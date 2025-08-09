@@ -1,0 +1,12 @@
+{
+  "appTitle": "플러터 스니펫",
+  "themeMode": "테마 모드",
+  "language": "언어",
+  "lightTheme": "라이트",
+  "darkTheme": "다크",
+  "systemTheme": "시스템",
+  "english": "영어",
+  "korean": "한국어",
+  "welcomeMessage": "플러터 스니펫 앱에 오신 것을 환영합니다!",
+  "description": "테마와 언어 전환이 가능한 예제 페이지입니다."
+}

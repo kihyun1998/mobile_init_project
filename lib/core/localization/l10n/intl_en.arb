@@ -1,0 +1,12 @@
+{
+  "appTitle": "Flutter Snippets",
+  "themeMode": "Theme Mode",
+  "language": "Language",
+  "lightTheme": "Light",
+  "darkTheme": "Dark",
+  "systemTheme": "System",
+  "english": "English",
+  "korean": "Korean",
+  "welcomeMessage": "Welcome to Flutter Snippets App!",
+  "description": "This is an example page with theme and language switching."
+}
