@@ -14,6 +14,7 @@ A Flutter mobile application template with internationalization, theme managemen
 
 - **flutter_riverpod**: State management with code generation
 - **riverpod_annotation/riverpod_generator**: Provider code generation
+- **flutter_screenutil**: Screen adaptation and consistent sizing across devices
 - **hive_flutter**: Local storage for settings
 - **flutter_intl**: Internationalization (Korean/English)
 - **flutter_svg**: SVG asset handling
@@ -39,11 +40,45 @@ Uses Riverpod with code generation. Providers are annotated with `@Riverpod()` a
 ### Debounce Service
 Singleton service for delaying expensive operations (like theme/locale saves) with immediate flush capabilities.
 
+## Screen Adaptation with flutter_screenutil
+
+This project uses **flutter_screenutil** for consistent sizing across devices. All sizing should use ScreenUtil units instead of raw pixels.
+
+### Setup
+```dart
+// Initialize in main.dart or app root
+ScreenUtil.init(context, designSize: Size(375, 812)); // Set your design reference size
+```
+
+### Usage
+```dart
+// Width/Height - use .w and .h instead of raw numbers
+Container(
+  width: 100.w,    // 100/375 of screen width
+  height: 50.h,    // 50/812 of screen height
+)
+
+// Font sizes - use .sp for scalable pixels
+Text('Hello', style: TextStyle(fontSize: 16.sp))
+
+// Padding/Margins
+EdgeInsets.all(16.r)           // radius/padding
+EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h)
+```
+
+### Best Practices
+- Always use `.w`, `.h`, `.sp`, `.r` units instead of raw numbers
+- Set designSize to match your development/design reference (e.g., iPhone dimensions)
+- All other devices will automatically scale proportionally
+
 ## Code Generation Commands
 
 **Important**: Ask user to run these commands on Windows, do not execute directly:
 
 ```bash
+# Install dependencies (run after adding flutter_screenutil)
+flutter pub get
+
 # Generate all code (providers, Hive adapters, etc.)
 flutter packages pub run build_runner build
 

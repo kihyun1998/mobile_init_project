@@ -854,6 +854,28 @@ class AppFont {
   TextStyle withOpacity(TextStyle style, double opacity) =>
       style.copyWith(color: style.color?.withValues(alpha: opacity));
 
+  /// 반응형 폰트 크기를 적용한 TextStyle 반환
+  TextStyle responsive(BuildContext context, TextStyle baseStyle) {
+    final width = MediaQuery.of(context).size.width;
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final baseFontSize = baseStyle.fontSize ?? 14.0;
+    
+    // 화면 크기에 따른 스케일링
+    double screenScale = 1.0;
+    if (width < 360) {
+      screenScale = 0.9; // 작은 화면
+    } else if (width > 600) {
+      screenScale = 1.05; // 큰 화면 (태블릿)
+    }
+    
+    final scaledSize = baseFontSize * screenScale * textScaleFactor;
+    
+    // 접근성을 위한 최소/최대 크기 제한
+    final clampedSize = scaledSize.clamp(baseFontSize * 0.8, baseFontSize * 1.4);
+    
+    return baseStyle.copyWith(fontSize: clampedSize);
+  }
+
   AppFont copyWith({
     Font? font,
     Font? monoFont,
