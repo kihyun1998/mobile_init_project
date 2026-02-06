@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../logger/app_logger.dart';
 import 'debounce_operation.dart';
 
 class DebounceService {
@@ -79,7 +80,7 @@ class DebounceService {
       final operation = _operations[key];
       if (operation != null) {
         futures.add(operation.executeImmediately().catchError((error) {
-          print('Error flushing operation "$key": $error');
+          logger.e('Error flushing operation "$key": $error');
           // 개별 작업 실패가 전체 flush를 중단하지 않도록 함
         }));
       }

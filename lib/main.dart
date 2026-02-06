@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/theme/provider/theme_provider.dart';
+import 'core/util/logger/app_logger.dart';
 import 'example/shadcn_components_page.dart';
 
 /// main()에서 초기화된 SharedPreferences 인스턴스
@@ -26,9 +27,9 @@ class MyApp extends ConsumerWidget {
     final size = MediaQuery.of(context).size;
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
 
-    print('화면 크기: ${size.width} x ${size.height}');
-    print('픽셀 밀도: ${pixelRatio}x');
-    print('실제 픽셀: ${size.width * pixelRatio} x ${size.height * pixelRatio}');
+    logger.d('화면 크기: ${size.width} x ${size.height}');
+    logger.d('픽셀 밀도: ${pixelRatio}x');
+    logger.d('실제 픽셀: ${size.width * pixelRatio} x ${size.height * pixelRatio}');
   }
 
   @override
