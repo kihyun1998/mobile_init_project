@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../main.dart';
 import '../../const/enum_debounce_key.dart';
-import '../../const/enum_hive_key.dart';
+import '../../const/enum_storage_key.dart';
 import '../../util/debounce/debounce_service.dart';
 
 part 'locale_state_provider.g.dart';
 
 @Riverpod(dependencies: [], keepAlive: true)
 class LocaleState extends _$LocaleState {
-  Box<String>? _box;
-
   @override
   Locale build() {
     try {
-      final box = Hive.box<String>(HiveKey.boxSettings.key);
-      final savedLocale = box.get(HiveKey.locale.key);
+      final savedLocale = sharedPrefs.getString(StorageKey.locale.key);
 
       if (savedLocale != null) {
         return Locale(savedLocale);
@@ -59,8 +56,7 @@ class LocaleState extends _$LocaleState {
 
   /// 저장된 로케일 불러오기 (앱 시작 시 한 번만 호출)
   Future<void> loadSavedLocale() async {
-    _box ??= await _openBox();
-    final savedLocale = _box!.get(HiveKey.locale.key);
+    final savedLocale = sharedPrefs.getString(StorageKey.locale.key);
     if (savedLocale != null) {
       state = Locale(savedLocale);
     }
@@ -95,17 +91,9 @@ class LocaleState extends _$LocaleState {
   /// 로케일 저장 (실제 저장 로직)
   Future<void> _saveLocale(Locale locale) async {
     try {
-      _box ??= await _openBox();
-      await _box!.put(HiveKey.locale.key, locale.languageCode);
+      await sharedPrefs.setString(StorageKey.locale.key, locale.languageCode);
     } catch (e) {
       // 저장 실패 시 로그 (에러를 던지지 않음으로써 UI 동작은 계속됨)
     }
-  }
-
-  Future<Box<String>> _openBox() async {
-    if (!Hive.isBoxOpen(HiveKey.boxSettings.key)) {
-      return await Hive.openBox(HiveKey.boxSettings.key);
-    }
-    return Hive.box(HiveKey.boxSettings.key);
   }
 }

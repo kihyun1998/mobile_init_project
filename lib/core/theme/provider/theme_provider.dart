@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../main.dart';
 import '../../const/enum_debounce_key.dart';
-import '../../const/enum_hive_key.dart';
+import '../../const/enum_storage_key.dart';
 import '../../util/debounce/debounce_service.dart';
 import '../dark_theme.dart';
 import '../foundation/app_theme.dart';
@@ -14,13 +14,10 @@ part 'theme_provider.g.dart';
 
 @Riverpod(dependencies: [], keepAlive: true)
 class Theme extends _$Theme {
-  Box<String>? _box;
-
   @override
   AppTheme build() {
     try {
-      final box = Hive.box<String>(HiveKey.boxSettings.key);
-      final savedMode = box.get(HiveKey.theme.key);
+      final savedMode = sharedPrefs.getString(StorageKey.theme.key);
 
       if (savedMode != null) {
         final mode = AppMode.fromJson(savedMode);
@@ -59,8 +56,7 @@ class Theme extends _$Theme {
 
   /// 저장된 테마 불러오기 (앱 시작 시 한 번만 호출)
   Future<void> loadSavedTheme() async {
-    _box ??= await _openBox();
-    final savedMode = _box!.get(HiveKey.theme.key);
+    final savedMode = sharedPrefs.getString(StorageKey.theme.key);
 
     if (savedMode != null) {
       final mode = AppMode.fromJson(savedMode);
@@ -93,22 +89,8 @@ class Theme extends _$Theme {
   /// 테마 모드 저장 (실제 저장 로직)
   Future<void> _saveThemeMode(AppMode mode) async {
     try {
-      _box ??= await _openBox();
-      await _box!.put(HiveKey.theme.key, mode.toJson());
-
-      // 🔍 Hive 박스 전체 내용 확인
+      await sharedPrefs.setString(StorageKey.theme.key, mode.toJson());
     } catch (e) {}
-  }
-
-  /// Hive 박스 열기
-  Future<Box<String>> _openBox() async {
-    if (!Hive.isBoxOpen(HiveKey.boxSettings.key)) {
-      final box = await Hive.openBox<String>(HiveKey.boxSettings.key);
-      return box;
-    }
-
-    final box = Hive.box<String>(HiveKey.boxSettings.key);
-    return box;
   }
 }
 

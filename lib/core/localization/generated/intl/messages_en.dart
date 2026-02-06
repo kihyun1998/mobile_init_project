@@ -22,17 +22,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-        "appTitle": MessageLookupByLibrary.simpleMessage("Flutter Snippets"),
-        "darkTheme": MessageLookupByLibrary.simpleMessage("Dark"),
-        "description": MessageLookupByLibrary.simpleMessage(
-            "This is an example page with theme and language switching."),
-        "english": MessageLookupByLibrary.simpleMessage("English"),
-        "korean": MessageLookupByLibrary.simpleMessage("Korean"),
-        "language": MessageLookupByLibrary.simpleMessage("Language"),
-        "lightTheme": MessageLookupByLibrary.simpleMessage("Light"),
-        "systemTheme": MessageLookupByLibrary.simpleMessage("System"),
-        "themeMode": MessageLookupByLibrary.simpleMessage("Theme Mode"),
-        "welcomeMessage": MessageLookupByLibrary.simpleMessage(
-            "Welcome to Flutter Snippets App!")
-      };
+    "appTitle": MessageLookupByLibrary.simpleMessage("Flutter Snippets"),
+    "darkTheme": MessageLookupByLibrary.simpleMessage("Dark"),
+    "description": MessageLookupByLibrary.simpleMessage(
+      "This is an example page with theme and language switching.",
+    ),
+    "english": MessageLookupByLibrary.simpleMessage("English"),
+    "korean": MessageLookupByLibrary.simpleMessage("Korean"),
+    "language": MessageLookupByLibrary.simpleMessage("Language"),
+    "lightTheme": MessageLookupByLibrary.simpleMessage("Light"),
+    "systemTheme": MessageLookupByLibrary.simpleMessage("System"),
+    "themeMode": MessageLookupByLibrary.simpleMessage("Theme Mode"),
+    "welcomeMessage": MessageLookupByLibrary.simpleMessage(
+      "Welcome to Flutter Snippets App!",
+    ),
+  };
 }

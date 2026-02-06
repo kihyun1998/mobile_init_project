@@ -22,17 +22,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-        "appTitle": MessageLookupByLibrary.simpleMessage("플러터 스니펫"),
-        "darkTheme": MessageLookupByLibrary.simpleMessage("다크"),
-        "description":
-            MessageLookupByLibrary.simpleMessage("테마와 언어 전환이 가능한 예제 페이지입니다."),
-        "english": MessageLookupByLibrary.simpleMessage("영어"),
-        "korean": MessageLookupByLibrary.simpleMessage("한국어"),
-        "language": MessageLookupByLibrary.simpleMessage("언어"),
-        "lightTheme": MessageLookupByLibrary.simpleMessage("라이트"),
-        "systemTheme": MessageLookupByLibrary.simpleMessage("시스템"),
-        "themeMode": MessageLookupByLibrary.simpleMessage("테마 모드"),
-        "welcomeMessage":
-            MessageLookupByLibrary.simpleMessage("플러터 스니펫 앱에 오신 것을 환영합니다!")
-      };
+    "appTitle": MessageLookupByLibrary.simpleMessage("플러터 스니펫"),
+    "darkTheme": MessageLookupByLibrary.simpleMessage("다크"),
+    "description": MessageLookupByLibrary.simpleMessage(
+      "테마와 언어 전환이 가능한 예제 페이지입니다.",
+    ),
+    "english": MessageLookupByLibrary.simpleMessage("영어"),
+    "korean": MessageLookupByLibrary.simpleMessage("한국어"),
+    "language": MessageLookupByLibrary.simpleMessage("언어"),
+    "lightTheme": MessageLookupByLibrary.simpleMessage("라이트"),
+    "systemTheme": MessageLookupByLibrary.simpleMessage("시스템"),
+    "themeMode": MessageLookupByLibrary.simpleMessage("테마 모드"),
+    "welcomeMessage": MessageLookupByLibrary.simpleMessage(
+      "플러터 스니펫 앱에 오신 것을 환영합니다!",
+    ),
+  };
 }

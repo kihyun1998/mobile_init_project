@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/const/enum_hive_key.dart';
 import 'core/theme/provider/theme_provider.dart';
 import 'example/shadcn_components_page.dart';
+
+/// main()에서 초기화된 SharedPreferences 인스턴스
+/// Provider의 동기 build()에서 접근 가능하도록 전역 캐싱
+late final SharedPreferences sharedPrefs;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Hive 초기화
-  await Hive.initFlutter();
-  await Hive.openBox<String>(HiveKey.boxSettings.key);
+  // SharedPreferences 초기화 및 캐싱
+  sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(const ProviderScope(child: MyApp()));
 }

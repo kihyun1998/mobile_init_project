@@ -15,7 +15,7 @@ A Flutter mobile application template with internationalization, theme managemen
 - **flutter_riverpod**: State management with code generation
 - **riverpod_annotation/riverpod_generator**: Provider code generation
 - **flutter_screenutil**: Screen adaptation and consistent sizing across devices
-- **hive_flutter**: Local storage for settings
+- **shared_preferences**: Local storage for settings
 - **flutter_intl**: Internationalization (Korean/English)
 - **flutter_svg**: SVG asset handling
 - **build_runner**: Code generation runner
@@ -27,14 +27,14 @@ A Flutter mobile application template with internationalization, theme managemen
   - `theme/` - Theme system with light/dark mode support
   - `localization/` - i18n with generated files in `generated/`
   - `util/` - Utilities including debounce service and SVG handling
-  - `const/` - Enums for Hive keys and debounce keys
+  - `const/` - Enums for storage keys and debounce keys
 
 ### State Management
 Uses Riverpod with code generation. Providers are annotated with `@Riverpod()` and generate `.g.dart` files.
 
 ### Theme System
 - Abstract `AppTheme` class with concrete `LightTheme` and `DarkTheme`
-- Settings persisted via Hive with debounced saves for performance
+- Settings persisted via SharedPreferences with debounced saves for performance
 - Custom extensions on `WidgetRef` for easy theme access
 
 ### Debounce Service
@@ -79,7 +79,7 @@ EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h)
 # Install dependencies (run after adding flutter_screenutil)
 flutter pub get
 
-# Generate all code (providers, Hive adapters, etc.)
+# Generate all code (providers, etc.)
 flutter packages pub run build_runner build
 
 # Watch for changes and regenerate automatically

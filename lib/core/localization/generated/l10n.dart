@@ -18,8 +18,10 @@ class S {
   static S? _current;
 
   static S get current {
-    assert(_current != null,
-        'No instance of S was loaded. Try to initialize the S delegate before accessing S.current.');
+    assert(
+      _current != null,
+      'No instance of S was loaded. Try to initialize the S delegate before accessing S.current.',
+    );
     return _current!;
   }
 
@@ -41,8 +43,10 @@ class S {
 
   static S of(BuildContext context) {
     final instance = S.maybeOf(context);
-    assert(instance != null,
-        'No instance of S present in the widget tree. Did you add S.delegate in localizationsDelegates?');
+    assert(
+      instance != null,
+      'No instance of S present in the widget tree. Did you add S.delegate in localizationsDelegates?',
+    );
     return instance!;
   }
 
@@ -62,72 +66,37 @@ class S {
 
   /// `Theme Mode`
   String get themeMode {
-    return Intl.message(
-      'Theme Mode',
-      name: 'themeMode',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Theme Mode', name: 'themeMode', desc: '', args: []);
   }
 
   /// `Language`
   String get language {
-    return Intl.message(
-      'Language',
-      name: 'language',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Language', name: 'language', desc: '', args: []);
   }
 
   /// `Light`
   String get lightTheme {
-    return Intl.message(
-      'Light',
-      name: 'lightTheme',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Light', name: 'lightTheme', desc: '', args: []);
   }
 
   /// `Dark`
   String get darkTheme {
-    return Intl.message(
-      'Dark',
-      name: 'darkTheme',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Dark', name: 'darkTheme', desc: '', args: []);
   }
 
   /// `System`
   String get systemTheme {
-    return Intl.message(
-      'System',
-      name: 'systemTheme',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('System', name: 'systemTheme', desc: '', args: []);
   }
 
   /// `English`
   String get english {
-    return Intl.message(
-      'English',
-      name: 'english',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('English', name: 'english', desc: '', args: []);
   }
 
   /// `Korean`
   String get korean {
-    return Intl.message(
-      'Korean',
-      name: 'korean',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Korean', name: 'korean', desc: '', args: []);
   }
 
   /// `Welcome to Flutter Snippets App!`
