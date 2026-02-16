@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/theme/foundation/app_mode.dart';
 import 'core/theme/provider/theme_provider.dart';
+import 'core/theme/tweakcn_theme.g.dart';
 import 'core/util/logger/app_logger.dart';
 import 'example/shadcn_components_page.dart';
 
@@ -36,6 +38,8 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     printDeviceInfo(context);
 
+    final mode = ref.watch(themeProvider);
+
     return ScreenUtilInit(
       designSize: const Size(375, 812), // iPhone X 기준 크기
       minTextAdapt: true,
@@ -44,7 +48,9 @@ class MyApp extends ConsumerWidget {
         return MaterialApp(
           title: 'Mobile Init Project',
           debugShowCheckedModeBanner: false,
-          theme: ref.theme.themeData,
+          theme: TweakcnTheme.light,
+          darkTheme: TweakcnTheme.dark,
+          themeMode: mode == AppMode.light ? ThemeMode.light : ThemeMode.dark,
           home: const ShadcnComponentsPage(),
         );
       },

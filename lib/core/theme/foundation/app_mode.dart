@@ -1,5 +1,3 @@
-part of 'app_theme.dart';
-
 enum AppMode {
   light,
   dark;

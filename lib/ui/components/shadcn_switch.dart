@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/theme/provider/theme_provider.dart';
+import '../../core/theme/tweakcn_theme.g.dart';
 
-class ShadcnSwitch extends ConsumerWidget {
+class ShadcnSwitch extends StatelessWidget {
   const ShadcnSwitch({
     super.key,
     required this.value,
@@ -17,9 +16,9 @@ class ShadcnSwitch extends ConsumerWidget {
   final bool disabled;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = ref.color;
-    
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
+
     return GestureDetector(
       onTap: disabled || onChanged == null ? null : () => onChanged!(!value),
       child: AnimatedContainer(
@@ -30,7 +29,7 @@ class ShadcnSwitch extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12.r),
           color: disabled
-              ? colors.disabled
+              ? colors.mutedForeground
               : value
                   ? colors.primary
                   : colors.border,
@@ -48,8 +47,8 @@ class ShadcnSwitch extends ConsumerWidget {
               color: disabled
                   ? colors.mutedForeground
                   : value
-                      ? colors.onPrimary
-                      : colors.onSurface,
+                      ? colors.primaryForeground
+                      : colors.foreground,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -65,7 +64,7 @@ class ShadcnSwitch extends ConsumerWidget {
   }
 }
 
-class ShadcnSwitchWithLabel extends ConsumerWidget {
+class ShadcnSwitchWithLabel extends StatelessWidget {
   const ShadcnSwitchWithLabel({
     super.key,
     required this.value,
@@ -82,9 +81,8 @@ class ShadcnSwitchWithLabel extends ConsumerWidget {
   final bool disabled;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = ref.color;
-    final font = ref.font;
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
 
     return GestureDetector(
       onTap: disabled || onChanged == null ? null : () => onChanged!(!value),
@@ -96,16 +94,22 @@ class ShadcnSwitchWithLabel extends ConsumerWidget {
               children: [
                 Text(
                   label,
-                  style: font.responsive(context, font.mediumText14).copyWith(
-                    color: disabled ? colors.disabled : colors.onSurface,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: disabled ? colors.mutedForeground : colors.foreground,
                   ),
                 ),
                 if (description != null) ...[
                   SizedBox(height: 2.h),
                   Text(
                     description!,
-                    style: font.responsive(context, font.regularText12).copyWith(
-                      color: disabled ? colors.disabled : colors.mutedForeground,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: disabled
+                          ? colors.mutedForeground
+                          : colors.mutedForeground,
                     ),
                   ),
                 ],

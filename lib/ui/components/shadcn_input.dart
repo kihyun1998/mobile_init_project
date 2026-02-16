@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/theme/provider/theme_provider.dart';
+import '../../core/theme/tweakcn_theme.g.dart';
 
-class ShadcnInput extends ConsumerWidget {
+class ShadcnInput extends StatelessWidget {
   const ShadcnInput({
     super.key,
     this.controller,
@@ -54,9 +53,8 @@ class ShadcnInput extends ConsumerWidget {
   final bool autofocus;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = ref.color;
-    final font = ref.font;
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
     final hasError = errorText != null;
 
     return Column(
@@ -65,8 +63,10 @@ class ShadcnInput extends ConsumerWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: font.responsive(context, font.mediumText14).copyWith(
-              color: colors.onSurface,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: colors.foreground,
             ),
           ),
           SizedBox(height: 6.h),
@@ -76,10 +76,10 @@ class ShadcnInput extends ConsumerWidget {
             borderRadius: BorderRadius.circular(6.r),
             border: Border.all(
               color: hasError
-                  ? colors.error
+                  ? colors.destructive
                   : enabled
                       ? colors.border
-                      : colors.disabled,
+                      : colors.mutedForeground,
               width: 1.r,
             ),
           ),
@@ -99,12 +99,16 @@ class ShadcnInput extends ConsumerWidget {
             onSubmitted: onSubmitted,
             onTap: onTap,
             autofocus: autofocus,
-            style: font.responsive(context, font.regularText14).copyWith(
-              color: enabled ? colors.onSurface : colors.disabled,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w400,
+              color: enabled ? colors.foreground : colors.mutedForeground,
             ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: font.responsive(context, font.regularText14).copyWith(
+              hintStyle: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
                 color: colors.mutedForeground,
               ),
               prefixIcon: prefixIcon != null
@@ -145,8 +149,10 @@ class ShadcnInput extends ConsumerWidget {
           SizedBox(height: 4.h),
           Text(
             hasError ? errorText! : helperText!,
-            style: font.responsive(context, font.regularText12).copyWith(
-              color: hasError ? colors.error : colors.mutedForeground,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: hasError ? colors.destructive : colors.mutedForeground,
             ),
           ),
         ],
@@ -155,7 +161,7 @@ class ShadcnInput extends ConsumerWidget {
   }
 }
 
-class ShadcnTextArea extends ConsumerWidget {
+class ShadcnTextArea extends StatelessWidget {
   const ShadcnTextArea({
     super.key,
     this.controller,
@@ -186,7 +192,7 @@ class ShadcnTextArea extends ConsumerWidget {
   final FocusNode? focusNode;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ShadcnInput(
       controller: controller,
       placeholder: placeholder,

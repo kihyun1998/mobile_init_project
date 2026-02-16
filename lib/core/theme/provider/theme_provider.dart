@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -6,49 +5,44 @@ import '../../../main.dart';
 import '../../const/enum_debounce_key.dart';
 import '../../const/enum_storage_key.dart';
 import '../../util/debounce/debounce_service.dart';
-import '../dark_theme.dart';
-import '../foundation/app_theme.dart';
-import '../light_theme.dart';
+import '../foundation/app_mode.dart';
 
 part 'theme_provider.g.dart';
 
 @Riverpod(dependencies: [], keepAlive: true)
 class Theme extends _$Theme {
   @override
-  AppTheme build() {
+  AppMode build() {
     try {
       final savedMode = sharedPrefs.getString(StorageKey.theme.key);
 
       if (savedMode != null) {
-        final mode = AppMode.fromJson(savedMode);
-        return mode == AppMode.light ? LightTheme() : DarkTheme();
+        return AppMode.fromJson(savedMode);
       }
     } catch (e) {
       // 에러시 기본값
     }
 
-    return LightTheme();
+    return AppMode.light;
   }
 
   /// 테마 변경 (토글)
   /// UI는 즉시 변경되고, 저장은 debounce로 처리
   Future<void> toggleTheme() async {
-    final newTheme = state.mode == AppMode.light ? DarkTheme() : LightTheme();
+    final newMode = state == AppMode.light ? AppMode.dark : AppMode.light;
 
     // 1. UI 즉시 업데이트 (사용자 경험 우선)
-    state = newTheme;
+    state = newMode;
 
     // 2. 저장은 debounce로 처리 (성능 최적화)
-    _scheduleThemeSave(newTheme.mode);
+    _scheduleThemeSave(newMode);
   }
 
   /// 특정 테마로 설정
   /// UI는 즉시 변경되고, 저장은 debounce로 처리
   Future<void> setTheme(AppMode mode) async {
-    final newTheme = mode == AppMode.light ? LightTheme() : DarkTheme();
-
     // 1. UI 즉시 업데이트
-    state = newTheme;
+    state = mode;
 
     // 2. 저장은 debounce로 처리
     _scheduleThemeSave(mode);
@@ -59,11 +53,8 @@ class Theme extends _$Theme {
     final savedMode = sharedPrefs.getString(StorageKey.theme.key);
 
     if (savedMode != null) {
-      final mode = AppMode.fromJson(savedMode);
-      final newTheme = mode == AppMode.light ? LightTheme() : DarkTheme();
-
-      state = newTheme;
-    } else {}
+      state = AppMode.fromJson(savedMode);
+    }
   }
 
   /// 현재 대기 중인 테마 저장 작업을 즉시 실행
@@ -92,11 +83,4 @@ class Theme extends _$Theme {
       await sharedPrefs.setString(StorageKey.theme.key, mode.toJson());
     } catch (e) {}
   }
-}
-
-extension ThemeProviderExt on WidgetRef {
-  AppTheme get theme => watch(themeProvider);
-  AppColor get color => theme.color;
-  AppFont get font => theme.font;
-  ThemeData get themeData => theme.themeData;
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/theme/provider/theme_provider.dart';
+import '../../core/theme/tweakcn_theme.g.dart';
 
 enum ShadcnButtonVariant {
   defaultStyle,
@@ -20,7 +19,7 @@ enum ShadcnButtonSize {
   icon,
 }
 
-class ShadcnButton extends ConsumerWidget {
+class ShadcnButton extends StatelessWidget {
   const ShadcnButton({
     super.key,
     required this.onPressed,
@@ -43,9 +42,8 @@ class ShadcnButton extends ConsumerWidget {
   final double? height;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.theme;
-    final colors = ref.color;
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
 
     return SizedBox(
       width: width,
@@ -119,7 +117,7 @@ class ShadcnButton extends ConsumerWidget {
     switch (variant) {
       case ShadcnButtonVariant.defaultStyle:
         backgroundColor = colors.primary;
-        foregroundColor = colors.onPrimary;
+        foregroundColor = colors.primaryForeground;
         break;
       case ShadcnButtonVariant.secondary:
         backgroundColor = colors.muted;
@@ -135,7 +133,7 @@ class ShadcnButton extends ConsumerWidget {
         foregroundColor = colors.primary;
         break;
       case ShadcnButtonVariant.destructive:
-        backgroundColor = colors.error;
+        backgroundColor = colors.destructive;
         foregroundColor = Colors.white;
         break;
       case ShadcnButtonVariant.link:
@@ -189,7 +187,7 @@ class ShadcnButton extends ConsumerWidget {
       case ShadcnButtonVariant.ghost:
         return colors.accent;
       case ShadcnButtonVariant.destructive:
-        return colors.error.withValues(alpha: 0.9);
+        return colors.destructive.withValues(alpha: 0.9);
       case ShadcnButtonVariant.link:
         return Colors.transparent;
     }
@@ -205,7 +203,7 @@ class ShadcnButton extends ConsumerWidget {
       case ShadcnButtonVariant.ghost:
         return colors.accent.withValues(alpha: 0.8);
       case ShadcnButtonVariant.destructive:
-        return colors.error.withValues(alpha: 0.8);
+        return colors.destructive.withValues(alpha: 0.8);
       case ShadcnButtonVariant.link:
         return Colors.transparent;
     }
@@ -214,7 +212,7 @@ class ShadcnButton extends ConsumerWidget {
   Color _getLoadingColor(dynamic colors) {
     switch (variant) {
       case ShadcnButtonVariant.defaultStyle:
-        return colors.onPrimary;
+        return colors.primaryForeground;
       case ShadcnButtonVariant.secondary:
         return colors.mutedForeground;
       case ShadcnButtonVariant.outline:
