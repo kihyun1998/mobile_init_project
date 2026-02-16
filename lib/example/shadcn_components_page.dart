@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../core/localization/generated/l10n.dart';
+import '../core/localization/provider/language_provider.dart';
+import '../core/localization/provider/locale_state_provider.dart';
 import '../core/theme/foundation/app_mode.dart';
 import '../core/theme/provider/theme_provider.dart';
 import '../core/theme/tweakcn_theme.g.dart';
@@ -88,6 +91,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
     final mode = ref.watch(themeProvider);
+    final s = ref.watch(languageProvider);
+    final locale = ref.watch(localeStateProvider);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -96,7 +101,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'tweakcn',
+          s.appTitle,
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.bold,
@@ -104,6 +109,17 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () => ref.read(localeStateProvider.notifier).toggleLocale(),
+            icon: Text(
+              locale.languageCode.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: colors.foreground,
+              ),
+            ),
+          ),
           IconButton(
             onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
             icon: Icon(
@@ -118,57 +134,31 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         child: Column(
           children: [
-            // Row 1: Revenue + Subscriptions
-            _buildRevenueCard(colors),
+            _buildRevenueCard(colors, s),
             SizedBox(height: 12.h),
-            _buildSubscriptionsCard(colors),
-
+            _buildSubscriptionsCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 2: Move Goal + Exercise Minutes
-            _buildMoveGoalCard(colors),
+            _buildMoveGoalCard(colors, s),
             SizedBox(height: 12.h),
-            _buildExerciseMinutesCard(colors),
-
+            _buildExerciseMinutesCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 3: Upgrade Plan
-            _buildUpgradePlanCard(colors),
-
+            _buildUpgradePlanCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 4: Team Members
-            _buildTeamMembersCard(colors),
-
+            _buildTeamMembersCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 5: Cookie Settings + Create Account
-            _buildCookieSettingsCard(colors),
+            _buildCookieSettingsCard(colors, s),
             SizedBox(height: 12.h),
-            _buildCreateAccountCard(colors),
-
+            _buildCreateAccountCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 6: Chat
-            _buildChatCard(colors),
-
+            _buildChatCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 7: tweakcn Info
-            _buildTweakcnInfoCard(colors),
-
+            _buildTweakcnInfoCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 8: Payments Table
-            _buildPaymentsCard(colors),
-
+            _buildPaymentsCard(colors, s),
             SizedBox(height: 12.h),
-
-            // Row 9: Share Document + Report Issue
-            _buildShareDocumentCard(colors),
+            _buildShareDocumentCard(colors, s),
             SizedBox(height: 12.h),
-            _buildReportIssueCard(colors),
-
+            _buildReportIssueCard(colors, s),
             SizedBox(height: 32.h),
           ],
         ),
@@ -179,10 +169,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Revenue Card (Line Chart)
   // ─────────────────────────────────────────
-  Widget _buildRevenueCard(TweakcnColors colors) {
+  Widget _buildRevenueCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Total Revenue',
-      description: '+20.1% from last month',
+      title: s.totalRevenue,
+      description: s.revenueChange,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -206,18 +196,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 lineBarsData: [
                   LineChartBarData(
                     spots: const [
-                      FlSpot(0, 3),
-                      FlSpot(1, 1.5),
-                      FlSpot(2, 4),
-                      FlSpot(3, 3.5),
-                      FlSpot(4, 5),
-                      FlSpot(5, 3),
-                      FlSpot(6, 4.5),
-                      FlSpot(7, 6),
-                      FlSpot(8, 5.5),
-                      FlSpot(9, 7),
-                      FlSpot(10, 6),
-                      FlSpot(11, 8),
+                      FlSpot(0, 3), FlSpot(1, 1.5), FlSpot(2, 4),
+                      FlSpot(3, 3.5), FlSpot(4, 5), FlSpot(5, 3),
+                      FlSpot(6, 4.5), FlSpot(7, 6), FlSpot(8, 5.5),
+                      FlSpot(9, 7), FlSpot(10, 6), FlSpot(11, 8),
                     ],
                     isCurved: true,
                     color: colors.chart1,
@@ -241,10 +223,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Subscriptions Card (Bar Chart)
   // ─────────────────────────────────────────
-  Widget _buildSubscriptionsCard(TweakcnColors colors) {
+  Widget _buildSubscriptionsCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Subscriptions',
-      description: '+180.1% from last month',
+      title: s.subscriptions,
+      description: s.subscriptionsChange,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -293,14 +275,13 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Move Goal Card
   // ─────────────────────────────────────────
-  Widget _buildMoveGoalCard(TweakcnColors colors) {
+  Widget _buildMoveGoalCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Move Goal',
-      description: 'Set your daily activity goal.',
+      title: s.moveGoal,
+      description: s.moveGoalDescription,
       content: Column(
         children: [
           SizedBox(height: 8.h),
-          // Goal counter
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -323,7 +304,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'CALORIES/DAY',
+                    s.caloriesPerDay,
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w500,
@@ -342,7 +323,6 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             ],
           ),
           SizedBox(height: 24.h),
-          // Mini bar chart
           SizedBox(
             height: 80.h,
             child: BarChart(
@@ -396,10 +376,15 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Exercise Minutes Card (Dual Line Chart)
   // ─────────────────────────────────────────
-  Widget _buildExerciseMinutesCard(TweakcnColors colors) {
+  Widget _buildExerciseMinutesCard(TweakcnColors colors, S s) {
+    final monthLabels = [
+      s.monthJan, s.monthFeb, s.monthMar,
+      s.monthApr, s.monthMay, s.monthJun,
+    ];
+
     return ShadcnCard(
-      title: 'Exercise Minutes',
-      description: 'Your exercise minutes are ahead of where you normally are.',
+      title: s.exerciseMinutes,
+      description: s.exerciseMinutesDescription,
       content: SizedBox(
         height: 200.h,
         child: LineChart(
@@ -411,14 +396,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   showTitles: true,
                   reservedSize: 24.h,
                   getTitlesWidget: (value, meta) {
-                    const labels = [
-                      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                    ];
-                    if (value.toInt() >= 0 && value.toInt() < labels.length) {
+                    final idx = value.toInt();
+                    if (idx >= 0 && idx < monthLabels.length) {
                       return Padding(
                         padding: EdgeInsets.only(top: 8.h),
                         child: Text(
-                          labels[value.toInt()],
+                          monthLabels[idx],
                           style: TextStyle(
                             fontSize: 10.sp,
                             color: colors.mutedForeground,
@@ -437,30 +420,20 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             borderData: FlBorderData(show: false),
             lineTouchData: LineTouchData(enabled: false),
             lineBarsData: [
-              // This year
               LineChartBarData(
                 spots: const [
-                  FlSpot(0, 30),
-                  FlSpot(1, 45),
-                  FlSpot(2, 35),
-                  FlSpot(3, 55),
-                  FlSpot(4, 48),
-                  FlSpot(5, 62),
+                  FlSpot(0, 30), FlSpot(1, 45), FlSpot(2, 35),
+                  FlSpot(3, 55), FlSpot(4, 48), FlSpot(5, 62),
                 ],
                 isCurved: true,
                 color: colors.chart1,
                 barWidth: 2.r,
                 dotData: FlDotData(show: false),
               ),
-              // Last year
               LineChartBarData(
                 spots: const [
-                  FlSpot(0, 20),
-                  FlSpot(1, 25),
-                  FlSpot(2, 30),
-                  FlSpot(3, 35),
-                  FlSpot(4, 32),
-                  FlSpot(5, 40),
+                  FlSpot(0, 20), FlSpot(1, 25), FlSpot(2, 30),
+                  FlSpot(3, 35), FlSpot(4, 32), FlSpot(5, 40),
                 ],
                 isCurved: true,
                 color: colors.chart2,
@@ -477,11 +450,11 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         children: [
           _legendDot(colors.chart1),
           SizedBox(width: 4.w),
-          Text('This Year', style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
+          Text(s.thisYear, style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
           SizedBox(width: 16.w),
           _legendDot(colors.chart2),
           SizedBox(width: 4.w),
-          Text('Last Year', style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
+          Text(s.lastYear, style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
         ],
       ),
     );
@@ -498,31 +471,30 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Upgrade Plan Card
   // ─────────────────────────────────────────
-  Widget _buildUpgradePlanCard(TweakcnColors colors) {
+  Widget _buildUpgradePlanCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Upgrade your plan',
-      description:
-          'You\'re currently on the free plan. Upgrade to unlock more features.',
+      title: s.upgradePlan,
+      description: s.upgradePlanDescription,
       content: Column(
         children: [
           ShadcnRadioGroup<String>(
             value: _selectedPlan,
             onChanged: (val) => setState(() => _selectedPlan = val),
-            items: const [
+            items: [
               ShadcnRadioItem(
                 value: 'starter',
-                label: 'Starter',
-                description: '1 user, 5GB storage',
+                label: s.planStarter,
+                description: s.planStarterDesc,
               ),
               ShadcnRadioItem(
                 value: 'professional',
-                label: 'Professional',
-                description: '5 users, 50GB storage',
+                label: s.planProfessional,
+                description: s.planProfessionalDesc,
               ),
               ShadcnRadioItem(
                 value: 'enterprise',
-                label: 'Enterprise',
-                description: 'Unlimited users, 500GB storage',
+                label: s.planEnterprise,
+                description: s.planEnterpriseDesc,
               ),
             ],
           ),
@@ -531,7 +503,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
       footer: ShadcnButton(
         onPressed: () {},
         width: double.infinity,
-        child: const Text('Upgrade Plan'),
+        child: Text(s.upgradePlanButton),
       ),
     );
   }
@@ -539,7 +511,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Team Members Card
   // ─────────────────────────────────────────
-  Widget _buildTeamMembersCard(TweakcnColors colors) {
+  Widget _buildTeamMembersCard(TweakcnColors colors, S s) {
     final members = [
       _TeamMember('Sofia Davis', 'm@example.com', 'SD'),
       _TeamMember('Jackson Lee', 'p@example.com', 'JL'),
@@ -547,8 +519,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
     ];
 
     return ShadcnCard(
-      title: 'Team Members',
-      description: 'Invite your team members to collaborate.',
+      title: s.teamMembers,
+      description: s.teamMembersDescription,
       content: Column(
         children: members.map((m) {
           return Padding(
@@ -583,10 +555,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   value: _teamRoles[m.name],
                   onChanged: (val) =>
                       setState(() => _teamRoles[m.name] = val),
-                  items: const [
-                    ShadcnSelectItem(value: 'owner', label: 'Owner'),
-                    ShadcnSelectItem(value: 'member', label: 'Member'),
-                    ShadcnSelectItem(value: 'viewer', label: 'Viewer'),
+                  items: [
+                    ShadcnSelectItem(value: 'owner', label: s.roleOwner),
+                    ShadcnSelectItem(value: 'member', label: s.roleMember),
+                    ShadcnSelectItem(value: 'viewer', label: s.roleViewer),
                   ],
                 ),
               ],
@@ -600,31 +572,31 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Cookie Settings Card
   // ─────────────────────────────────────────
-  Widget _buildCookieSettingsCard(TweakcnColors colors) {
+  Widget _buildCookieSettingsCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Cookie Settings',
-      description: 'Manage your cookie settings here.',
+      title: s.cookieSettings,
+      description: s.cookieSettingsDescription,
       content: Column(
         children: [
           ShadcnSwitchWithLabel(
             value: _strictCookies,
             onChanged: (v) => setState(() => _strictCookies = v),
-            label: 'Strictly Necessary',
-            description: 'These cookies are essential for the website to function.',
+            label: s.strictlyNecessary,
+            description: s.strictlyNecessaryDesc,
           ),
           SizedBox(height: 12.h),
           ShadcnSwitchWithLabel(
             value: _functionalCookies,
             onChanged: (v) => setState(() => _functionalCookies = v),
-            label: 'Functional Cookies',
-            description: 'These cookies enable personalized features.',
+            label: s.functionalCookies,
+            description: s.functionalCookiesDesc,
           ),
           SizedBox(height: 12.h),
           ShadcnSwitchWithLabel(
             value: _performanceCookies,
             onChanged: (v) => setState(() => _performanceCookies = v),
-            label: 'Performance Cookies',
-            description: 'These cookies help improve performance.',
+            label: s.performanceCookies,
+            description: s.performanceCookiesDesc,
           ),
         ],
       ),
@@ -632,7 +604,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         onPressed: () {},
         width: double.infinity,
         variant: ShadcnButtonVariant.outline,
-        child: const Text('Save preferences'),
+        child: Text(s.savePreferences),
       ),
     );
   }
@@ -640,13 +612,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Create Account Card
   // ─────────────────────────────────────────
-  Widget _buildCreateAccountCard(TweakcnColors colors) {
+  Widget _buildCreateAccountCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Create an account',
-      description: 'Enter your information below to create your account.',
+      title: s.createAccount,
+      description: s.createAccountDescription,
       content: Column(
         children: [
-          // Social buttons
           Row(
             children: [
               Expanded(
@@ -658,7 +629,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     children: [
                       Icon(Icons.g_mobiledata, size: 20.r),
                       SizedBox(width: 4.w),
-                      const Text('Google'),
+                      Text(s.google),
                     ],
                   ),
                 ),
@@ -673,7 +644,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     children: [
                       Icon(Icons.apple, size: 18.r),
                       SizedBox(width: 4.w),
-                      const Text('Apple'),
+                      Text(s.apple),
                     ],
                   ),
                 ),
@@ -681,14 +652,13 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             ],
           ),
           SizedBox(height: 16.h),
-          // Divider with text
           Row(
             children: [
               Expanded(child: ShadcnSeparator(margin: EdgeInsets.zero)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                 child: Text(
-                  'OR CONTINUE WITH',
+                  s.orContinueWith,
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: colors.mutedForeground,
@@ -702,21 +672,21 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           SizedBox(height: 16.h),
           ShadcnInput(
             controller: _nameController,
-            label: 'Name',
-            placeholder: 'Enter your name',
+            label: s.name,
+            placeholder: s.namePlaceholder,
           ),
           SizedBox(height: 12.h),
           ShadcnInput(
             controller: _emailController,
-            label: 'Email',
-            placeholder: 'name@example.com',
+            label: s.email,
+            placeholder: s.emailPlaceholder,
             keyboardType: TextInputType.emailAddress,
           ),
           SizedBox(height: 12.h),
           ShadcnInput(
             controller: _passwordController,
-            label: 'Password',
-            placeholder: 'Create a password',
+            label: s.password,
+            placeholder: s.passwordPlaceholder,
             obscureText: true,
           ),
         ],
@@ -724,7 +694,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
       footer: ShadcnButton(
         onPressed: () {},
         width: double.infinity,
-        child: const Text('Create account'),
+        child: Text(s.createAccountButton),
       ),
     );
   }
@@ -732,7 +702,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Chat Card
   // ─────────────────────────────────────────
-  Widget _buildChatCard(TweakcnColors colors) {
+  Widget _buildChatCard(TweakcnColors colors, S s) {
     return ShadcnCard(
       padding: EdgeInsets.all(16.r),
       titleWidget: Row(
@@ -778,7 +748,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
               Expanded(
                 child: ShadcnInput(
                   controller: _chatController,
-                  placeholder: 'Type your message...',
+                  placeholder: s.typeMessage,
                   onSubmitted: (_) => _sendMessage(),
                 ),
               ),
@@ -807,7 +777,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // tweakcn Info Card
   // ─────────────────────────────────────────
-  Widget _buildTweakcnInfoCard(TweakcnColors colors) {
+  Widget _buildTweakcnInfoCard(TweakcnColors colors, S s) {
     return ShadcnCard(
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,7 +807,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                       ),
                     ),
                     Text(
-                      'Beautiful themes for shadcn/ui',
+                      s.tweakcnSubtitle,
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: colors.mutedForeground,
@@ -850,7 +820,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
           SizedBox(height: 16.h),
           Text(
-            'Create beautiful, customizable themes for your shadcn/ui projects. Preview components in real-time and export CSS variables.',
+            s.tweakcnDescription,
             style: TextStyle(
               fontSize: 13.sp,
               color: colors.mutedForeground,
@@ -875,7 +845,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Payments Card (Data Table)
   // ─────────────────────────────────────────
-  Widget _buildPaymentsCard(TweakcnColors colors) {
+  Widget _buildPaymentsCard(TweakcnColors colors, S s) {
     final payments = [
       _Payment('INV001', 'success', 'ken99@example.com', 316.0),
       _Payment('INV002', 'success', 'abe45@example.com', 242.0),
@@ -885,8 +855,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
     ];
 
     return ShadcnCard(
-      title: 'Payments',
-      description: 'Manage your recent payments.',
+      title: s.payments,
+      description: s.paymentsDescription,
       content: Column(
         children: [
           ShadcnDataTable<_Payment>(
@@ -911,10 +881,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 }
               });
             },
-            columns: const [
-              ShadcnDataColumn(label: 'Status', flex: 2),
-              ShadcnDataColumn(label: 'Email', flex: 3),
-              ShadcnDataColumn(label: 'Amount', flex: 2),
+            columns: [
+              ShadcnDataColumn(label: s.statusHeader, flex: 2),
+              ShadcnDataColumn(label: s.emailHeader, flex: 3),
+              ShadcnDataColumn(label: s.amountHeader, flex: 2),
             ],
             rows: payments.asMap().entries.map((entry) {
               final p = entry.value;
@@ -942,7 +912,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
           SizedBox(height: 8.h),
           Text(
-            '${_selectedPayments.length} of ${payments.length} row(s) selected.',
+            s.rowsSelected(_selectedPayments.length, payments.length),
             style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground),
           ),
         ],
@@ -974,13 +944,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Share Document Card
   // ─────────────────────────────────────────
-  Widget _buildShareDocumentCard(TweakcnColors colors) {
+  Widget _buildShareDocumentCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Share this document',
-      description: 'Anyone with the link can view this document.',
+      title: s.shareDocument,
+      description: s.shareDocumentDescription,
       content: Column(
         children: [
-          // Link field
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             decoration: BoxDecoration(
@@ -1006,9 +975,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                       const ClipboardData(text: 'https://example.com/link/to/doc'),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Link copied!'),
-                        duration: Duration(seconds: 1),
+                      SnackBar(
+                        content: Text(s.linkCopied),
+                        duration: const Duration(seconds: 1),
                       ),
                     );
                   },
@@ -1019,7 +988,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
           SizedBox(height: 16.h),
           Text(
-            'People with access',
+            s.peopleWithAccess,
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
@@ -1028,9 +997,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
           SizedBox(height: 8.h),
           ...[
-            ('Olivia Martin', 'm@example.com', 'Can edit'),
-            ('Isabella Nguyen', 'b@example.com', 'Can view'),
-            ('Sofia Davis', 'p@example.com', 'Can view'),
+            ('Olivia Martin', 'm@example.com', s.canEdit),
+            ('Isabella Nguyen', 'b@example.com', s.canView),
+            ('Sofia Davis', 'p@example.com', s.canView),
           ].map((person) => Padding(
                 padding: EdgeInsets.only(bottom: 8.h),
                 child: Row(
@@ -1080,38 +1049,38 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   // Report Issue Card
   // ─────────────────────────────────────────
-  Widget _buildReportIssueCard(TweakcnColors colors) {
+  Widget _buildReportIssueCard(TweakcnColors colors, S s) {
     return ShadcnCard(
-      title: 'Report an issue',
-      description: 'What area are you having problems with?',
+      title: s.reportIssue,
+      description: s.reportIssueDescription,
       content: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: ShadcnSelect<String>(
-                  label: 'Area',
+                  label: s.area,
                   value: _issueArea,
                   onChanged: (v) => setState(() => _issueArea = v),
-                  items: const [
-                    ShadcnSelectItem(value: 'team', label: 'Team'),
-                    ShadcnSelectItem(value: 'billing', label: 'Billing'),
-                    ShadcnSelectItem(value: 'account', label: 'Account'),
-                    ShadcnSelectItem(value: 'deployments', label: 'Deployments'),
+                  items: [
+                    ShadcnSelectItem(value: 'team', label: s.areaTeam),
+                    ShadcnSelectItem(value: 'billing', label: s.areaBilling),
+                    ShadcnSelectItem(value: 'account', label: s.areaAccount),
+                    ShadcnSelectItem(value: 'deployments', label: s.areaDeployments),
                   ],
                 ),
               ),
               SizedBox(width: 12.w),
               Expanded(
                 child: ShadcnSelect<String>(
-                  label: 'Severity',
+                  label: s.severity,
                   value: _issueSeverity,
                   onChanged: (v) => setState(() => _issueSeverity = v),
-                  items: const [
-                    ShadcnSelectItem(value: 'low', label: 'Low'),
-                    ShadcnSelectItem(value: 'medium', label: 'Medium'),
-                    ShadcnSelectItem(value: 'high', label: 'High'),
-                    ShadcnSelectItem(value: 'critical', label: 'Critical'),
+                  items: [
+                    ShadcnSelectItem(value: 'low', label: s.severityLow),
+                    ShadcnSelectItem(value: 'medium', label: s.severityMedium),
+                    ShadcnSelectItem(value: 'high', label: s.severityHigh),
+                    ShadcnSelectItem(value: 'critical', label: s.severityCritical),
                   ],
                 ),
               ),
@@ -1120,13 +1089,13 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           SizedBox(height: 12.h),
           ShadcnInput(
             controller: _issueController,
-            label: 'Subject',
-            placeholder: 'I need help with...',
+            label: s.subject,
+            placeholder: s.subjectPlaceholder,
           ),
           SizedBox(height: 12.h),
           ShadcnInput(
-            label: 'Description',
-            placeholder: 'Please include all information relevant to your issue.',
+            label: s.descriptionLabel,
+            placeholder: s.descriptionPlaceholder,
             maxLines: 4,
             minLines: 3,
           ),
@@ -1138,14 +1107,14 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             child: ShadcnButton(
               variant: ShadcnButtonVariant.outline,
               onPressed: () {},
-              child: const Text('Cancel'),
+              child: Text(s.cancel),
             ),
           ),
           SizedBox(width: 8.w),
           Expanded(
             child: ShadcnButton(
               onPressed: () {},
-              child: const Text('Submit'),
+              child: Text(s.submit),
             ),
           ),
         ],

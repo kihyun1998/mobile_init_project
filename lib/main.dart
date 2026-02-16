@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/localization/generated/l10n.dart';
+import 'core/localization/provider/locale_state_provider.dart';
 import 'core/theme/foundation/app_mode.dart';
 import 'core/theme/provider/theme_provider.dart';
 import 'core/theme/tweakcn_theme.g.dart';
@@ -39,6 +42,7 @@ class MyApp extends ConsumerWidget {
     printDeviceInfo(context);
 
     final mode = ref.watch(themeProvider);
+    final locale = ref.watch(localeStateProvider);
 
     return ScreenUtilInit(
       designSize: const Size(375, 812), // iPhone X 기준 크기
@@ -51,6 +55,14 @@ class MyApp extends ConsumerWidget {
           theme: TweakcnTheme.light,
           darkTheme: TweakcnTheme.dark,
           themeMode: mode == AppMode.light ? ThemeMode.light : ThemeMode.dark,
+          locale: locale,
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
           home: const ShadcnComponentsPage(),
         );
       },
