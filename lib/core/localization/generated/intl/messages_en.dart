@@ -155,6 +155,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionsChange": MessageLookupByLibrary.simpleMessage(
       "+180.1% from last month",
     ),
+    "tabHome": MessageLookupByLibrary.simpleMessage("Home"),
+    "tabProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "tabSearch": MessageLookupByLibrary.simpleMessage("Search"),
     "teamMembers": MessageLookupByLibrary.simpleMessage("Team Members"),
     "teamMembersDescription": MessageLookupByLibrary.simpleMessage(
       "Invite your team members to collaborate.",

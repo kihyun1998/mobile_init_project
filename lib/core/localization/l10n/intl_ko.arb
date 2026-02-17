@@ -100,5 +100,8 @@
   "lightTheme": "라이트",
   "darkTheme": "다크",
   "english": "영어",
-  "korean": "한국어"
+  "korean": "한국어",
+  "tabHome": "홈",
+  "tabSearch": "검색",
+  "tabProfile": "프로필"
 }

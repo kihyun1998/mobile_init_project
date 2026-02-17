@@ -758,6 +758,21 @@ class S {
   String get korean {
     return Intl.message('Korean', name: 'korean', desc: '', args: []);
   }
+
+  /// `Home`
+  String get tabHome {
+    return Intl.message('Home', name: 'tabHome', desc: '', args: []);
+  }
+
+  /// `Search`
+  String get tabSearch {
+    return Intl.message('Search', name: 'tabSearch', desc: '', args: []);
+  }
+
+  /// `Profile`
+  String get tabProfile {
+    return Intl.message('Profile', name: 'tabProfile', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

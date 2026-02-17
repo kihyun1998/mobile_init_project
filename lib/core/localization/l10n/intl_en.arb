@@ -100,5 +100,8 @@
   "lightTheme": "Light",
   "darkTheme": "Dark",
   "english": "English",
-  "korean": "Korean"
+  "korean": "Korean",
+  "tabHome": "Home",
+  "tabSearch": "Search",
+  "tabProfile": "Profile"
 }

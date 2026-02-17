@@ -10,7 +10,7 @@ import 'core/theme/foundation/app_mode.dart';
 import 'core/theme/provider/theme_provider.dart';
 import 'core/theme/tweakcn_theme.g.dart';
 import 'core/util/logger/app_logger.dart';
-import 'example/shadcn_components_page.dart';
+import 'ui/layout/main_layout.dart';
 
 /// main()에서 초기화된 SharedPreferences 인스턴스
 /// Provider의 동기 build()에서 접근 가능하도록 전역 캐싱
@@ -63,7 +63,7 @@ class MyApp extends ConsumerWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: S.delegate.supportedLocales,
-          home: const ShadcnComponentsPage(),
+          home: const MainLayout(),
         );
       },
     );
