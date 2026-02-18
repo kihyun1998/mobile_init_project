@@ -22,7 +22,6 @@ dependencies:
   logger: ^2.5.0
   riverpod_annotation: ^2.6.1
   shared_preferences: ^2.5.4
-  google_fonts: ^8.0.1
   fl_chart: ^0.70.2
 
 dev_dependencies:
@@ -30,7 +29,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
-  flutter_tweakcn_generator: ^0.1.4
+  flutter_tweakcn_generator: ^0.2.0
   riverpod_generator: ^2.6.5
   riverpod_lint: ^2.6.5
 
@@ -45,3 +44,4 @@ flutter_intl:
 flutter_tweakcn_generator:
   input: tweakcn.css
   output: lib/core/theme/tweakcn_theme.g.dart
+  font_mode: local
