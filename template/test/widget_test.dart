@@ -1,30 +1,31 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:mobile_init_project/main.dart';
+import 'package:mobile_init_project/ui/components/app_bottom_nav_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUpAll(() async {
+    // main() 이 하는 초기화를 대신한다. MyApp 은 이 전역이 채워져 있다고 가정한다.
+    SharedPreferences.setMockInitialValues({});
+    sharedPrefs = await SharedPreferences.getInstance();
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('앱이 예외 없이 뜨고 바텀 내비게이션이 보인다', (tester) async {
+    // 기본 테스트 표면은 800x812 가 아니라 800x600 이다. ScreenUtil 은 가로와
+    // 세로 배율을 따로 계산하므로 그 상태로 그리면 .w 는 2배로 늘고 .h 는
+    // 줄어들어 실제 기기에서 나지 않는 오버플로가 난다. 기준 크기로 맞춘다.
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(AppBottomNavBar), findsOneWidget);
   });
 }
