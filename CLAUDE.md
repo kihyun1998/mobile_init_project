@@ -27,6 +27,8 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 - **`template/` 을 `path:` 의존성으로 문다.** 미리보기 캔버스는 `package:mobile_init_project/...` 를 import해서 **진짜 컴포넌트**를 렌더한다. 미리보기용 사본을 따로 만들지 말 것 — 그 순간 미리보기가 거짓말을 시작한다.
 - 미리보기 캔버스는 `template/lib/example/shadcn_components_page.dart` 를 재사용한다. `ProviderScope` 와 `localizationsDelegates` 로 감싸주면 된다.
 - 붙여넣은 CSS는 `CssParser.parse()` (flutter_tweakcn_generator가 공개 API로 export한다) 로 파싱해 `Theme(data: ...)` 에 실어 캔버스에 넘긴다. 컴포넌트가 `context.tweakcnColors` = `Theme.of(context).extension<TweakcnColors>()` 로 색을 읽기 때문에 런타임 교체가 그냥 된다.
+- **`preview_theme.dart` 의 파생 규칙은 생성기(`DartThemeGenerator`)가 하는 것과 한 글자도 다르면 안 된다.** 색→ColorScheme 매핑, 없는 토큰을 투명으로 두는 것, `--radius` 기본 8.0 까지 전부. "미리보기에서 더 예쁘게 보이도록" 하는 처리를 넣는 순간 미리보기가 거짓말을 시작한다. 반영하지 못하는 것(폰트 등)은 감추지 말고 화면에 알린다.
+- **빌더 UI에서는 `.w` `.h` `.sp` `.r` 을 쓰지 말 것.** 미리보기 캔버스가 `ScreenUtil` 싱글톤을 폰 크기(375×812)로 설정하는데 이건 프로세스 전역이다. 데스크톱 폼에서 이 단위를 쓰면 폰 배율이 딸려온다. 데스크톱 쪽은 생짜 논리 픽셀을 쓴다.
 - **macOS와 Windows 양쪽에서 돈다.** 경로는 반드시 `package:path` 의 `p.join` 을 쓰고 `/` 를 문자열로 이어붙이지 말 것. `Process.run` 으로 `flutter` 를 부를 땐 `runInShell: true` — Windows에선 `flutter.bat` 이다.
 - `template/` 실제 경로는 `../template` 을 먼저 보고, 없으면 사용자에게 폴더를 묻고 `shared_preferences` 에 저장한다.
 

@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 import 'src/generation/process_runner.dart';
 import 'src/generation/project_generator.dart';
-import 'src/ui/generate_form_page.dart';
+import 'src/ui/builder_home_page.dart';
 
 void main() {
   runApp(
@@ -33,7 +33,7 @@ class BuilderApp extends StatelessWidget {
       // 템플릿이 뿌리는 테마를 빌더도 그대로 쓴다.
       theme: TweakcnTheme.light,
       darkTheme: TweakcnTheme.dark,
-      home: GenerateFormPage(generator: generator),
+      home: BuilderHomePage(generator: generator),
     );
   }
 }

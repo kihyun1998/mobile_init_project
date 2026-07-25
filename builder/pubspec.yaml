@@ -13,7 +13,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # template/ 컴포넌트가 .w/.h/.sp 를 쓰므로 미리보기에도 필요하다.
+  # 미리보기 캔버스가 템플릿 예제 페이지를 그대로 띄우기 때문에, 그 페이지가
+  # 쓰는 것들이 빌더에도 필요하다 — l10n delegate, ProviderScope, .w/.h/.sp.
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
   flutter_screenutil: ^5.9.3
 
   # 붙여넣은 CSS를 런타임에 파싱하는 데 쓴다 (CssParser.parse).
