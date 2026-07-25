@@ -130,3 +130,17 @@ flutter packages pub run build_runner clean
 ## Testing
 
 Standard Flutter test structure in `test/` directory. Ask user for specific test commands if needed.
+
+## Agent skills
+
+### 이슈 트래커
+
+이슈는 `kihyun1998/mobile_init_project`의 GitHub 이슈로 관리하며 `gh` CLI를 사용한다. `docs/agents/issue-tracker.md` 참고.
+
+### 트리아지 라벨
+
+다섯 가지 표준 트리아지 역할을 사용하며, 라벨 문자열은 역할 이름과 동일하다. `docs/agents/triage-labels.md` 참고.
+
+### 도메인 문서
+
+싱글 컨텍스트 구성 — 루트의 `CONTEXT.md` + `docs/adr/`. `docs/agents/domain.md` 참고.
