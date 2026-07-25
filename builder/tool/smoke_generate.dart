@@ -23,7 +23,7 @@ Future<void> main(List<String> args) async {
     processRunner: const SystemProcessRunner(),
   );
 
-  final root = await generator.generate(
+  final result = await generator.generate(
     GenerationConfig(
       projectName: PackageName.parse(args.length > 2 ? args[2] : 'smoke_app'),
       organization: Organization.parse('io.github.kihyun1998'),
@@ -31,5 +31,9 @@ Future<void> main(List<String> args) async {
     ),
   );
 
-  stdout.writeln(root.path);
+  stdout.writeln(result.projectRoot.path);
+  if (!result.succeeded) {
+    stderr.writeln('${result.failedStep?.label}: ${result.failureMessage}');
+    exit(1);
+  }
 }

@@ -3,15 +3,25 @@ import 'dart:io';
 import 'package:mobile_init_builder/src/generation/process_runner.dart';
 import 'package:path/path.dart' as p;
 
-/// `flutter create` 를 흉내내는 러너.
+/// `flutter create` 와 후처리 명령을 흉내내는 러너.
 ///
 /// 진짜로 돌리면 테스트 한 번에 몇 분이 걸려서 아무도 돌리지 않게 된다.
 /// 여기서 검증하려는 건 flutter 의 동작이 아니라 **그 위에 우리가 얹는 것** 이다.
 class FakeProcessRunner implements ProcessRunner {
-  FakeProcessRunner({this.exitCode = 0, this.stderr = ''});
+  FakeProcessRunner({
+    this.failingCommand,
+    this.stderr = '',
+    this.outputLines = const [],
+  });
 
-  final int exitCode;
+  /// 명령줄에 이 문자열이 들어 있으면 실패시킨다. 예: `'build_runner'`.
+  final String? failingCommand;
+
   final String stderr;
+
+  /// 모든 명령이 뱉을 출력 줄.
+  final List<String> outputLines;
+
   final List<ProcessInvocation> invocations = [];
 
   @override
@@ -19,13 +29,27 @@ class FakeProcessRunner implements ProcessRunner {
     String executable,
     List<String> arguments, {
     String? workingDirectory,
+    void Function(String line)? onOutput,
   }) async {
     invocations.add(ProcessInvocation(executable, arguments, workingDirectory));
 
-    if (exitCode == 0 && executable == 'flutter' && arguments.first == 'create') {
+    final commandLine = '$executable ${arguments.join(' ')}';
+    final fails =
+        failingCommand != null && commandLine.contains(failingCommand!);
+
+    for (final line in outputLines) {
+      onOutput?.call(line);
+    }
+
+    if (!fails && executable == 'flutter' && arguments.first == 'create') {
       _scaffold(arguments.last, workingDirectory!);
     }
-    return ProcessRunResult(exitCode: exitCode, stdout: '', stderr: stderr);
+
+    return ProcessRunResult(
+      exitCode: fails ? 1 : 0,
+      stdout: outputLines.join('\n'),
+      stderr: fails ? stderr : '',
+    );
   }
 
   /// flutter create 가 만들어놓는 것과 같은 모양의 뼈대.

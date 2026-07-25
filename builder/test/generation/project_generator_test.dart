@@ -47,14 +47,16 @@ void main() {
     String org = 'io.github.kihyun1998',
     String description = '내가 쓴 설명',
   }) {
-    return generator.generate(
-      GenerationConfig(
-        projectName: PackageName.parse(name),
-        organization: Organization.parse(org),
-        outputParent: outputParent,
-        description: description,
-      ),
-    );
+    return generator
+        .generate(
+          GenerationConfig(
+            projectName: PackageName.parse(name),
+            organization: Organization.parse(org),
+            outputParent: outputParent,
+            description: description,
+          ),
+        )
+        .then((r) => r.projectRoot);
   }
 
   String read(Directory root, String relative) =>
@@ -63,7 +65,7 @@ void main() {
   test('flutter create 가 입력한 이름과 org 로 실행된다', () async {
     await generate(name: 'my_app', org: 'com.example.team');
 
-    final create = runner.invocations.single;
+    final create = runner.invocations.first;
     expect(create.executable, 'flutter');
     expect(create.arguments.first, 'create');
     expect(create.arguments, contains('--org'));

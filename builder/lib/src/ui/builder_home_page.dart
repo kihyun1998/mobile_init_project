@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
+import '../generation/process_runner.dart';
 import '../generation/project_generator.dart';
 import '../preview/preview_panel.dart';
 import '../preview/preview_theme.dart';
@@ -11,9 +12,14 @@ import 'generate_form_page.dart';
 /// CSS 상태를 여기서 들고 있는다. 미리보기가 쓰는 그 CSS 가 나중에 생성될
 /// 프로젝트의 테마 소스가 되기 때문이다.
 class BuilderHomePage extends StatefulWidget {
-  const BuilderHomePage({super.key, required this.generator});
+  const BuilderHomePage({
+    super.key,
+    required this.generator,
+    required this.processRunner,
+  });
 
   final ProjectGenerator generator;
+  final ProcessRunner processRunner;
 
   @override
   State<BuilderHomePage> createState() => _BuilderHomePageState();
@@ -66,7 +72,10 @@ class _BuilderHomePageState extends State<BuilderHomePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: GenerateFormPage(generator: widget.generator),
+              child: GenerateFormPage(
+                generator: widget.generator,
+                processRunner: widget.processRunner,
+              ),
             ),
             VerticalDivider(width: 1, color: colors.border),
             SizedBox(

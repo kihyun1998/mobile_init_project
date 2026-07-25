@@ -24,6 +24,7 @@ void main() {
           templateDir: Directory(p.join('..', 'template')),
           processRunner: FakeProcessRunner(),
         ),
+        processRunner: FakeProcessRunner(),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));

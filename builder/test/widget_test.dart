@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Size;
+import 'package:flutter/material.dart' show Key, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
@@ -34,6 +34,7 @@ void main() {
           templateDir: Directory(p.join('..', 'template')),
           processRunner: runner,
         ),
+        processRunner: runner,
       ),
     );
     await tester.pumpAndSettle();
@@ -76,7 +77,9 @@ void main() {
       find.text(p.join(outputParent.path, 'my_app')),
       findsOneWidget,
     );
-    expect(runner.invocations, hasLength(1));
+    // flutter create 하나로 끝나지 않는다 — 후처리까지 돌아야 바로 실행된다.
+    expect(runner.invocations.first.arguments.first, 'create');
+    expect(runner.invocations, hasLength(4));
   });
 
   testWidgets('폼에 적은 설명이 결과물 pubspec 까지 간다', (tester) async {
@@ -101,8 +104,55 @@ void main() {
     expect(runner.invocations, isEmpty);
   });
 
+  testWidgets('진행 중 단계와 명령 출력이 화면에 흐른다', (tester) async {
+    runner = FakeProcessRunner(outputLines: ['Resolving dependencies...']);
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    // 끝난 뒤에도 로그가 남아 있어야 무엇이 있었는지 볼 수 있다.
+    expect(find.byKey(const Key('generate.log')), findsOneWidget);
+    expect(find.textContaining('Resolving dependencies...'), findsWidgets);
+    expect(find.textContaining('코드 생성 중'), findsWidgets);
+  });
+
+  testWidgets('후처리가 실패해도 경로가 남고 어느 단계였는지 보인다', (tester) async {
+    runner = FakeProcessRunner(
+      failingCommand: 'build_runner',
+      stderr: '코드 생성이 터졌습니다',
+    );
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    expect(find.textContaining('에서 실패했습니다'), findsOneWidget);
+    expect(find.textContaining('코드 생성이 터졌습니다'), findsOneWidget);
+    // 프로젝트는 남아 있으니 경로도 보여야 한다.
+    expect(find.text(p.join(outputParent.path, 'my_app')), findsOneWidget);
+    expect(
+      Directory(p.join(outputParent.path, 'my_app')).existsSync(),
+      isTrue,
+    );
+  });
+
+  testWidgets('폴더 열기 버튼이 파일 관리자를 호출한다', (tester) async {
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    // 로그 창과 결과 배너가 붙으면서 버튼이 접힌 아래쪽에 있을 수 있다.
+    await tester.ensureVisible(find.text('폴더 열기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('폴더 열기'));
+    await tester.pumpAndSettle();
+
+    final opened = runner.invocations.last;
+    expect(opened.executable, isIn(['open', 'explorer', 'xdg-open']));
+    expect(opened.arguments.single, p.join(outputParent.path, 'my_app'));
+  });
+
   testWidgets('flutter create 가 실패하면 그 사실이 화면에 남는다', (tester) async {
-    runner = FakeProcessRunner(exitCode: 1, stderr: '디스크가 가득 찼습니다');
+    runner = FakeProcessRunner(
+      failingCommand: 'create',
+      stderr: '디스크가 가득 찼습니다',
+    );
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'my_app');
 

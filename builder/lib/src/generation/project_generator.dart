@@ -3,8 +3,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'generation_config.dart';
+import 'generation_event.dart';
 import 'generation_exception.dart';
+import 'generation_result.dart';
 import 'process_runner.dart';
+
+export 'generation_result.dart';
 
 /// `flutter create` 로 새 프로젝트를 만든 뒤 그 위에 템플릿을 얹는다.
 ///
@@ -40,13 +44,21 @@ class ProjectGenerator {
   /// 치환 대상으로 볼 텍스트 확장자. 그 외(이미지 등)는 건드리지 않는다.
   static const _textExtensions = {'.dart', '.yaml', '.arb', '.md'};
 
-  /// 새 프로젝트를 만들고 만들어진 디렉토리를 돌려준다.
+  /// 새 프로젝트를 만들고 바로 쓸 수 있는 상태까지 만든다.
   ///
-  /// 검증에 실패하면 **아무것도 만들거나 건드리지 않고** 던진다.
-  Future<Directory> generate(GenerationConfig config) async {
+  /// **쓸 프로젝트가 없으면 던지고, 있는데 덜 됐으면 결과로 돌려준다.**
+  /// 입력이 틀렸거나 `flutter create` 가 실패하면 예외다. 후처리가 실패하면
+  /// 프로젝트는 남겨둔 채 어느 단계에서 왜 실패했는지를 결과에 담는다.
+  Future<GenerationResult> generate(
+    GenerationConfig config, {
+    void Function(GenerationEvent)? onEvent,
+  }) async {
+    void emit(GenerationEvent e) => onEvent?.call(e);
+
     _validate(config);
 
-    await _runFlutterCreate(config);
+    emit(const GenerationStepStarted(GenerationStep.scaffold));
+    await _runFlutterCreate(config, emit);
 
     final projectRoot = _targetDirectory(config);
     if (!projectRoot.existsSync()) {
@@ -55,11 +67,60 @@ class ProjectGenerator {
       );
     }
 
+    emit(const GenerationStepStarted(GenerationStep.applyTemplate));
+    // 복사는 동기라 그대로 진행하면 이 단계 표시가 화면에 뜰 틈이 없다.
+    // 한 프레임 양보해서 사용자가 무슨 일이 일어나는지 볼 수 있게 한다.
+    await Future<void>.delayed(Duration.zero);
+
     final preserved = _capturePreservedLines(projectRoot);
     _copyTemplate(projectRoot);
     _rewriteReferences(projectRoot, config, preserved);
 
-    return projectRoot;
+    return _runPostProcessing(projectRoot, emit);
+  }
+
+  /// 복사가 끝난 프로젝트를 `flutter run` 가능한 상태로 만든다.
+  ///
+  /// 순서가 중요하다. 의존성이 없으면 나머지가 아예 돌지 않고, 코드 생성은
+  /// l10n 생성물을 입력으로 삼으므로 그 뒤여야 한다.
+  static const _postProcessing = <(GenerationStep, String, List<String>)>[
+    (GenerationStep.dependencies, 'flutter', ['pub', 'get']),
+    (GenerationStep.localization, 'dart', ['run', 'intl_utils:generate']),
+    (
+      GenerationStep.codegen,
+      'dart',
+      ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+    ),
+  ];
+
+  Future<GenerationResult> _runPostProcessing(
+    Directory projectRoot,
+    void Function(GenerationEvent) emit,
+  ) async {
+    for (final (step, executable, arguments) in _postProcessing) {
+      emit(GenerationStepStarted(step));
+
+      final result = await processRunner.run(
+        executable,
+        arguments,
+        workingDirectory: projectRoot.path,
+        onOutput: (line) => emit(GenerationOutput(line)),
+      );
+
+      if (!result.succeeded) {
+        // 한 단계가 실패하면 뒤는 어차피 실패한다. 여기서 멈추되 만들어진
+        // 프로젝트는 남긴다 — 사용자가 남은 명령을 직접 이어 돌릴 수 있다.
+        return GenerationResult(
+          projectRoot: projectRoot,
+          failedStep: step,
+          failureMessage:
+              '$executable ${arguments.join(' ')} 이(가) 실패했습니다 '
+              '(exit ${result.exitCode}).\n${result.failureOutput}',
+        );
+      }
+    }
+
+    return GenerationResult(projectRoot: projectRoot);
   }
 
   /// 파일시스템에 의존하는 검증만 남는다. 이름과 org 의 형식은 값 타입이
@@ -86,7 +147,10 @@ class ProjectGenerator {
         p.join(config.outputParent.path, config.projectName.value),
       );
 
-  Future<void> _runFlutterCreate(GenerationConfig config) async {
+  Future<void> _runFlutterCreate(
+    GenerationConfig config,
+    void Function(GenerationEvent) emit,
+  ) async {
     final result = await processRunner.run(
       'flutter',
       [
@@ -98,6 +162,7 @@ class ProjectGenerator {
         config.projectName.value,
       ],
       workingDirectory: config.outputParent.path,
+      onOutput: (line) => emit(GenerationOutput(line)),
     );
 
     if (!result.succeeded) {
