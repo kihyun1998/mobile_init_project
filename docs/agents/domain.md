@@ -6,7 +6,7 @@
 
 - 저장소 루트의 **`CONTEXT.md`**, 또는
 - 루트에 **`CONTEXT-MAP.md`** 가 있다면 그것 — 컨텍스트별 `CONTEXT.md`를 가리킨다. 주제와 관련된 것들을 각각 읽는다.
-- **`docs/adr/`** — 작업하려는 영역과 관련된 ADR을 읽는다. 멀티 컨텍스트 저장소라면 `lib/<context>/docs/adr/`의 컨텍스트별 결정도 확인한다.
+- **`docs/adr/`** — 작업하려는 영역과 관련된 ADR을 읽는다. 멀티 컨텍스트 저장소라면 `<context>/docs/adr/`의 컨텍스트별 결정도 확인한다.
 
 이 파일들이 없으면 **조용히 진행한다.** 부재를 지적하지 말고, 먼저 만들라고 제안하지도 않는다. `/domain-modeling` 스킬(`/grill-with-docs`, `/improve-codebase-architecture`를 통해 도달)이 실제로 용어나 결정이 정리될 때 lazy하게 생성한다.
 
@@ -20,7 +20,8 @@
 ├── docs/adr/
 │   ├── 0001-theme-persistence.md
 │   └── 0002-riverpod-codegen.md
-└── lib/
+├── template/
+└── builder/
 ```
 
 멀티 컨텍스트 저장소 (루트에 `CONTEXT-MAP.md` 가 존재):
@@ -29,13 +30,12 @@
 /
 ├── CONTEXT-MAP.md
 ├── docs/adr/                          ← 시스템 전역 결정
-└── lib/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← 컨텍스트 한정 결정
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
+├── template/
+│   ├── CONTEXT.md
+│   └── docs/adr/                      ← 컨텍스트 한정 결정
+└── builder/
+    ├── CONTEXT.md
+    └── docs/adr/
 ```
 
 ## 용어집의 어휘를 사용할 것

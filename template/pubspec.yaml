@@ -30,6 +30,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_tweakcn_generator: ^0.2.3
+  intl_utils: ^2.8.11
   riverpod_generator: ^2.6.5
   riverpod_lint: ^2.6.5
 

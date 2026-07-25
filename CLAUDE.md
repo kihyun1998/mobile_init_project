@@ -1,135 +1,54 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code(claude.ai/code)가 이 저장소에서 작업할 때 참고하는 지침.
 
-## Environment & Development Constraints
+## 이 저장소는 앱이 아니라 도구다
 
-This project runs in WSL environment but user develops on Windows. **Do NOT execute Flutter/Dart commands directly** - ask the user to run them manually on their Windows system.
+루트에 `pubspec.yaml`이 없다. Flutter 프로젝트가 **두 개** 들어있고, 루트에서 `flutter` 명령을 치면 실패하는 게 정상이다. `cd template` 이나 `cd builder` 를 먼저 해야 한다.
 
-## Project Overview
-
-A Flutter mobile application template with internationalization, theme management, and state management using Riverpod. The project uses code generation heavily and follows Korean development practices (comments and variable names may be in Korean).
-
-## Key Dependencies
-
-- **flutter_riverpod**: State management with code generation
-- **riverpod_annotation/riverpod_generator**: Provider code generation
-- **flutter_screenutil**: Screen adaptation and consistent sizing across devices
-- **shared_preferences**: Local storage for settings
-- **flutter_intl**: Internationalization (Korean/English)
-- **flutter_svg**: SVG asset handling
-- **build_runner**: Code generation runner
-
-## Architecture
-
-### Core Structure
-- `lib/core/` - Contains foundational modules:
-  - `theme/` - Theme system with light/dark mode support
-  - `localization/` - i18n with generated files in `generated/`
-  - `util/` - Utilities including debounce service and SVG handling
-  - `const/` - Enums for storage keys and debounce keys
-
-### State Management
-Uses Riverpod with code generation. Providers are annotated with `@Riverpod()` and generate `.g.dart` files.
-
-### Theme System
-- Abstract `AppTheme` class with concrete `LightTheme` and `DarkTheme`
-- Settings persisted via SharedPreferences with debounced saves for performance
-- Custom extensions on `WidgetRef` for easy theme access
-
-### Debounce Service
-Singleton service for delaying expensive operations (like theme/locale saves) with immediate flush capabilities.
-
-## Screen Adaptation with flutter_screenutil
-
-This project uses **flutter_screenutil** for consistent sizing across devices. All sizing should use ScreenUtil units instead of raw pixels.
-
-### Setup
-```dart
-// Initialize in main.dart or app root
-ScreenUtil.init(context, designSize: Size(375, 812)); // Set your design reference size
+```
+template/    뿌릴 템플릿. 그 자체로 flutter run 되는 모바일 앱이다.
+builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 ```
 
-### Usage
-```dart
-// Width/Height - use .w and .h instead of raw numbers
-Container(
-  width: 100.w,    // 100/375 of screen width
-  height: 50.h,    // 50/812 of screen height
-)
+목표: 빌더를 켜서 이름·org·플랫폼을 넣고 tweakcn CSS를 붙여넣어 미리보기로 확인한 뒤, 생성 버튼을 누르면 바로 `flutter run` 되는 새 프로젝트가 나오는 것.
 
-// Font sizes - use .sp for scalable pixels
-Text('Hello', style: TextStyle(fontSize: 16.sp))
+빌더가 하는 일:
 
-// Padding/Margins
-EdgeInsets.all(16.r)           // radius/padding
-EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h)
-```
+1. `flutter create <name> --org <org> --platforms=...` 실행 후 대기
+2. `template/` 에서 **allowlist에 있는 것만** 새 프로젝트로 복사
+3. `package:mobile_init_project/` → `package:<name>/` 치환, `pubspec.yaml`의 `name:` 교체
+4. `flutter pub get` → `dart run intl_utils:generate` → `dart run build_runner build`
 
-### Best Practices
-- Always use `.w`, `.h`, `.sp`, `.r` units instead of raw numbers
-- Set designSize to match your development/design reference (e.g., iPhone dimensions)
-- All other devices will automatically scale proportionally
+**`template/` 전체를 복사하면 안 된다.** `android/`, `ios/`, `macos/`, `web/`, `windows/`, `linux/`, `build/`, `.dart_tool/`, `.metadata` 는 `flutter create` 가 새로 만드는 것들이라 덮어쓰면 오히려 망가진다. 복사 대상은 `lib/`, `pubspec.yaml`, `tweakcn.css`, `analysis_options.yaml`, `assets/`, `test/` 다.
 
-## Code Generation Commands
+## builder/ 작업 규칙
 
-**Important**: Ask user to run these commands on Windows, do not execute directly:
+- **`template/` 을 `path:` 의존성으로 문다.** 미리보기 캔버스는 `package:mobile_init_project/...` 를 import해서 **진짜 컴포넌트**를 렌더한다. 미리보기용 사본을 따로 만들지 말 것 — 그 순간 미리보기가 거짓말을 시작한다.
+- 미리보기 캔버스는 `template/lib/example/shadcn_components_page.dart` 를 재사용한다. `ProviderScope` 와 `localizationsDelegates` 로 감싸주면 된다.
+- 붙여넣은 CSS는 `CssParser.parse()` (flutter_tweakcn_generator가 공개 API로 export한다) 로 파싱해 `Theme(data: ...)` 에 실어 캔버스에 넘긴다. 컴포넌트가 `context.tweakcnColors` = `Theme.of(context).extension<TweakcnColors>()` 로 색을 읽기 때문에 런타임 교체가 그냥 된다.
+- **macOS와 Windows 양쪽에서 돈다.** 경로는 반드시 `package:path` 의 `p.join` 을 쓰고 `/` 를 문자열로 이어붙이지 말 것. `Process.run` 으로 `flutter` 를 부를 땐 `runInShell: true` — Windows에선 `flutter.bat` 이다.
+- `template/` 실제 경로는 `../template` 을 먼저 보고, 없으면 사용자에게 폴더를 묻고 `shared_preferences` 에 저장한다.
+
+## template/ 작업 규칙
+
+Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
+
+- **크기는 항상 `.w` `.h` `.sp` `.r`.** 생짜 픽셀을 쓰지 말 것. 기준 디자인은 375×812.
+- **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 재생성한다.
+- **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
+- **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
+- 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
+- shadcn 컴포넌트 13개는 `lib/ui/components/` 에 있고 `material` + `screenutil` + 생성된 테마 외엔 아무것도 import하지 않는다. **이 격리를 깨지 말 것** — provider나 l10n을 끌어들이는 순간 빌더 미리보기가 깨진다.
+
+## 명령어
 
 ```bash
-# Install dependencies (run after adding flutter_screenutil)
-flutter pub get
-
-# Generate all code (providers, etc.)
-flutter packages pub run build_runner build
-
-# Watch for changes and regenerate automatically
-flutter packages pub run build_runner watch
-
-# Clean generated files before rebuilding
-flutter packages pub run build_runner clean
+cd template && flutter run                                  # 템플릿 앱 실행
+cd template && dart run build_runner build --delete-conflicting-outputs
+cd template && dart run intl_utils:generate
+cd builder  && flutter run -d macos                         # 빌더 실행
 ```
-
-## Internationalization
-
-- ARB files in `lib/core/localization/l10n/`
-- Generated files in `lib/core/localization/generated/`
-- Supports Korean (`ko`) and English (`en`)
-- Use `S.of(context)` or `ref.watch(languageProvider)` for translations
-
-## Common Development Tasks
-
-### Adding New Providers
-1. Create provider with `@Riverpod()` annotation
-2. Import `riverpod_annotation`
-3. Add `part 'filename.g.dart'`
-4. Ask user to run code generation
-
-### Theme Development
-- Modify `app_color.dart`, `app_font.dart` for styling
-- Theme changes auto-save with 5-second debounce
-- Access via `ref.theme`, `ref.color`, `ref.font` extensions
-
-### Adding Translations
-1. Add keys to ARB files in `l10n/`
-2. Ask user to run Flutter intl code generation
-3. Use via generated `S` class
-
-## Asset Management
-
-- Custom fonts in `assets/fonts/` (Pretendard, SpaceMono)
-- Font weights configured in `pubspec.yaml`
-- SVG icons handled through `SvgIcon` widget with color targeting
-
-## Analysis & Linting
-
-- Uses `flutter_lints` with custom rules
-- Excludes generated files (`**/*.g.dart`, `**/*.freezed.dart`)
-- Custom lint enabled via `riverpod_lint`
-- Prefers const constructors and declarations
-
-## Testing
-
-Standard Flutter test structure in `test/` directory. Ask user for specific test commands if needed.
 
 ## Agent skills
 

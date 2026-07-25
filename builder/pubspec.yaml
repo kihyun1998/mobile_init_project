@@ -1,0 +1,35 @@
+name: mobile_init_builder
+description: "mobile_init_project 템플릿으로 새 Flutter 앱을 찍어내는 데스크톱 도구."
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  file_picker: ^11.0.2
+  flutter:
+    sdk: flutter
+
+  # template/ 컴포넌트가 .w/.h/.sp 를 쓰므로 미리보기에도 필요하다.
+  flutter_screenutil: ^5.9.3
+
+  # 붙여넣은 CSS를 런타임에 파싱하는 데 쓴다 (CssParser.parse).
+  flutter_tweakcn_generator: ^0.3.0
+
+  # 미리보기 캔버스에 쓰는 진짜 컴포넌트의 출처.
+  # 사본이 아니라 template/ 의 소스를 그대로 컴파일한다.
+  mobile_init_project:
+    path: ../template
+  path: ^1.9.1
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
