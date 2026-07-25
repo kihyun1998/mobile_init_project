@@ -6,6 +6,8 @@ import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
 import '../generation/generation_config.dart';
 import '../generation/generation_exception.dart';
+import '../generation/organization.dart';
+import '../generation/package_name.dart';
 import '../generation/project_generator.dart';
 
 /// 이름·org·출력 폴더를 받아 새 프로젝트를 만드는 화면.
@@ -62,12 +64,12 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
       final description = _description.text.trim();
       final root = await widget.generator.generate(
         GenerationConfig(
-          projectName: _name.text.trim(),
-          organization: _organization.text.trim(),
+          // 형식이 틀리면 여기서 던진다. flutter create 는 시작도 하지 않는다.
+          projectName: PackageName.parse(_name.text),
+          organization: Organization.parse(_organization.text),
           outputParent: Directory(_outputParent.text.trim()),
-          // 비워두면 GenerationConfig 의 기본 문구를 그대로 쓴다.
           description: description.isEmpty
-              ? 'A new Flutter project.'
+              ? GenerationConfig.defaultDescription
               : description,
         ),
       );

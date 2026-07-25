@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:mobile_init_builder/src/generation/generation_config.dart';
+import 'package:mobile_init_builder/src/generation/organization.dart';
+import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/process_runner.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
 
@@ -23,8 +25,8 @@ Future<void> main(List<String> args) async {
 
   final root = await generator.generate(
     GenerationConfig(
-      projectName: args.length > 2 ? args[2] : 'smoke_app',
-      organization: 'io.github.kihyun1998',
+      projectName: PackageName.parse(args.length > 2 ? args[2] : 'smoke_app'),
+      organization: Organization.parse('io.github.kihyun1998'),
       outputParent: Directory(args[1]),
     ),
   );

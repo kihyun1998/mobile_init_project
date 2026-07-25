@@ -3,10 +3,24 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/src/generation/generation_config.dart';
 import 'package:mobile_init_builder/src/generation/generation_exception.dart';
+import 'package:mobile_init_builder/src/generation/organization.dart';
+import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/fake_process_runner.dart';
+
+/// 텍스트로 읽히면 내용을, 바이너리면 null 을 준다.
+/// 확장자로 거르는 대신 이렇게 하면 어떤 파일도 검사에서 빠지지 않는다.
+String? _readTextOrNull(File file) {
+  try {
+    return file.readAsStringSync();
+  } on FileSystemException {
+    return null;
+  } on FormatException {
+    return null;
+  }
+}
 
 void main() {
   late Directory outputParent;
@@ -35,8 +49,8 @@ void main() {
   }) {
     return generator.generate(
       GenerationConfig(
-        projectName: name,
-        organization: org,
+        projectName: PackageName.parse(name),
+        organization: Organization.parse(org),
         outputParent: outputParent,
         description: description,
       ),
@@ -107,12 +121,12 @@ void main() {
   test('결과물에 템플릿 패키지 참조가 하나도 남지 않는다', () async {
     final root = await generate(name: 'my_app');
 
+    // 확장자 목록을 두지 않는다. 구현이 다루는 확장자가 늘어도 이 검사는
+    // 자동으로 따라가야 한다 — 목록을 복사해두면 조용히 범위만 좁아진다.
     final offenders = root
         .listSync(recursive: true)
         .whereType<File>()
-        .where((f) => const {'.dart', '.yaml', '.arb', '.md'}
-            .contains(p.extension(f.path)))
-        .where((f) => f.readAsStringSync().contains('mobile_init_project'))
+        .where((f) => _readTextOrNull(f)?.contains('mobile_init_project') ?? false)
         .map((f) => p.relative(f.path, from: root.path))
         .toList();
 
@@ -158,20 +172,31 @@ void main() {
   });
 
   group('생성 전에 막는 것', () {
-    test('Dart 패키지명 규칙에 안 맞는 이름은 flutter create 전에 거부된다', () async {
+    test('형식이 틀린 입력은 flutter create 를 시작조차 하지 않는다', () {
+      // 값 타입이 GenerationConfig 를 만드는 시점에 던지므로, 잘못된 입력으로는
+      // 생성기에 도달할 방법 자체가 없다.
       for (final bad in ['My-App', '2fast', 'my app', '', 'class']) {
-        await expectLater(
-          generate(name: bad),
+        expect(
+          () => generate(name: bad),
           throwsA(isA<GenerationException>()),
           reason: '"$bad" 이 통과했다',
         );
       }
+      expect(
+        () => generate(org: 'nodots'),
+        throwsA(isA<GenerationException>()),
+      );
       expect(runner.invocations, isEmpty);
     });
 
-    test('org 형식이 틀리면 거부된다', () async {
+    test('템플릿이 없으면 거부된다', () async {
+      generator = ProjectGenerator(
+        templateDir: Directory(p.join(outputParent.path, 'none')),
+        processRunner: runner,
+      );
+
       await expectLater(
-        generate(org: 'nodots'),
+        generate(),
         throwsA(isA<GenerationException>()),
       );
       expect(runner.invocations, isEmpty);

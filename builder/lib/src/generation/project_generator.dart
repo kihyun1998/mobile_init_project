@@ -40,19 +40,6 @@ class ProjectGenerator {
   /// 치환 대상으로 볼 텍스트 확장자. 그 외(이미지 등)는 건드리지 않는다.
   static const _textExtensions = {'.dart', '.yaml', '.arb', '.md'};
 
-  static final _packageNamePattern = RegExp(r'^[a-z][a-z0-9_]*$');
-  static final _organizationPattern =
-      RegExp(r'^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$');
-
-  /// `flutter create` 가 거부하거나 컴파일을 깨뜨리는 이름들.
-  static const _reservedNames = {
-    'assert', 'break', 'case', 'catch', 'class', 'const', 'continue',
-    'default', 'do', 'else', 'enum', 'extends', 'false', 'final', 'finally',
-    'for', 'if', 'in', 'is', 'new', 'null', 'return', 'super', 'switch',
-    'this', 'throw', 'true', 'try', 'var', 'void', 'while', 'with',
-    'flutter', 'test',
-  };
-
   /// 새 프로젝트를 만들고 만들어진 디렉토리를 돌려준다.
   ///
   /// 검증에 실패하면 **아무것도 만들거나 건드리지 않고** 던진다.
@@ -61,10 +48,7 @@ class ProjectGenerator {
 
     await _runFlutterCreate(config);
 
-    final projectRoot = Directory(p.join(
-      config.outputParent.path,
-      config.projectName,
-    ));
+    final projectRoot = _targetDirectory(config);
     if (!projectRoot.existsSync()) {
       throw GenerationException(
         'flutter create 는 성공했다고 했는데 ${projectRoot.path} 가 없습니다.',
@@ -78,23 +62,9 @@ class ProjectGenerator {
     return projectRoot;
   }
 
+  /// 파일시스템에 의존하는 검증만 남는다. 이름과 org 의 형식은 값 타입이
+  /// 이미 보증했으므로 여기서 다시 볼 것이 없다.
   void _validate(GenerationConfig config) {
-    final name = config.projectName;
-    if (!_packageNamePattern.hasMatch(name)) {
-      throw GenerationException(
-        '"$name" 은 Dart 패키지 이름으로 쓸 수 없습니다. '
-        '소문자로 시작하고 소문자·숫자·밑줄만 쓸 수 있습니다.',
-      );
-    }
-    if (_reservedNames.contains(name)) {
-      throw GenerationException('"$name" 은 예약된 이름이라 쓸 수 없습니다.');
-    }
-    if (!_organizationPattern.hasMatch(config.organization)) {
-      throw GenerationException(
-        '"${config.organization}" 은 org 형식이 아닙니다. '
-        'com.example 처럼 점으로 구분된 역방향 도메인이어야 합니다.',
-      );
-    }
     if (!templateDir.existsSync()) {
       throw GenerationException('템플릿을 찾을 수 없습니다: ${templateDir.path}');
     }
@@ -104,7 +74,7 @@ class ProjectGenerator {
       );
     }
 
-    final target = Directory(p.join(config.outputParent.path, name));
+    final target = _targetDirectory(config);
     if (target.existsSync() || File(target.path).existsSync()) {
       throw GenerationException(
         '${target.path} 가 이미 있습니다. 기존 작업을 덮어쓰지 않기 위해 중단합니다.',
@@ -112,16 +82,20 @@ class ProjectGenerator {
     }
   }
 
+  Directory _targetDirectory(GenerationConfig config) => Directory(
+        p.join(config.outputParent.path, config.projectName.value),
+      );
+
   Future<void> _runFlutterCreate(GenerationConfig config) async {
     final result = await processRunner.run(
       'flutter',
       [
         'create',
         '--org',
-        config.organization,
+        config.organization.value,
         '--project-name',
-        config.projectName,
-        config.projectName,
+        config.projectName.value,
+        config.projectName.value,
       ],
       workingDirectory: config.outputParent.path,
     );
@@ -199,7 +173,7 @@ class ProjectGenerator {
       file.writeAsStringSync(
         content.replaceAll(
           'package:$templatePackageName/',
-          'package:${config.projectName}/',
+          'package:${config.projectName.value}/',
         ),
       );
     }
@@ -213,7 +187,7 @@ class ProjectGenerator {
     final pubspec = File(p.join(projectRoot.path, 'pubspec.yaml'));
 
     final rewritten = pubspec.readAsLinesSync().map((line) {
-      if (line.startsWith('name:')) return 'name: ${config.projectName}';
+      if (line.startsWith('name:')) return 'name: ${config.projectName.value}';
       if (line.startsWith('description:')) {
         return 'description: ${_quote(config.description)}';
       }
