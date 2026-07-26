@@ -41,6 +41,12 @@ class ProjectGenerator {
   /// 템플릿 패키지 이름. 결과물에서 이 참조가 남으면 컴파일되지 않는다.
   static const templatePackageName = 'mobile_init_project';
 
+  /// 템플릿 `main.dart` 의 `MaterialApp(title:)`. 표시 이름으로 갈아끼운다.
+  ///
+  /// 패키지 이름과 달리 남아 있어도 컴파일은 되므로 조용히 넘어간다.
+  /// 템플릿에서 이 문구를 바꾸면 여기도 같이 바꿔야 한다.
+  static const templateDisplayName = 'Mobile Init Project';
+
   /// 치환 대상으로 볼 텍스트 확장자. 그 외(이미지 등)는 건드리지 않는다.
   static const _textExtensions = {'.dart', '.yaml', '.arb', '.md'};
 
@@ -75,6 +81,7 @@ class ProjectGenerator {
     final preserved = _capturePreservedLines(projectRoot);
     _copyTemplate(projectRoot);
     _rewriteReferences(projectRoot, config, preserved);
+    _applyDisplayName(projectRoot, config.displayName);
 
     return _runPostProcessing(projectRoot, emit);
   }
@@ -159,6 +166,7 @@ class ProjectGenerator {
         config.organization.value,
         '--project-name',
         config.projectName.value,
+        '--platforms=${config.platforms.flags}',
         config.projectName.value,
       ],
       workingDirectory: config.outputParent.path,
@@ -264,6 +272,94 @@ class ProjectGenerator {
 
     pubspec.writeAsStringSync('${rewritten.join('\n')}\n');
   }
+
+  /// 표시 이름을 사람이 보는 세 자리에 넣는다.
+  ///
+  /// 자리마다 문법이 달라서 한 번의 문자열 치환으로 밀 수 없다. `title: 'Ki's
+  /// App'` 은 컴파일되지 않고, `android:label="A & B"` 는 XML 이 아니다.
+  /// 넣는 곳의 규칙대로 각각 이스케이프한다.
+  ///
+  /// 고르지 않은 플랫폼의 설정 파일은 아예 없으므로 조용히 건너뛴다.
+  void _applyDisplayName(Directory projectRoot, String displayName) {
+    _rewriteDartTitle(projectRoot, displayName);
+    _rewriteAndroidLabel(projectRoot, displayName);
+    _rewriteIosDisplayName(projectRoot, displayName);
+  }
+
+  /// `MaterialApp(title: '...')`. 템플릿에는 main.dart 한 곳뿐이지만
+  /// 늘어나도 따라가도록 복사된 dart 파일을 전부 훑는다.
+  void _rewriteDartTitle(Directory projectRoot, String displayName) {
+    final quoted = "'${_escapeDartLiteral(displayName)}'";
+
+    for (final file in Directory(p.join(projectRoot.path, 'lib'))
+        .listSync(recursive: true)
+        .whereType<File>()) {
+      if (p.extension(file.path) != '.dart') continue;
+
+      final content = file.readAsStringSync();
+      if (!content.contains("'$templateDisplayName'")) continue;
+      file.writeAsStringSync(
+        content.replaceAll("'$templateDisplayName'", quoted),
+      );
+    }
+  }
+
+  void _rewriteAndroidLabel(Directory projectRoot, String displayName) {
+    final manifest = File(
+      p.join(
+        projectRoot.path,
+        'android',
+        'app',
+        'src',
+        'main',
+        'AndroidManifest.xml',
+      ),
+    );
+    // flutter create 는 `android:label` 을 `<application>` 에만 붙이고 그게
+    // 파일에서 처음 나온다. 나중에 액티비티 라벨이 생겨도 건드리지 않도록
+    // 첫 번째만 바꾼다.
+    _rewriteIfPresent(
+      manifest,
+      (xml) => xml.replaceFirst(
+        RegExp(r'android:label="[^"]*"'),
+        'android:label="${_escapeXml(displayName)}"',
+      ),
+    );
+  }
+
+  void _rewriteIosDisplayName(Directory projectRoot, String displayName) {
+    // plist 는 키와 값이 형제로 나란히 놓이는 구조라 키만으로는 값을 집을 수
+    // 없다. 키 바로 뒤의 <string> 을 그 값으로 본다.
+    _rewriteIfPresent(
+      File(p.join(projectRoot.path, 'ios', 'Runner', 'Info.plist')),
+      (xml) => xml.replaceAllMapped(
+        RegExp(r'(<key>CFBundleDisplayName</key>\s*<string>)[^<]*(</string>)'),
+        (m) => '${m[1]}${_escapeXml(displayName)}${m[2]}',
+      ),
+    );
+  }
+
+  /// 고르지 않은 플랫폼의 설정 파일은 아예 없다. 없으면 조용히 넘어간다.
+  static void _rewriteIfPresent(File file, String Function(String) rewrite) {
+    if (!file.existsSync()) return;
+    file.writeAsStringSync(rewrite(file.readAsStringSync()));
+  }
+
+  /// 큰따옴표로 감싼 XML 속성과 요소 안에 넣을 값. 작은따옴표는 두 자리 모두
+  /// 구분자가 아니므로 건드리지 않는다.
+  static String _escapeXml(String value) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll('\n', ' ');
+
+  /// 작은따옴표 Dart 문자열 리터럴 안에 넣을 값. `$` 는 그냥 두면 보간이 된다.
+  static String _escapeDartLiteral(String value) => value
+      .replaceAll(r'\', r'\\')
+      .replaceAll(r'$', r'\$')
+      .replaceAll("'", r"\'")
+      .replaceAll('\n', ' ');
 
   /// 설명은 사용자가 자유롭게 쓰는 한 줄이라 따옴표와 줄바꿈이 들어올 수 있다.
   /// 그대로 넣으면 pubspec 이 깨지므로 큰따옴표 문자열로 감싼다.

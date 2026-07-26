@@ -6,6 +6,7 @@ import 'package:mobile_init_builder/src/generation/generation_exception.dart';
 import 'package:mobile_init_builder/src/generation/organization.dart';
 import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
+import 'package:mobile_init_builder/src/generation/project_platform.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/fake_process_runner.dart';
@@ -46,6 +47,11 @@ void main() {
     String name = 'my_app',
     String org = 'io.github.kihyun1998',
     String description = '내가 쓴 설명',
+    String displayName = '',
+    List<ProjectPlatform> platforms = const [
+      ProjectPlatform.android,
+      ProjectPlatform.ios,
+    ],
   }) {
     return generator
         .generate(
@@ -54,6 +60,8 @@ void main() {
             organization: Organization.parse(org),
             outputParent: outputParent,
             description: description,
+            displayName: displayName,
+            platforms: PlatformSelection.of(platforms),
           ),
         )
         .then((r) => r.projectRoot);
@@ -171,6 +179,129 @@ void main() {
     );
 
     expect(pubspec, contains(r'description: "He said \"hi\""'));
+  });
+
+  group('플랫폼', () {
+    test('고른 플랫폼만 --platforms 로 넘어간다', () async {
+      await generate(
+        platforms: [ProjectPlatform.web, ProjectPlatform.android],
+      );
+
+      expect(
+        runner.invocations.first.arguments,
+        contains('--platforms=android,web'),
+        reason: '체크한 순서가 아니라 선언 순서로 정규화돼야 한다',
+      );
+    });
+
+    test('고르지 않은 플랫폼 폴더는 결과물에 없다', () async {
+      final root = await generate(platforms: [ProjectPlatform.android]);
+
+      expect(Directory(p.join(root.path, 'android')).existsSync(), isTrue);
+      for (final absent in ['ios', 'macos', 'windows', 'linux', 'web']) {
+        expect(
+          Directory(p.join(root.path, absent)).existsSync(),
+          isFalse,
+          reason: '고르지 않은 $absent 가 생겼다',
+        );
+      }
+    });
+
+    test('하나도 고르지 않으면 만들 수 없다', () {
+      // 빈 --platforms= 를 넘기면 flutter 가 한참 뒤에 알아듣기 힘든 소리를
+      // 한다. 그 전에 값 타입이 막는다 — 생성기까지 갈 방법이 없다.
+      expect(
+        () => PlatformSelection.of(const []),
+        throwsA(isA<GenerationException>()),
+      );
+    });
+  });
+
+  group('표시 이름', () {
+    test('앱 타이틀·안드로이드 라벨·iOS 표시 이름에 모두 들어간다', () async {
+      final root = await generate(name: 'my_app', displayName: '내 가계부');
+
+      expect(read(root, p.join('lib', 'main.dart')), contains("'내 가계부'"));
+      expect(
+        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        contains('android:label="내 가계부"'),
+      );
+      expect(
+        read(root, p.join('ios', 'Runner', 'Info.plist')),
+        contains('<string>내 가계부</string>'),
+      );
+    });
+
+    test('비워두면 프로젝트 이름을 쓴다', () async {
+      final root = await generate(name: 'my_app', displayName: '   ');
+
+      expect(read(root, p.join('lib', 'main.dart')), contains("'my_app'"));
+      // 안드로이드 라벨은 flutter create 도 프로젝트 이름을 넣는다. 그래서 이
+      // 검사는 결과가 맞는지만 보고, 치환이 실제로 돌았는지는 구분하지 못한다
+      // — 그건 위의 '내 가계부' 검사가 본다.
+      expect(
+        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        contains('android:label="my_app"'),
+      );
+      // plist 는 다르다. flutter create 가 'My App' 을 넣어두므로 치환이
+      // 빠지면 여기서 걸린다.
+      expect(
+        read(root, p.join('ios', 'Runner', 'Info.plist')),
+        contains('<string>my_app</string>'),
+      );
+      expect(
+        read(root, p.join('ios', 'Runner', 'Info.plist')),
+        isNot(contains('<string>My App</string>')),
+      );
+    });
+
+    test('템플릿 표시 이름이 결과물에 남지 않는다', () async {
+      final root = await generate(displayName: '내 가계부');
+
+      expect(
+        read(root, p.join('lib', 'main.dart')),
+        isNot(contains(ProjectGenerator.templateDisplayName)),
+      );
+    });
+
+    test('생성기가 아는 표시 이름을 템플릿이 실제로 쓰고 있다', () {
+      // 위 검사들은 전부 생성기의 상수를 기준으로 삼는다. 템플릿에서 이 문구를
+      // 바꾸면 치환이 조용히 아무것도 하지 않게 되는데, 상수끼리만 비교해서는
+      // 그걸 잡지 못한다. 결합을 여기서 못박는다.
+      expect(
+        File(p.join(templateDir.path, 'lib', 'main.dart')).readAsStringSync(),
+        contains("title: '${ProjectGenerator.templateDisplayName}'"),
+        reason: '템플릿의 앱 타이틀이 바뀌었다. '
+            'ProjectGenerator.templateDisplayName 도 같이 고쳐야 한다.',
+      );
+    });
+
+    test('따옴표와 앰퍼샌드가 들어와도 dart 와 xml 이 깨지지 않는다', () async {
+      // 'Ki's App' 은 컴파일되지 않고, android:label="A & B" 는 XML 이 아니다.
+      final root = await generate(displayName: r"Ki's $A & B");
+
+      expect(
+        read(root, p.join('lib', 'main.dart')),
+        contains(r"'Ki\'s \$A & B'"),
+      );
+      expect(
+        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        contains('android:label="Ki\'s \$A &amp; B"'),
+      );
+      expect(
+        read(root, p.join('ios', 'Runner', 'Info.plist')),
+        contains('<string>Ki\'s \$A &amp; B</string>'),
+      );
+    });
+
+    test('고르지 않은 플랫폼의 설정 파일을 찾지 못해도 실패하지 않는다', () async {
+      final root = await generate(
+        platforms: [ProjectPlatform.web],
+        displayName: '내 가계부',
+      );
+
+      expect(read(root, p.join('lib', 'main.dart')), contains("'내 가계부'"));
+    });
   });
 
   group('생성 전에 막는 것', () {

@@ -42,7 +42,7 @@ class FakeProcessRunner implements ProcessRunner {
     }
 
     if (!fails && executable == 'flutter' && arguments.first == 'create') {
-      _scaffold(arguments.last, workingDirectory!);
+      _scaffold(arguments.last, workingDirectory!, _platformsOf(arguments));
     }
 
     return ProcessRunResult(
@@ -52,9 +52,23 @@ class FakeProcessRunner implements ProcessRunner {
     );
   }
 
+  /// `--platforms=android,ios` 에서 고른 플랫폼을 뽑는다.
+  /// 인자가 없으면 진짜 flutter 처럼 전부 만든다.
+  static List<String> _platformsOf(List<String> arguments) {
+    const prefix = '--platforms=';
+    final flag = arguments.firstWhere(
+      (a) => a.startsWith(prefix),
+      orElse: () => '',
+    );
+    if (flag.isEmpty) {
+      return const ['android', 'ios', 'macos', 'windows', 'linux', 'web'];
+    }
+    return flag.substring(prefix.length).split(',');
+  }
+
   /// flutter create 가 만들어놓는 것과 같은 모양의 뼈대.
   /// 플랫폼 폴더에 마커를 남겨서, 우리가 그걸 덮어쓰지 않는지 확인한다.
-  void _scaffold(String name, String parent) {
+  void _scaffold(String name, String parent, List<String> platforms) {
     final root = Directory(p.join(parent, name))..createSync(recursive: true);
     File(p.join(root.path, 'pubspec.yaml')).writeAsStringSync('''
 name: $name
@@ -71,12 +85,65 @@ environment:
         ..createSync(recursive: true)
         ..writeAsStringSync('// flutter create default');
     }
-    for (final dir in ['android', 'ios']) {
+
+    for (final dir in platforms) {
       File(p.join(root.path, dir, 'marker.txt'))
         ..createSync(recursive: true)
         ..writeAsStringSync('from-flutter-create');
     }
+    if (platforms.contains('android')) _writeManifest(root, name);
+    if (platforms.contains('ios')) _writeInfoPlist(root, name);
   }
+
+  /// 표시 이름이 들어갈 자리를 진짜 flutter create 출력과 같은 모양으로 만든다.
+  /// 안드로이드 라벨은 패키지 이름 그대로다.
+  void _writeManifest(Directory root, String name) {
+    File(p.join(
+      root.path,
+      'android',
+      'app',
+      'src',
+      'main',
+      'AndroidManifest.xml',
+    ))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('''
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:label="$name"
+        android:name="\${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+    </application>
+</manifest>
+''');
+  }
+
+  void _writeInfoPlist(Directory root, String name) {
+    File(p.join(root.path, 'ios', 'Runner', 'Info.plist'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('''
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>\$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>${_humanize(name)}</string>
+	<key>CFBundleName</key>
+	<string>$name</string>
+</dict>
+</plist>
+''');
+  }
+
+  /// flutter create 는 plist 의 표시 이름만 `my_app` → `My App` 으로 바꿔 넣는다.
+  /// 그대로 흉내내야 "우리가 덮어썼는가" 를 이 값으로 구분할 수 있다 —
+  /// 표시 이름을 비워서 프로젝트 이름이 들어가는 경우까지 포함해서.
+  static String _humanize(String name) => name
+      .split('_')
+      .where((w) => w.isNotEmpty)
+      .map((w) => w[0].toUpperCase() + w.substring(1))
+      .join(' ');
 }
 
 class ProcessInvocation {

@@ -5,6 +5,7 @@ import 'package:mobile_init_builder/src/generation/organization.dart';
 import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/process_runner.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
+import 'package:mobile_init_builder/src/generation/project_platform.dart';
 
 /// 진짜 `flutter create` 로 한 번 만들어보는 수동 확인용 스크립트.
 ///
@@ -28,6 +29,13 @@ Future<void> main(List<String> args) async {
       projectName: PackageName.parse(args.length > 2 ? args[2] : 'smoke_app'),
       organization: Organization.parse('io.github.kihyun1998'),
       outputParent: Directory(args[1]),
+      // 가짜 러너가 흉내낸 manifest·plist 모양이 현실과 같은지 보려면
+      // 표시 이름이 프로젝트 이름과 달라야 한다.
+      displayName: '연기 시험 앱',
+      platforms: PlatformSelection.of(const [
+        ProjectPlatform.android,
+        ProjectPlatform.ios,
+      ]),
     ),
   );
 

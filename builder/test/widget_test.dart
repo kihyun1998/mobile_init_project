@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show Key, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
+import 'package:mobile_init_builder/src/generation/project_platform.dart';
 import 'package:mobile_init_builder/src/ui/generate_form_page.dart';
 import 'package:path/path.dart' as p;
 
@@ -40,11 +41,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> toggle(WidgetTester tester, ProjectPlatform platform) async {
+    final chip = find.byKey(GenerateFormPage.platformKey(platform));
+    await tester.ensureVisible(chip);
+    await tester.pumpAndSettle();
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> fillAndSubmit(
     WidgetTester tester, {
     required String name,
     String org = 'io.github.kihyun1998',
     String? description,
+    String? displayName,
   }) async {
     await tester.enterText(
       find.byKey(GenerateFormPage.nameFieldKey),
@@ -64,7 +74,16 @@ void main() {
         description,
       );
     }
-    await tester.tap(find.text('생성'));
+    if (displayName != null) {
+      await tester.enterText(
+        find.byKey(GenerateFormPage.displayNameFieldKey),
+        displayName,
+      );
+    }
+    final submit = find.text('생성');
+    await tester.ensureVisible(submit);
+    await tester.pumpAndSettle();
+    await tester.tap(submit);
     await tester.pumpAndSettle();
   }
 
@@ -90,6 +109,52 @@ void main() {
       p.join(outputParent.path, 'my_app', 'pubspec.yaml'),
     ).readAsStringSync();
     expect(pubspec, contains('description: "내 앱 설명"'));
+  });
+
+  testWidgets('폼에 적은 표시 이름이 안드로이드 라벨과 iOS 표시 이름까지 간다', (tester) async {
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app', displayName: '내 가계부');
+
+    final root = p.join(outputParent.path, 'my_app');
+    expect(
+      File(p.join(root, 'lib', 'main.dart')).readAsStringSync(),
+      contains("'내 가계부'"),
+    );
+    expect(
+      File(p.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'))
+          .readAsStringSync(),
+      contains('android:label="내 가계부"'),
+    );
+    expect(
+      File(p.join(root, 'ios', 'Runner', 'Info.plist')).readAsStringSync(),
+      contains('<string>내 가계부</string>'),
+    );
+  });
+
+  testWidgets('체크를 푼 플랫폼은 만들어지지 않는다', (tester) async {
+    await pumpForm(tester);
+    await toggle(tester, ProjectPlatform.ios);
+    await toggle(tester, ProjectPlatform.macos);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    expect(
+      runner.invocations.first.arguments,
+      contains('--platforms=android,macos'),
+    );
+    final root = p.join(outputParent.path, 'my_app');
+    expect(Directory(p.join(root, 'ios')).existsSync(), isFalse);
+    expect(Directory(p.join(root, 'macos')).existsSync(), isTrue);
+  });
+
+  testWidgets('플랫폼을 하나도 안 고르면 막히고 flutter create 가 실행되지 않는다', (tester) async {
+    await pumpForm(tester);
+    await toggle(tester, ProjectPlatform.android);
+    await toggle(tester, ProjectPlatform.ios);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    expect(find.textContaining('플랫폼을 하나 이상'), findsOneWidget);
+    expect(find.text('만들었습니다'), findsNothing);
+    expect(runner.invocations, isEmpty);
   });
 
   testWidgets('잘못된 이름은 오류로 보이고 flutter create 가 실행되지 않는다', (tester) async {

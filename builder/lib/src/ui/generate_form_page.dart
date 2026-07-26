@@ -12,13 +12,14 @@ import '../generation/organization.dart';
 import '../generation/package_name.dart';
 import '../generation/process_runner.dart';
 import '../generation/project_generator.dart';
+import '../generation/project_platform.dart';
 import 'generation_log.dart';
 import 'log_view.dart';
 
-/// 이름·org·설명·출력 폴더를 받아 새 프로젝트를 만들고, 진행 상황과 명령
-/// 출력을 보여주는 화면.
+/// 이름·표시 이름·설명·org·플랫폼·출력 폴더를 받아 새 프로젝트를 만들고,
+/// 진행 상황과 명령 출력을 보여주는 화면.
 ///
-/// 옵션(플랫폼·언어·예제)과 붙여넣은 테마 반영은 뒤따르는 티켓에서 붙는다.
+/// 옵션(언어·예제)과 붙여넣은 테마 반영은 뒤따르는 티켓에서 붙는다.
 class GenerateFormPage extends StatefulWidget {
   const GenerateFormPage({
     super.key,
@@ -27,9 +28,13 @@ class GenerateFormPage extends StatefulWidget {
   });
 
   static const nameFieldKey = Key('generate.field.name');
+  static const displayNameFieldKey = Key('generate.field.displayName');
   static const descriptionFieldKey = Key('generate.field.description');
   static const organizationFieldKey = Key('generate.field.organization');
   static const outputParentFieldKey = Key('generate.field.outputParent');
+
+  static Key platformKey(ProjectPlatform platform) =>
+      Key('generate.platform.${platform.flag}');
 
   final ProjectGenerator generator;
 
@@ -43,9 +48,14 @@ class GenerateFormPage extends StatefulWidget {
 
 class _GenerateFormPageState extends State<GenerateFormPage> {
   final _name = TextEditingController();
+  final _displayName = TextEditingController();
   final _description = TextEditingController();
   final _organization = TextEditingController(text: 'com.example');
   final _outputParent = TextEditingController();
+
+  /// 기본값은 설정 객체가 정한 것을 그대로 쓴다. 여기에 목록을 한 벌 더
+  /// 적어두면 플랫폼이 늘어날 때 둘 중 하나만 고치게 된다.
+  final _platforms = PlatformSelection.mobile.platforms.toSet();
 
   bool _running = false;
 
@@ -61,6 +71,7 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   @override
   void dispose() {
     _name.dispose();
+    _displayName.dispose();
     _description.dispose();
     _organization.dispose();
     _outputParent.dispose();
@@ -100,16 +111,17 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
     });
 
     try {
-      final description = _description.text.trim();
       final result = await widget.generator.generate(
         GenerationConfig(
           // 형식이 틀리면 여기서 던진다. flutter create 는 시작도 하지 않는다.
           projectName: PackageName.parse(_name.text),
           organization: Organization.parse(_organization.text),
+          platforms: PlatformSelection.of(_platforms),
           outputParent: Directory(_outputParent.text.trim()),
-          description: description.isEmpty
-              ? GenerationConfig.defaultDescription
-              : description,
+          // 빈 값을 무엇으로 채울지는 설정 객체가 안다. 여기서 한 번 더
+          // 정하면 둘이 어긋나는 날이 온다.
+          description: _description.text,
+          displayName: _displayName.text,
         ),
         onEvent: _onEvent,
       );
@@ -173,6 +185,19 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                 ),
                 const SizedBox(height: 16),
                 _Field(
+                  fieldKey: GenerateFormPage.displayNameFieldKey,
+                  label: '앱 표시 이름',
+                  hint: '내 가계부',
+                  // 데스크톱·웹의 표시 이름까지는 아직 손대지 않는다.
+                  // 그 자리엔 프로젝트 이름이 그대로 남으므로 여기서
+                  // "홈 화면 어디서나" 라고 하면 거짓말이 된다.
+                  helper: '앱 타이틀과 안드로이드·iOS 홈 화면 아이콘 밑에 보입니다. '
+                      '비워두면 프로젝트 이름을 씁니다.',
+                  controller: _displayName,
+                  enabled: !_running,
+                ),
+                const SizedBox(height: 16),
+                _Field(
                   fieldKey: GenerateFormPage.descriptionFieldKey,
                   label: '설명',
                   hint: 'A new Flutter project.',
@@ -188,6 +213,18 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   helper: '안드로이드 applicationId 와 iOS 번들 ID 의 앞부분이 됩니다.',
                   controller: _organization,
                   enabled: !_running,
+                ),
+                const SizedBox(height: 16),
+                _PlatformPicker(
+                  selected: _platforms,
+                  enabled: !_running,
+                  onToggle: (platform, on) => setState(() {
+                    if (on) {
+                      _platforms.add(platform);
+                    } else {
+                      _platforms.remove(platform);
+                    }
+                  }),
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -322,6 +359,78 @@ class _Field extends StatelessWidget {
             style: TextStyle(color: colors.mutedForeground, fontSize: 12),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// 만들 플랫폼 고르기.
+///
+/// 하나도 안 고른 상태를 여기서 막지 않는다. 생성 버튼을 누르는 순간
+/// [PlatformSelection] 이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된 이름과
+/// 같은 길을 타므로 "막는 자리" 가 화면 곳곳으로 흩어지지 않는다.
+class _PlatformPicker extends StatelessWidget {
+  const _PlatformPicker({
+    required this.selected,
+    required this.enabled,
+    required this.onToggle,
+  });
+
+  final Set<ProjectPlatform> selected;
+  final bool enabled;
+  final void Function(ProjectPlatform platform, bool on) onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '플랫폼',
+          style: TextStyle(
+            color: colors.foreground,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 4,
+          children: [
+            for (final platform in ProjectPlatform.values)
+              InkWell(
+                key: GenerateFormPage.platformKey(platform),
+                onTap: enabled
+                    ? () => onToggle(platform, !selected.contains(platform))
+                    : null,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: selected.contains(platform),
+                      onChanged: enabled
+                          ? (on) => onToggle(platform, on ?? false)
+                          : null,
+                      activeColor: colors.primary,
+                      checkColor: colors.primaryForeground,
+                      side: BorderSide(color: colors.border),
+                    ),
+                    Text(
+                      platform.label,
+                      style: TextStyle(color: colors.foreground),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '고르지 않은 플랫폼은 폴더조차 만들어지지 않습니다.',
+          style: TextStyle(color: colors.mutedForeground, fontSize: 12),
+        ),
       ],
     );
   }
