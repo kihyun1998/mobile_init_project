@@ -157,6 +157,38 @@ void main() {
     expect(runner.invocations, isEmpty);
   });
 
+  testWidgets('예제 스위치를 끄면 결과물에서 예제와 차트 의존성이 빠진다', (tester) async {
+    await pumpForm(tester);
+    final switchTile = find.byKey(GenerateFormPage.includeExampleKey);
+    await tester.ensureVisible(switchTile);
+    await tester.pumpAndSettle();
+    await tester.tap(switchTile);
+    await tester.pumpAndSettle();
+
+    await fillAndSubmit(tester, name: 'my_app');
+
+    final root = p.join(outputParent.path, 'my_app');
+    expect(Directory(p.join(root, 'lib', 'example')).existsSync(), isFalse);
+    expect(
+      File(p.join(root, 'pubspec.yaml')).readAsStringSync(),
+      isNot(contains('fl_chart')),
+    );
+    // 예제를 걷어낸 뒤에도 생성 자체는 끝까지 가야 한다.
+    expect(find.text('만들었습니다'), findsOneWidget);
+  });
+
+  testWidgets('예제 스위치를 그대로 두면 예제가 남는다', (tester) async {
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    final root = p.join(outputParent.path, 'my_app');
+    expect(Directory(p.join(root, 'lib', 'example')).existsSync(), isTrue);
+    expect(
+      File(p.join(root, 'pubspec.yaml')).readAsStringSync(),
+      contains('fl_chart'),
+    );
+  });
+
   testWidgets('잘못된 이름은 오류로 보이고 flutter create 가 실행되지 않는다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'My-App');

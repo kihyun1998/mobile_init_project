@@ -33,6 +33,8 @@ class GenerateFormPage extends StatefulWidget {
   static const organizationFieldKey = Key('generate.field.organization');
   static const outputParentFieldKey = Key('generate.field.outputParent');
 
+  static const includeExampleKey = Key('generate.field.includeExample');
+
   static Key platformKey(ProjectPlatform platform) =>
       Key('generate.platform.${platform.flag}');
 
@@ -56,6 +58,8 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   /// 기본값은 설정 객체가 정한 것을 그대로 쓴다. 여기에 목록을 한 벌 더
   /// 적어두면 플랫폼이 늘어날 때 둘 중 하나만 고치게 된다.
   final _platforms = PlatformSelection.mobile.platforms.toSet();
+
+  bool _includeExample = true;
 
   bool _running = false;
 
@@ -117,6 +121,7 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
           projectName: PackageName.parse(_name.text),
           organization: Organization.parse(_organization.text),
           platforms: PlatformSelection.of(_platforms),
+          includeExample: _includeExample,
           outputParent: Directory(_outputParent.text.trim()),
           // 빈 값을 무엇으로 채울지는 설정 객체가 안다. 여기서 한 번 더
           // 정하면 둘이 어긋나는 날이 온다.
@@ -225,6 +230,31 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                       _platforms.remove(platform);
                     }
                   }),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  key: GenerateFormPage.includeExampleKey,
+                  value: _includeExample,
+                  onChanged: _running
+                      ? null
+                      : (on) => setState(() => _includeExample = on),
+                  contentPadding: EdgeInsets.zero,
+                  activeThumbColor: colors.primary,
+                  title: Text(
+                    '컴포넌트 예제 페이지 포함',
+                    style: TextStyle(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '끄면 홈 화면이 빈 채로 시작합니다. '
+                    'shadcn 컴포넌트는 꺼도 그대로 남습니다.',
+                    style: TextStyle(
+                      color: colors.mutedForeground,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _Field(

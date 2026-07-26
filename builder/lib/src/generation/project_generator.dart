@@ -80,6 +80,9 @@ class ProjectGenerator {
 
     final preserved = _capturePreservedLines(projectRoot);
     _copyTemplate(projectRoot);
+    // 예제를 먼저 걷어낸다. 그래야 pubspec 에서 의존성이 빠진 뒤에
+    // 이름·설명이 다시 쓰이고, 치환이 어차피 지울 파일을 훑지 않는다.
+    if (!config.includeExample) _dropExample(projectRoot);
     _rewriteReferences(projectRoot, config, preserved);
     _applyDisplayName(projectRoot, config.displayName);
 
@@ -271,6 +274,111 @@ class ProjectGenerator {
     }).toList();
 
     pubspec.writeAsStringSync('${rewritten.join('\n')}\n');
+  }
+
+  /// 예제 페이지가 차지하던 자리.
+  ///
+  /// 경로는 조각으로 들고 있다가 [p.joinAll] 로 잇는다. Windows 에서도
+  /// 돌아야 해서 `/` 를 박은 문자열을 쓰지 않는다.
+  static const exampleDirSegments = ['lib', 'example'];
+  static const homeScreenSegments = [
+    'lib',
+    'ui',
+    'screens',
+    'home',
+    'home_screen.dart',
+  ];
+
+  /// 예제 페이지에서만 쓰는 의존성. 예제를 끄면 같이 빠져야 한다 —
+  /// 안 쓰는 패키지를 이고 시작하지 않도록.
+  static const exampleOnlyDependencies = {'fl_chart'};
+
+  /// 예제를 껐을 때 홈 화면 자리에 들어갈 것.
+  ///
+  /// **`package:flutter/material.dart` 말고는 아무것도 import 하지 않는다.**
+  /// 여기서 템플릿 API 를 쓰면 그 API 가 바뀔 때 이 문자열만 조용히 낡는다.
+  /// 화면이 비어 보이는 건 의도다 — 여기서부터 짜기 시작하라는 자리다.
+  ///
+  /// 그래도 [homeScreenSegments] 의 클래스 이름과 생성자 모양에는 묶여 있다
+  /// (`AppTab` 이 `const HomeScreen()` 으로 부른다). 컴파일러가 문자열을
+  /// 봐주지 않으므로 그 결합은 테스트로 못박아 뒀다.
+  static const emptyHomeScreenSource = '''
+import 'package:flutter/material.dart';
+
+/// 여기서부터 시작하면 된다.
+///
+/// 컴포넌트가 필요하면 `lib/ui/components/` 에 shadcn 13종이 그대로 있다.
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold();
+  }
+}
+''';
+
+  /// 예제를 끌 때 함께 움직이는 세 가지.
+  ///
+  /// 하나라도 빠지면 결과물이 깨지거나(예제를 지웠는데 홈 화면이 그걸
+  /// import 한 채로 남는다) 안 쓰는 패키지를 이고 시작한다. 그래서 셋을
+  /// 떼어놓지 않고 한 함수에 묶어둔다.
+  void _dropExample(Directory projectRoot) {
+    final exampleDir = Directory(
+      p.joinAll([projectRoot.path, ...exampleDirSegments]),
+    );
+    if (exampleDir.existsSync()) exampleDir.deleteSync(recursive: true);
+
+    File(p.joinAll([projectRoot.path, ...homeScreenSegments]))
+        .writeAsStringSync(emptyHomeScreenSource);
+
+    _rewriteIfPresent(
+      File(p.join(projectRoot.path, 'pubspec.yaml')),
+      (yaml) => _withoutDependencies(yaml, exampleOnlyDependencies),
+    );
+  }
+
+  /// pubspec 의 의존성 섹션에서 항목을 지운다.
+  ///
+  /// **의존성 섹션 안에서만 지운다.** pubspec 에는 `flutter:`,
+  /// `flutter_intl:`, `flutter_tweakcn_generator:` 처럼 같은 들여쓰기를 쓰는
+  /// 설정 블록이 여럿 있어서, 섹션을 안 보고 이름만 맞추면 엉뚱한 설정이
+  /// 사라진다.
+  ///
+  /// 항목은 두 칸 들여쓴 `  이름:` 이고, 그보다 더 들여쓴 줄은 그 항목에
+  /// 딸린 것이다(`  fl_chart:\n    version: ...`). 딸린 줄까지 같이 지워야
+  /// 고아 블록이 남지 않는다.
+  static String _withoutDependencies(String yaml, Set<String> names) {
+    const dependencySections = {'dependencies:', 'dev_dependencies:'};
+
+    final kept = <String>[];
+    var inDependencies = false;
+    var dropping = false;
+
+    for (final line in yaml.split('\n')) {
+      if (line.trim().isEmpty) {
+        // 빈 줄은 어느 항목에도 딸려 있지 않다. 같이 지우면 섹션이 붙어버린다.
+        dropping = false;
+      } else if (!line.startsWith(' ')) {
+        // 들여쓰지 않은 줄에서 섹션이 바뀐다.
+        inDependencies = dependencySections.contains(line.trim());
+        dropping = false;
+      } else if (!inDependencies) {
+        dropping = false;
+      } else {
+        final entry = RegExp(r'^  ([A-Za-z_][A-Za-z0-9_]*):').firstMatch(line);
+        if (entry != null) {
+          dropping = names.contains(entry.group(1));
+        } else if (!line.startsWith('   ')) {
+          // 들여쓰기가 얕아졌다 = 항목이 끝났다.
+          dropping = false;
+        }
+        // 더 깊이 들여쓴 줄은 앞 항목에 딸린 것이라 상태를 그대로 둔다.
+      }
+      if (!dropping) kept.add(line);
+    }
+
+    return kept.join('\n');
   }
 
   /// 표시 이름을 사람이 보는 세 자리에 넣는다.

@@ -48,6 +48,7 @@ void main() {
     String org = 'io.github.kihyun1998',
     String description = '내가 쓴 설명',
     String displayName = '',
+    bool includeExample = true,
     List<ProjectPlatform> platforms = const [
       ProjectPlatform.android,
       ProjectPlatform.ios,
@@ -61,6 +62,7 @@ void main() {
             outputParent: outputParent,
             description: description,
             displayName: displayName,
+            includeExample: includeExample,
             platforms: PlatformSelection.of(platforms),
           ),
         )
@@ -301,6 +303,152 @@ void main() {
       );
 
       expect(read(root, p.join('lib', 'main.dart')), contains("'내 가계부'"));
+    });
+  });
+
+  group('예제 포함 여부', () {
+    test('켜면 예제와 차트 의존성이 그대로 온다', () async {
+      final root = await generate();
+
+      expect(
+        Directory(p.join(root.path, 'lib', 'example')).existsSync(),
+        isTrue,
+      );
+      expect(read(root, 'pubspec.yaml'), contains('fl_chart:'));
+      expect(
+        read(root, p.join('lib', 'ui', 'screens', 'home', 'home_screen.dart')),
+        contains('ShadcnComponentsPage'),
+      );
+    });
+
+    test('끄면 예제 디렉토리가 없다', () async {
+      final root = await generate(includeExample: false);
+
+      expect(
+        Directory(p.join(root.path, 'lib', 'example')).existsSync(),
+        isFalse,
+      );
+    });
+
+    test('끄면 홈 화면이 예제를 참조하지 않는 빈 스텁이 된다', () async {
+      final root = await generate(includeExample: false);
+      final home = read(
+        root,
+        p.join('lib', 'ui', 'screens', 'home', 'home_screen.dart'),
+      );
+
+      // 예제를 지웠는데 import 가 남으면 컴파일되지 않는다.
+      expect(home, isNot(contains('example/')));
+      expect(home, isNot(contains('ShadcnComponentsPage')));
+      expect(home, contains('class HomeScreen extends StatelessWidget'));
+      // 스텁이 템플릿 API 를 끌어들이면 그 API 가 바뀔 때 조용히 낡는다.
+      expect(
+        RegExp(r"^import .*$", multiLine: true)
+            .allMatches(home)
+            .map((m) => m.group(0)),
+        ["import 'package:flutter/material.dart';"],
+      );
+    });
+
+    test('끄면 예제를 가리키는 참조가 결과물 어디에도 남지 않는다', () async {
+      final root = await generate(includeExample: false);
+
+      // home_screen.dart 만 보면 안 된다. 나중에 템플릿의 다른 파일이 예제를
+      // import 하면, 컴파일되지 않는 프로젝트가 조용히 나오고 테스트는 전부
+      // 초록으로 남는다.
+      final offenders = root
+          .listSync(recursive: true)
+          .whereType<File>()
+          .map((f) => (f, _readTextOrNull(f) ?? ''))
+          .where((e) =>
+              e.$2.contains('ShadcnComponentsPage') ||
+              e.$2.contains('example/') ||
+              e.$2.contains('fl_chart'))
+          .map((e) => p.relative(e.$1.path, from: root.path))
+          .toList();
+
+      expect(offenders, isEmpty);
+    });
+
+    test('끄면 예제 전용 차트 의존성이 pubspec 에서 빠진다', () async {
+      final pubspec = read(
+        await generate(includeExample: false),
+        'pubspec.yaml',
+      );
+
+      expect(pubspec, isNot(contains('fl_chart')));
+      // 옆줄까지 쓸려나가면 안 된다.
+      expect(pubspec, contains('shared_preferences:'));
+      expect(pubspec, contains('flutter_riverpod:'));
+      expect(pubspec, contains('dev_dependencies:'));
+      // 의존성과 같은 들여쓰기를 쓰는 설정 블록들. 섹션을 안 보고 지우면
+      // 여기가 같이 날아간다.
+      expect(pubspec, contains('flutter_intl:'));
+      expect(pubspec, contains('flutter_tweakcn_generator:'));
+    });
+
+    test('꺼도 shadcn 컴포넌트는 그대로 남는다', () async {
+      final root = await generate(includeExample: false);
+      final components = Directory(
+        p.join(root.path, 'lib', 'ui', 'components'),
+      );
+
+      expect(components.existsSync(), isTrue);
+      expect(
+        components.listSync().whereType<File>(),
+        isNotEmpty,
+        reason: '아무도 참조하지 않아도 꺼내 쓸 수 있게 남겨둬야 한다',
+      );
+    });
+
+    test('생성기가 쓰는 홈 화면 모양이 템플릿과 어긋나지 않는다', () async {
+      // 스텁은 문자열이라 컴파일러가 봐주지 않는다. 템플릿의 홈 화면이
+      // ConsumerWidget 이 되거나 인자를 받게 되면 AppTab 의 `const HomeScreen()`
+      // 과 스텁이 어긋나는데, 그건 생성한 뒤에야 드러난다. 여기서 못박는다.
+      final templateHome = File(
+        p.joinAll([templateDir.path, ...ProjectGenerator.homeScreenSegments]),
+      ).readAsStringSync();
+
+      for (final shape in [
+        'class HomeScreen extends StatelessWidget',
+        'const HomeScreen({super.key});',
+      ]) {
+        expect(
+          templateHome,
+          contains(shape),
+          reason: '템플릿 홈 화면이 바뀌었다. '
+              'ProjectGenerator.emptyHomeScreenSource 도 같이 고쳐야 한다.',
+        );
+        expect(ProjectGenerator.emptyHomeScreenSource, contains(shape));
+      }
+    });
+
+    test('예제에서만 쓰는 의존성이라고 적어둔 것이 실제로 예제에서만 쓰인다', () {
+      // 템플릿이 이 이름을 더 이상 선언하지 않으면 제거는 조용한 no-op 이
+      // 되고, 목록만 낡은 채로 남는다.
+      final pubspec =
+          File(p.join(templateDir.path, 'pubspec.yaml')).readAsStringSync();
+      for (final name in ProjectGenerator.exampleOnlyDependencies) {
+        expect(
+          pubspec,
+          contains('  $name:'),
+          reason: '템플릿이 $name 을 더 이상 쓰지 않는다면 목록에서 빼야 한다.',
+        );
+      }
+
+      // 다른 데서도 쓰는 패키지를 이 목록에 넣으면 결과물이 컴파일되지 않는다.
+      final users = Directory(p.join(templateDir.path, 'lib'))
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => p.extension(f.path) == '.dart')
+          .where((f) => ProjectGenerator.exampleOnlyDependencies
+              .any((d) => f.readAsStringSync().contains('package:$d/')))
+          .map((f) => p.relative(f.path, from: templateDir.path));
+
+      expect(
+        users,
+        everyElement(startsWith(p.joinAll(['lib', 'example']))),
+      );
     });
   });
 
