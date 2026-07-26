@@ -1,4 +1,4 @@
-import 'generation_exception.dart';
+import 'selection.dart';
 
 /// `flutter create --platforms` 가 받는 플랫폼.
 ///
@@ -26,19 +26,14 @@ enum ProjectPlatform {
 class PlatformSelection {
   const PlatformSelection._(this.platforms);
 
-  factory PlatformSelection.of(Iterable<ProjectPlatform> platforms) {
-    final chosen = platforms.toSet();
-    // 선언 순서로 정렬한다. 체크박스를 누른 순서에 따라 명령줄이 달라지면
-    // 같은 선택인데 매번 다른 명령으로 보인다.
-    final ordered = ProjectPlatform.values
-        .where(chosen.contains)
-        .toList(growable: false);
-
-    if (ordered.isEmpty) {
-      throw const GenerationException('플랫폼을 하나 이상 골라야 합니다.');
-    }
-    return PlatformSelection._(ordered);
-  }
+  factory PlatformSelection.of(Iterable<ProjectPlatform> platforms) =>
+      PlatformSelection._(
+        orderedNonEmpty(
+          platforms,
+          ProjectPlatform.values,
+          '플랫폼을 하나 이상 골라야 합니다.',
+        ),
+      );
 
   /// 템플릿이 모바일 앱이므로 기본값도 모바일이다.
   static const mobile = PlatformSelection._([

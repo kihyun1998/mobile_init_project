@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart' show Key, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
+import 'package:mobile_init_builder/src/generation/app_language.dart';
+import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:mobile_init_builder/src/generation/project_platform.dart';
 import 'package:mobile_init_builder/src/template/template_locator.dart';
 import 'package:mobile_init_builder/src/ui/generate_form_page.dart';
@@ -187,6 +189,45 @@ void main() {
       File(p.join(root, 'pubspec.yaml')).readAsStringSync(),
       contains('fl_chart'),
     );
+  });
+
+  testWidgets('언어 체크를 풀면 그 번역 원본이 결과물에 없다', (tester) async {
+    await pumpForm(tester);
+    final english = find.byKey(GenerateFormPage.languageKey(AppLanguage.en));
+    await tester.ensureVisible(english);
+    await tester.pumpAndSettle();
+    await tester.tap(english);
+    await tester.pumpAndSettle();
+
+    await fillAndSubmit(tester, name: 'my_app');
+
+    final l10n = p.join(
+      outputParent.path,
+      'my_app',
+      p.joinAll(ProjectGenerator.arbDirSegments),
+    );
+    expect(File(p.join(l10n, 'intl_ko.arb')).existsSync(), isTrue);
+    expect(File(p.join(l10n, 'intl_en.arb')).existsSync(), isFalse);
+    expect(
+      File(p.join(outputParent.path, 'my_app', 'pubspec.yaml'))
+          .readAsStringSync(),
+      contains('main_locale: ko'),
+    );
+  });
+
+  testWidgets('언어를 하나도 안 고르면 막히고 flutter create 가 실행되지 않는다', (tester) async {
+    await pumpForm(tester);
+    for (final language in AppLanguage.values) {
+      final chip = find.byKey(GenerateFormPage.languageKey(language));
+      await tester.ensureVisible(chip);
+      await tester.pumpAndSettle();
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+    }
+    await fillAndSubmit(tester, name: 'my_app');
+
+    expect(find.textContaining('언어를 하나 이상'), findsOneWidget);
+    expect(runner.invocations, isEmpty);
   });
 
   testWidgets('잘못된 이름은 오류로 보이고 flutter create 가 실행되지 않는다', (tester) async {

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
+import '../generation/app_language.dart';
 import '../generation/file_manager.dart';
 import '../generation/generation_config.dart';
 import '../generation/generation_event.dart';
@@ -16,10 +17,11 @@ import '../generation/project_platform.dart';
 import 'generation_log.dart';
 import 'log_view.dart';
 
-/// 이름·표시 이름·설명·org·플랫폼·출력 폴더를 받아 새 프로젝트를 만들고,
+/// 이름·표시 이름·설명·org·플랫폼·언어·예제 여부·출력 폴더를 받아 새
+/// 프로젝트를 만들고,
 /// 진행 상황과 명령 출력을 보여주는 화면.
 ///
-/// 옵션(언어·예제)과 붙여넣은 테마 반영은 뒤따르는 티켓에서 붙는다.
+/// 붙여넣은 테마를 결과물에 반영하는 것은 뒤따르는 티켓에서 붙는다.
 class GenerateFormPage extends StatefulWidget {
   const GenerateFormPage({
     super.key,
@@ -37,6 +39,9 @@ class GenerateFormPage extends StatefulWidget {
 
   static Key platformKey(ProjectPlatform platform) =>
       Key('generate.platform.${platform.flag}');
+
+  static Key languageKey(AppLanguage language) =>
+      Key('generate.language.${language.code}');
 
   final ProjectGenerator generator;
 
@@ -58,6 +63,8 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   /// 기본값은 설정 객체가 정한 것을 그대로 쓴다. 여기에 목록을 한 벌 더
   /// 적어두면 플랫폼이 늘어날 때 둘 중 하나만 고치게 된다.
   final _platforms = PlatformSelection.mobile.platforms.toSet();
+
+  final _languages = LanguageSelection.all.languages.toSet();
 
   bool _includeExample = true;
 
@@ -121,6 +128,7 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
           projectName: PackageName.parse(_name.text),
           organization: Organization.parse(_organization.text),
           platforms: PlatformSelection.of(_platforms),
+          languages: LanguageSelection.of(_languages),
           includeExample: _includeExample,
           outputParent: Directory(_outputParent.text.trim()),
           // 빈 값을 무엇으로 채울지는 설정 객체가 안다. 여기서 한 번 더
@@ -220,7 +228,12 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   enabled: !_running,
                 ),
                 const SizedBox(height: 16),
-                _PlatformPicker(
+                _CheckboxGroup<ProjectPlatform>(
+                  label: '플랫폼',
+                  helper: '고르지 않은 플랫폼은 폴더조차 만들어지지 않습니다.',
+                  options: ProjectPlatform.values,
+                  labelOf: (platform) => platform.label,
+                  keyOf: GenerateFormPage.platformKey,
                   selected: _platforms,
                   enabled: !_running,
                   onToggle: (platform, on) => setState(() {
@@ -228,6 +241,23 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                       _platforms.add(platform);
                     } else {
                       _platforms.remove(platform);
+                    }
+                  }),
+                ),
+                const SizedBox(height: 16),
+                _CheckboxGroup<AppLanguage>(
+                  label: '지원 언어',
+                  helper: '고르지 않은 언어의 번역 파일은 결과물에 남지 않습니다.',
+                  options: AppLanguage.values,
+                  labelOf: (language) => language.label,
+                  keyOf: GenerateFormPage.languageKey,
+                  selected: _languages,
+                  enabled: !_running,
+                  onToggle: (language, on) => setState(() {
+                    if (on) {
+                      _languages.add(language);
+                    } else {
+                      _languages.remove(language);
                     }
                   }),
                 ),
@@ -394,21 +424,31 @@ class _Field extends StatelessWidget {
   }
 }
 
-/// 만들 플랫폼 고르기.
+/// 체크박스 여러 개를 한 묶음으로 보여주는 자리.
 ///
-/// 하나도 안 고른 상태를 여기서 막지 않는다. 생성 버튼을 누르는 순간
-/// [PlatformSelection] 이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된 이름과
-/// 같은 길을 타므로 "막는 자리" 가 화면 곳곳으로 흩어지지 않는다.
-class _PlatformPicker extends StatelessWidget {
-  const _PlatformPicker({
+/// 하나도 안 고른 상태를 여기서 막지 않는다. 생성 버튼을 누르는 순간 값
+/// 타입이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된 이름과 같은 길을 타므로
+/// "막는 자리" 가 화면 곳곳으로 흩어지지 않는다.
+class _CheckboxGroup<T> extends StatelessWidget {
+  const _CheckboxGroup({
+    required this.label,
+    required this.helper,
+    required this.options,
+    required this.labelOf,
+    required this.keyOf,
     required this.selected,
     required this.enabled,
     required this.onToggle,
   });
 
-  final Set<ProjectPlatform> selected;
+  final String label;
+  final String helper;
+  final List<T> options;
+  final String Function(T option) labelOf;
+  final Key Function(T option) keyOf;
+  final Set<T> selected;
   final bool enabled;
-  final void Function(ProjectPlatform platform, bool on) onToggle;
+  final void Function(T option, bool on) onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +458,7 @@ class _PlatformPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '플랫폼',
+          label,
           style: TextStyle(
             color: colors.foreground,
             fontWeight: FontWeight.w500,
@@ -428,26 +468,26 @@ class _PlatformPicker extends StatelessWidget {
         Wrap(
           spacing: 4,
           children: [
-            for (final platform in ProjectPlatform.values)
+            for (final option in options)
               InkWell(
-                key: GenerateFormPage.platformKey(platform),
+                key: keyOf(option),
                 onTap: enabled
-                    ? () => onToggle(platform, !selected.contains(platform))
+                    ? () => onToggle(option, !selected.contains(option))
                     : null,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Checkbox(
-                      value: selected.contains(platform),
+                      value: selected.contains(option),
                       onChanged: enabled
-                          ? (on) => onToggle(platform, on ?? false)
+                          ? (on) => onToggle(option, on ?? false)
                           : null,
                       activeColor: colors.primary,
                       checkColor: colors.primaryForeground,
                       side: BorderSide(color: colors.border),
                     ),
                     Text(
-                      platform.label,
+                      labelOf(option),
                       style: TextStyle(color: colors.foreground),
                     ),
                     const SizedBox(width: 12),
@@ -458,7 +498,7 @@ class _PlatformPicker extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '고르지 않은 플랫폼은 폴더조차 만들어지지 않습니다.',
+          helper,
           style: TextStyle(color: colors.mutedForeground, fontSize: 12),
         ),
       ],

@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile_init_builder/src/generation/app_language.dart';
 import 'package:mobile_init_builder/src/generation/generation_config.dart';
 import 'package:mobile_init_builder/src/generation/generation_exception.dart';
 import 'package:mobile_init_builder/src/generation/organization.dart';
@@ -49,6 +51,7 @@ void main() {
     String description = '내가 쓴 설명',
     String displayName = '',
     bool includeExample = true,
+    List<AppLanguage> languages = const [AppLanguage.ko, AppLanguage.en],
     List<ProjectPlatform> platforms = const [
       ProjectPlatform.android,
       ProjectPlatform.ios,
@@ -63,6 +66,7 @@ void main() {
             description: description,
             displayName: displayName,
             includeExample: includeExample,
+            languages: LanguageSelection.of(languages),
             platforms: PlatformSelection.of(platforms),
           ),
         )
@@ -449,6 +453,217 @@ void main() {
         users,
         everyElement(startsWith(p.joinAll(['lib', 'example']))),
       );
+    });
+  });
+
+  group('지원 언어', () {
+    String arb(String code) => p.joinAll([
+          ...ProjectGenerator.arbDirSegments,
+          'intl_$code.arb',
+        ]);
+
+    test('둘 다 고르면 둘 다 남는다', () async {
+      final root = await generate();
+
+      expect(File(p.join(root.path, arb('ko'))).existsSync(), isTrue);
+      expect(File(p.join(root.path, arb('en'))).existsSync(), isTrue);
+    });
+
+    test('고르지 않은 언어의 번역 원본이 없다', () async {
+      final root = await generate(languages: [AppLanguage.ko]);
+
+      expect(File(p.join(root.path, arb('ko'))).existsSync(), isTrue);
+      expect(File(p.join(root.path, arb('en'))).existsSync(), isFalse);
+    });
+
+    test('main_locale 이 고른 언어를 가리킨다', () async {
+      // 이걸 빼먹으면 intl_utils 가 기본값 en 을 찾다가 없는 intl_en.arb 를
+      // 빈 파일로 새로 만들고, 번역이 하나도 없는 S 를 생성한다.
+      final pubspec = read(
+        await generate(languages: [AppLanguage.ko]),
+        'pubspec.yaml',
+      );
+
+      expect(pubspec, contains('main_locale: ko'));
+      expect(
+        RegExp(r'^\s+main_locale:', multiLine: true).allMatches(pubspec),
+        hasLength(1),
+        reason: 'main_locale 이 여러 번 적히면 뒤엣것만 먹는다',
+      );
+    });
+
+    test('main_locale 은 flutter_intl 블록 안에 들어간다', () async {
+      final pubspec = read(
+        await generate(languages: [AppLanguage.en]),
+        'pubspec.yaml',
+      );
+      final lines = pubspec.split('\n');
+      final header = lines.indexWhere((l) => l.trimRight() == 'flutter_intl:');
+      final entry = lines.indexWhere((l) => l.contains('main_locale: en'));
+
+      expect(header, greaterThanOrEqualTo(0));
+      expect(entry, greaterThan(header));
+      // 블록이 끝나기 전이어야 한다.
+      expect(
+        lines.sublist(header + 1, entry).every(
+              (l) => l.trim().isEmpty || l.startsWith(' '),
+            ),
+        isTrue,
+      );
+    });
+
+    test('블록 안의 다른 설정은 건드리지 않는다', () async {
+      final pubspec = read(
+        await generate(languages: [AppLanguage.en]),
+        'pubspec.yaml',
+      );
+
+      expect(pubspec, contains('arb_dir:'));
+      expect(pubspec, contains('output_dir:'));
+    });
+
+    test('템플릿에 flutter_intl 블록이 실제로 있다', () {
+      // 블록을 못 찾으면 withMainLocale 은 조용히 아무것도 하지 않는다.
+      // 이름이 바뀌거나 사라지면 결과물이 컴파일되지 않는데 아무 소리가 없다.
+      expect(
+        File(p.join(templateDir.path, 'pubspec.yaml')).readAsStringSync(),
+        contains('\nflutter_intl:'),
+      );
+    });
+
+    test('두 언어의 arb 가 같은 키를 갖는다', () {
+      // main_locale 이 가리키는 arb 가 S 의 API 면을 정한다. 키가 어긋나면
+      // 어느 언어를 고르냐에 따라 없는 메서드가 생긴다.
+      Set<String> keysOf(String code) {
+        final raw = File(p.joinAll([
+          templateDir.path,
+          ...ProjectGenerator.arbDirSegments,
+          'intl_$code.arb',
+        ])).readAsStringSync();
+        return (jsonDecode(raw) as Map<String, dynamic>).keys
+            .where((k) => !k.startsWith('@'))
+            .toSet();
+      }
+
+      expect(keysOf('ko'), keysOf('en'));
+    });
+
+    group('main_locale 써넣기', () {
+      const block = '''
+name: x
+
+flutter_intl:
+  enabled: true
+  arb_dir: lib/l10n
+
+flutter:
+  uses-material-design: true
+''';
+
+      test('없으면 블록 안에 넣는다', () {
+        final out = ProjectGenerator.withMainLocale(block, 'ko');
+
+        expect(out, contains('  main_locale: ko'));
+        expect(out, contains('  enabled: true'));
+        expect(out, contains('  arb_dir: lib/l10n'));
+        final lines = out.split('\n');
+        final header = lines.indexOf('flutter_intl:');
+        final entry = lines.indexWhere((l) => l.contains('main_locale'));
+        expect(entry, greaterThan(header));
+        expect(lines.indexOf('flutter:'), greaterThan(entry));
+      });
+
+      test('있으면 바꾼다 — 늘어나지 않는다', () {
+        final once = ProjectGenerator.withMainLocale(block, 'ko');
+        final twice = ProjectGenerator.withMainLocale(once, 'en');
+
+        expect(twice, contains('  main_locale: en'));
+        expect(twice, isNot(contains('main_locale: ko')));
+        expect(
+          RegExp(r'main_locale', multiLine: true).allMatches(twice),
+          hasLength(1),
+        );
+      });
+
+      test('다른 블록의 같은 이름은 건드리지 않는다', () {
+        const other = '''
+flutter_intl:
+  enabled: true
+
+flutter_tweakcn_generator:
+  main_locale: 건드리지마
+''';
+        final out = ProjectGenerator.withMainLocale(other, 'ko');
+
+        expect(out, contains('  main_locale: 건드리지마'));
+        expect(out, contains('  main_locale: ko'));
+      });
+
+      test('블록이 없으면 아무것도 하지 않는다', () {
+        const none = 'name: x\n';
+        expect(ProjectGenerator.withMainLocale(none, 'ko'), none);
+      });
+    });
+
+    test('l10n 생성물을 손으로 건드리지 않는다', () async {
+      final root = await generate(languages: [AppLanguage.ko]);
+
+      // 복사된 그대로 남아 있어야 한다. 여기서 손으로 지우거나 고치면
+      // "생성 파일을 직접 편집하지 않는다" 가 깨지고, 재생성이 실패했을 때
+      // 그 사실이 가려진다.
+      //
+      // 실제로 언어가 줄어드는 건 후처리의 intl_utils:generate 다. 가짜
+      // 러너는 그걸 돌리지 않으므로 여기서는 검사할 수 없다 —
+      // tool/smoke_generate.dart 가 진짜로 돌려보고 확인한다.
+      final generated = File(p.join(root.path, 'lib', 'core', 'localization',
+          'generated', 'l10n.dart'));
+
+      expect(generated.existsSync(), isTrue);
+      expect(
+        generated.readAsStringSync(),
+        File(p.joinAll([
+          templateDir.path,
+          'lib',
+          'core',
+          'localization',
+          'generated',
+          'l10n.dart',
+        ])).readAsStringSync(),
+      );
+    });
+
+    test('하나도 고르지 않으면 만들 수 없다', () {
+      expect(
+        () => LanguageSelection.of(const []),
+        throwsA(isA<GenerationException>()),
+      );
+    });
+
+    test('고른 순서와 무관하게 main_locale 이 같다', () {
+      expect(
+        LanguageSelection.of([AppLanguage.en, AppLanguage.ko]).main,
+        AppLanguage.ko,
+      );
+      expect(
+        LanguageSelection.of([AppLanguage.ko, AppLanguage.en]).main,
+        AppLanguage.ko,
+      );
+    });
+
+    test('템플릿이 실제로 가진 arb 가 고를 수 있는 언어와 일치한다', () {
+      // 템플릿에 언어가 하나 늘었는데 AppLanguage 에 없으면, 그 arb 는
+      // 어떻게 골라도 지워진다. 반대로 목록에만 있으면 고를 수는 있는데
+      // 아무 효과가 없다.
+      final onDisk = Directory(
+        p.joinAll([templateDir.path, ...ProjectGenerator.arbDirSegments]),
+      )
+          .listSync()
+          .whereType<File>()
+          .where((f) => p.extension(f.path) == '.arb')
+          .map((f) => p.basenameWithoutExtension(f.path).split('_').last)
+          .toSet();
+
+      expect(onDisk, AppLanguage.values.map((l) => l.code).toSet());
     });
   });
 

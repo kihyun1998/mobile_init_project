@@ -109,17 +109,20 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () => ref.read(localeStateProvider.notifier).toggleLocale(),
-            icon: Text(
-              locale.languageCode.toUpperCase(),
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: colors.foreground,
+          // 지원 언어가 하나뿐이면 눌러도 아무 일이 없다. 그런 버튼은 두지 않는다.
+          if (LocaleState.supportedLocales.length > 1)
+            IconButton(
+              onPressed: () =>
+                  ref.read(localeStateProvider.notifier).toggleLocale(),
+              icon: Text(
+                locale.languageCode.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: colors.foreground,
+                ),
               ),
             ),
-          ),
           IconButton(
             onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
             icon: Icon(

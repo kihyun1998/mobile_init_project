@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'app_language.dart';
 import 'generation_config.dart';
 import 'generation_event.dart';
 import 'generation_exception.dart';
@@ -83,6 +84,7 @@ class ProjectGenerator {
     // 예제를 먼저 걷어낸다. 그래야 pubspec 에서 의존성이 빠진 뒤에
     // 이름·설명이 다시 쓰이고, 치환이 어차피 지울 파일을 훑지 않는다.
     if (!config.includeExample) _dropExample(projectRoot);
+    _applyLanguages(projectRoot, config.languages);
     _rewriteReferences(projectRoot, config, preserved);
     _applyDisplayName(projectRoot, config.displayName);
 
@@ -379,6 +381,91 @@ class HomeScreen extends StatelessWidget {
     }
 
     return kept.join('\n');
+  }
+
+  /// 번역 원본이 있는 자리.
+  static const arbDirSegments = [
+    'lib',
+    'core',
+    'localization',
+    'l10n',
+  ];
+
+  /// 고르지 않은 언어를 걷어낸다.
+  ///
+  /// **생성물은 손대지 않는다.** 번역 원본만 지우고 `main_locale` 을 맞춰두면,
+  /// 후처리의 `intl_utils:generate` 가 l10n 을 통째로 다시 만들면서 고아가 된
+  /// `messages_<code>.dart` 까지 알아서 지운다.
+  void _applyLanguages(Directory projectRoot, LanguageSelection languages) {
+    final arbDir = Directory(
+      p.joinAll([projectRoot.path, ...arbDirSegments]),
+    );
+    if (arbDir.existsSync()) {
+      final keep = languages.languages
+          .map((language) => 'intl_${language.code}.arb')
+          .toSet();
+
+      for (final file in arbDir.listSync().whereType<File>()) {
+        if (p.extension(file.path) != '.arb') continue;
+        if (!keep.contains(p.basename(file.path))) file.deleteSync();
+      }
+    }
+
+    _rewriteIfPresent(
+      File(p.join(projectRoot.path, 'pubspec.yaml')),
+      (yaml) => withMainLocale(yaml, languages.main.code),
+    );
+  }
+
+  /// `flutter_intl:` 블록의 `main_locale` 을 [code] 로 맞춘다.
+  ///
+  /// 없으면 넣고, 있으면 바꾼다. 빼먹으면 기본값 `en` 이 쓰이는데, 영어를
+  /// 고르지 않았다면 `intl_utils` 가 없는 `intl_en.arb` 를 **빈 파일로 새로
+  /// 만들고** 번역이 하나도 없는 `S` 를 생성한다. 결과물이 컴파일되지 않는다.
+  ///
+  /// 공개해 둔 이유는 테스트가 직접 부르기 위해서다. 생성기를 통해서는
+  /// 템플릿 pubspec 이 가진 모양 하나만 지나가므로 나머지 갈래가 덮이지 않는다.
+  static String withMainLocale(String yaml, String code) {
+    const entry = 'main_locale';
+
+    final lines = yaml.split('\n');
+    final header = lines.indexWhere((l) => l.trimRight() == 'flutter_intl:');
+    if (header < 0) return yaml;
+
+    final end = _blockEnd(lines, header);
+
+    final block = <String>[];
+    var written = false;
+    for (final line in lines.sublist(header + 1, end)) {
+      if (RegExp('^\\s+$entry\\s*:').hasMatch(line)) {
+        if (!written) {
+          block.add('  $entry: $code');
+          written = true;
+        }
+        continue;
+      }
+      block.add(line);
+    }
+    if (!written) block.insert(0, '  $entry: $code');
+
+    return [
+      ...lines.sublist(0, header + 1),
+      ...block,
+      ...lines.sublist(end),
+    ].join('\n');
+  }
+
+  /// [header] 로 시작하는 최상위 항목이 끝나는 줄 번호.
+  ///
+  /// 들여쓴 줄과 빈 줄은 그 항목에 딸린 것으로 본다. 들여쓰지 않은 줄이
+  /// 나오면 거기서 끝이다.
+  static int _blockEnd(List<String> lines, int header) {
+    var end = header + 1;
+    while (end < lines.length &&
+        (lines[end].trim().isEmpty || lines[end].startsWith(' '))) {
+      end++;
+    }
+    return end;
   }
 
   /// 표시 이름을 사람이 보는 세 자리에 넣는다.
