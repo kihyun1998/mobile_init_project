@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart' show Key, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
-import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:mobile_init_builder/src/generation/project_platform.dart';
+import 'package:mobile_init_builder/src/template/template_locator.dart';
 import 'package:mobile_init_builder/src/ui/generate_form_page.dart';
 import 'package:path/path.dart' as p;
 
 import 'support/fake_process_runner.dart';
+import 'support/fake_template_path_store.dart';
 
 void main() {
   late Directory outputParent;
@@ -22,20 +23,19 @@ void main() {
   tearDown(() => outputParent.deleteSync(recursive: true));
 
   Future<void> pumpForm(WidgetTester tester) async {
-    // 기본 테스트 표면(800x600)은 데스크톱 창치고 너무 작아서 폼 아래쪽이
-    // 잘린다. 필드는 뒤따르는 티켓에서 더 늘어나므로 넉넉히 잡는다.
-    tester.view.physicalSize = const Size(1280, 900);
+    // 폼 전체가 스크롤 없이 들어가는 크기로 잡는다. 실제 창에서는 스크롤이
+    // 되지만, 테스트에서 스크롤에 기대면 위젯이 하나 늘 때마다 tap 이
+    // 화면 밖을 찍어 엉뚱한 이유로 빨개진다.
+    tester.view.physicalSize = const Size(1280, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       BuilderApp(
-        generator: ProjectGenerator(
-          templateDir: Directory(p.join('..', 'template')),
-          processRunner: runner,
-        ),
+        locator: TemplateLocator(store: FakeTemplatePathStore()),
         processRunner: runner,
+        initialTemplateDir: Directory(p.join('..', 'template')),
       ),
     );
     await tester.pumpAndSettle();

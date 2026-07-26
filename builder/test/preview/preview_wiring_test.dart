@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
-import 'package:mobile_init_builder/src/generation/project_generator.dart';
+import 'package:mobile_init_builder/src/template/template_locator.dart';
 import 'package:mobile_init_builder/src/preview/preview_panel.dart';
 import 'package:mobile_init_project/ui/components/shadcn_card.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/fake_process_runner.dart';
+import '../support/fake_template_path_store.dart';
 import '../support/rendered_color.dart';
 
 void main() {
@@ -20,11 +21,9 @@ void main() {
 
     await tester.pumpWidget(
       BuilderApp(
-        generator: ProjectGenerator(
-          templateDir: Directory(p.join('..', 'template')),
-          processRunner: FakeProcessRunner(),
-        ),
+        locator: TemplateLocator(store: FakeTemplatePathStore()),
         processRunner: FakeProcessRunner(),
+        initialTemplateDir: Directory(p.join('..', 'template')),
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));

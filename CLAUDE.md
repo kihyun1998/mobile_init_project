@@ -30,7 +30,8 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 - **`preview_theme.dart` 의 파생 규칙은 생성기(`DartThemeGenerator`)가 하는 것과 한 글자도 다르면 안 된다.** 색→ColorScheme 매핑, 없는 토큰을 투명으로 두는 것, `--radius` 기본 8.0 까지 전부. "미리보기에서 더 예쁘게 보이도록" 하는 처리를 넣는 순간 미리보기가 거짓말을 시작한다. 반영하지 못하는 것(폰트 등)은 감추지 말고 화면에 알린다.
 - **빌더 UI에서는 `.w` `.h` `.sp` `.r` 을 쓰지 말 것.** 미리보기 캔버스가 `ScreenUtil` 싱글톤을 폰 크기(375×812)로 설정하는데 이건 프로세스 전역이다. 데스크톱 폼에서 이 단위를 쓰면 폰 배율이 딸려온다. 데스크톱 쪽은 생짜 논리 픽셀을 쓴다.
 - **macOS와 Windows 양쪽에서 돈다.** 경로는 반드시 `package:path` 의 `p.join` 을 쓰고 `/` 를 문자열로 이어붙이지 말 것. `Process.run` 으로 `flutter` 를 부를 땐 `runInShell: true` — Windows에선 `flutter.bat` 이다.
-- `template/` 실제 경로는 `../template` 을 먼저 보고, 없으면 사용자에게 폴더를 묻고 `shared_preferences` 에 저장한다.
+- **macOS 앱 샌드박스를 켜지 말 것.** `builder/macos/Runner/*.entitlements` 의 `com.apple.security.app-sandbox` 는 빼둔 상태다. 켜면 `Directory.current` 가 `~/Library/Containers/…/Data` 가 되어 `../template` 이 해석되지 않고, `Process.run('flutter', …)` 도 실패한다. 즉 이 도구가 하는 일이 전부 막힌다. `flutter create` 로 `macos/` 를 다시 만들면 기본값으로 되살아나므로 주의 — `builder/test/macos_sandbox_test.dart` 가 지키고 있다.
+- `template/` 실제 경로는 **저장된 경로 → `../template` → 저장소 루트의 `template`** 순으로 본다. 아무 데도 없으면 폴더를 묻고 `shared_preferences` 에 **절대 경로로** 저장한다. 저장된 것을 기본 위치보다 먼저 보는 이유는, 설정에서 바꿔둔 경로가 조용히 무시되면 바꾼 의미가 없기 때문이다. 고른 폴더가 템플릿인지(필수 항목 + pubspec 의 `name`) 확인한 뒤에 저장한다.
 
 ## template/ 작업 규칙
 
