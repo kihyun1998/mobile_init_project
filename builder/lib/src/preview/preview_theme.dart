@@ -14,17 +14,23 @@ class PreviewThemeException implements Exception {
 
 /// tweakcn CSS 한 덩어리를 라이트/다크 [ThemeData] 한 쌍으로 바꾼다.
 ///
-/// **파서 출력을 테마로 옮기는 매핑은 전부 이 파일 안에 있다.**
-/// `flutter_tweakcn_generator` 는 빌드 타임 코드 생성기라 CSS → Dart 소스는
-/// 하지만 CSS → 런타임 객체는 하지 못한다. 그 간극을 여기서 메운다.
-/// 생성기에 런타임 팩토리가 들어오면
-/// (kihyun1998/flutter_tweakcn_generator#11) [_colorsFrom]·[_radiusFrom]·
-/// [_shadowsFrom] 세 함수만 그 호출로 바꾸면 된다.
+/// **색·radius·그림자 파생은 생성기가 한다.** 0.4.0 이
+/// `TweakcnColors.fromMap` · `TweakcnRadius.fromRadius` ·
+/// `TweakcnShadows.fromShadowMap` 을 생성 파일에 함께 뱉으므로
+/// (kihyun1998/flutter_tweakcn_generator#11), 이 파일은 그것을 부른다.
+/// 손으로 베낀 사본이 없으니 색 토큰이 추가돼도 조용히 뒤처질 수 없다.
 ///
-/// **모든 파생 규칙은 생성기가 하는 것을 그대로 따라간다** — 색 매핑, 누락
-/// 토큰 처리, radius 공식까지. 여기서 한 군데라도 갈리면 미리보기가 생성
-/// 결과와 다른 화면을 보여주고, 그 순간 이 도구의 존재 이유가 사라진다.
-/// "미리보기에서 더 예쁘게 보이도록" 하는 처리를 넣지 말 것.
+/// **아직 사본으로 남은 두 군데가 있고, 둘 다 갈릴 수 있다:**
+///
+/// - [colorTokens] — CSS 가 정의하지 않은 토큰을 사용자에게 알리는 데만 쓴다.
+///   생성기의 목록(`_extensionColorTokens`)이 private 이라 가져올 수 없다.
+///   여기가 낡으면 잘못된 색이 아니라 **잘못된 안내**가 나간다.
+/// - [_themeFrom] 의 [ColorScheme] 매핑 — 생성기의 `_colorSchemeMapping` 에
+///   대응하는 런타임 팩토리가 아직 없다. 여기가 갈리면 화면이 실제로 달라진다.
+///
+/// 그 두 곳에 "미리보기에서 더 예쁘게 보이도록" 하는 처리를 넣지 말 것.
+/// 반영하지 못하는 것은 감추지 않고 [missingTokens] · [unsupportedFont] 로
+/// 화면에 알린다.
 class PreviewTheme {
   const PreviewTheme({
     required this.light,
@@ -67,9 +73,11 @@ class PreviewTheme {
       );
     }
 
-    // 생성기와 같다: 라이트 우선, 없으면 다크, 둘 다 없으면 8.0.
+    // 라이트 우선, 없으면 다크. 둘 다 없으면 팩토리가 8.0 을 쓴다.
     // 두 모드가 하나의 radius 를 공유한다.
-    final radius = _radiusFrom(parsed.light.radius ?? parsed.dark.radius);
+    final radius = TweakcnRadius.fromRadius(
+      parsed.light.radius ?? parsed.dark.radius,
+    );
 
     final missing = <String>{
       ..._missingIn(parsed.light.colors),
@@ -79,15 +87,15 @@ class PreviewTheme {
     return PreviewTheme(
       light: _themeFrom(
         brightness: Brightness.light,
-        colors: _colorsFrom(parsed.light.colors),
+        colors: TweakcnColors.fromMap(parsed.light.colors),
         radius: radius,
-        shadows: _shadowsFrom(parsed.light.shadows),
+        shadows: TweakcnShadows.fromShadowMap(parsed.light.shadowLayers),
       ),
       dark: _themeFrom(
         brightness: Brightness.dark,
-        colors: _colorsFrom(parsed.dark.colors),
+        colors: TweakcnColors.fromMap(parsed.dark.colors),
         radius: radius,
-        shadows: _shadowsFrom(parsed.dark.shadows),
+        shadows: TweakcnShadows.fromShadowMap(parsed.dark.shadowLayers),
       ),
       missingTokens: missing,
       // 생성기와 같은 추출기를 쓴다. 미리보기는 폰트를 반영하지 못하므로
@@ -99,6 +107,11 @@ class PreviewTheme {
   }
 
   /// 생성기의 `_extensionColorTokens` 와 같은 목록이어야 한다.
+  ///
+  /// 사본인 이유는 그 목록이 private 이기 때문이다. 색을 만드는 데는 쓰이지
+  /// 않고 — 그건 `TweakcnColors.fromMap` 이 한다 — CSS 가 정의하지 않은
+  /// 토큰을 사용자에게 알리는 데만 쓴다. 그래서 낡았을 때의 증상은 잘못된
+  /// 색이 아니라 잘못된 안내다.
   static const colorTokens = <String>[
     'background', 'foreground',
     'card', 'card-foreground',
@@ -127,7 +140,8 @@ class PreviewTheme {
   }) {
     return ThemeData(
       brightness: brightness,
-      // 생성기의 _colorSchemeMapping 과 하나씩 대응한다. 특히 outlineVariant 는
+      // 생성기의 _colorSchemeMapping 과 하나씩 대응한다. 여기에 대응하는
+      // 런타임 팩토리는 아직 없어서 사본으로 남는다. 특히 outlineVariant 는
       // border 가 아니라 input, surfaceContainerLowest 는 background 가 아니라
       // card 다. 템플릿 CSS 는 두 쌍이 같은 값이라 틀려도 티가 나지 않는다.
       colorScheme: ColorScheme(
@@ -147,88 +161,6 @@ class PreviewTheme {
         onSurfaceVariant: colors.mutedForeground,
       ),
       extensions: [colors, radius, shadows],
-    );
-  }
-
-  /// CSS 변수 이름(kebab) → [TweakcnColors] 필드.
-  ///
-  /// 없는 토큰은 **생성기와 똑같이 투명**으로 둔다. 템플릿 색으로 채우면
-  /// 미리보기는 멀쩡한데 생성된 앱만 투명해진다.
-  static TweakcnColors _colorsFrom(Map<String, int> css) {
-    Color pick(String token) => Color(css[token] ?? 0x00000000);
-
-    return TweakcnColors(
-      background: pick('background'),
-      foreground: pick('foreground'),
-      card: pick('card'),
-      cardForeground: pick('card-foreground'),
-      popover: pick('popover'),
-      popoverForeground: pick('popover-foreground'),
-      primary: pick('primary'),
-      primaryForeground: pick('primary-foreground'),
-      secondary: pick('secondary'),
-      secondaryForeground: pick('secondary-foreground'),
-      muted: pick('muted'),
-      mutedForeground: pick('muted-foreground'),
-      accent: pick('accent'),
-      accentForeground: pick('accent-foreground'),
-      destructive: pick('destructive'),
-      destructiveForeground: pick('destructive-foreground'),
-      border: pick('border'),
-      input: pick('input'),
-      ring: pick('ring'),
-      chart1: pick('chart-1'),
-      chart2: pick('chart-2'),
-      chart3: pick('chart-3'),
-      chart4: pick('chart-4'),
-      chart5: pick('chart-5'),
-      sidebar: pick('sidebar'),
-      sidebarForeground: pick('sidebar-foreground'),
-      sidebarPrimary: pick('sidebar-primary'),
-      sidebarPrimaryForeground: pick('sidebar-primary-foreground'),
-      sidebarAccent: pick('sidebar-accent'),
-      sidebarAccentForeground: pick('sidebar-accent-foreground'),
-      sidebarBorder: pick('sidebar-border'),
-      sidebarRing: pick('sidebar-ring'),
-    );
-  }
-
-  /// shadcn 규칙: lg = radius, md = radius-2, sm = radius-4, xl = radius+4.
-  /// `--radius` 가 없을 때의 기본 8.0 까지 생성기와 같다.
-  static TweakcnRadius _radiusFrom(double? radius) {
-    final base = radius ?? 8.0;
-
-    return TweakcnRadius(
-      sm: (base - 4).clamp(0.0, double.infinity),
-      md: (base - 2).clamp(0.0, double.infinity),
-      lg: base,
-      xl: base + 4,
-    );
-  }
-
-  /// 없는 그림자는 생성기와 같이 빈 목록이다.
-  static TweakcnShadows _shadowsFrom(Map<String, List<ShadowData>> css) {
-    List<BoxShadow> pick(String token) =>
-        (css[token] ?? const <ShadowData>[])
-            .map(
-              (s) => BoxShadow(
-                offset: Offset(s.offsetX, s.offsetY),
-                blurRadius: s.blurRadius,
-                spreadRadius: s.spreadRadius,
-                color: Color(s.color),
-              ),
-            )
-            .toList();
-
-    return TweakcnShadows(
-      shadow2xs: pick('shadow-2xs'),
-      shadowXs: pick('shadow-xs'),
-      shadowSm: pick('shadow-sm'),
-      shadow: pick('shadow'),
-      shadowMd: pick('shadow-md'),
-      shadowLg: pick('shadow-lg'),
-      shadowXl: pick('shadow-xl'),
-      shadow2xl: pick('shadow-2xl'),
     );
   }
 }

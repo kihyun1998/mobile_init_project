@@ -13,8 +13,9 @@ String _$themeHash() => r'edbfd9aa77eacb303c7e8b3e4baa29ab0f72ca62';
 final themeProvider = NotifierProvider<Theme, AppMode>.internal(
   Theme.new,
   name: r'themeProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$themeHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$themeHash,
   dependencies: const <ProviderOrFamily>[],
   allTransitiveDependencies: const <ProviderOrFamily>{},
 );

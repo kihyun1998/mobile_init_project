@@ -13,12 +13,13 @@ String _$languageHash() => r'8790e18093b69934a6e14cc91d93c52348cf1251';
 final languageProvider = AutoDisposeProvider<S>.internal(
   language,
   name: r'languageProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$languageHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$languageHash,
   dependencies: <ProviderOrFamily>[localeStateProvider],
   allTransitiveDependencies: <ProviderOrFamily>{
     localeStateProvider,
-    ...?localeStateProvider.allTransitiveDependencies
+    ...?localeStateProvider.allTransitiveDependencies,
   },
 );
 

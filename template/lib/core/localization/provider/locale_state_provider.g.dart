@@ -6,15 +6,16 @@ part of 'locale_state_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localeStateHash() => r'826ee0e57541b298c5c5b70cf8958467dd46665e';
+String _$localeStateHash() => r'df170fa2925709e3f441b692f0a2e98cc8e376dc';
 
 /// See also [LocaleState].
 @ProviderFor(LocaleState)
 final localeStateProvider = NotifierProvider<LocaleState, Locale>.internal(
   LocaleState.new,
   name: r'localeStateProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$localeStateHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$localeStateHash,
   dependencies: const <ProviderOrFamily>[],
   allTransitiveDependencies: const <ProviderOrFamily>{},
 );
