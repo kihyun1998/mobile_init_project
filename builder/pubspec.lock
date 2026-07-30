@@ -105,6 +105,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  dart_style:
+    dependency: transitive
+    description:
+      name: dart_style
+      sha256: "59d53ef8eaed9d288ed9767618e2b31c4fa0383a127db59d5eb2e737a7638a60"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.9"
   dbus:
     dependency: transitive
     description:
@@ -220,10 +228,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_tweakcn_generator
-      sha256: "7cff68e21f5cece9b8af6ca9c7f3d6355acac4de21cacae53d67dd707702a80e"
+      sha256: ee97735e5d32ce9cba2aa62b1fccd8006fd68a6cc85bc81867c740f68768759e
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.0"
   flutter_web_plugins:
     dependency: transitive
     description: flutter

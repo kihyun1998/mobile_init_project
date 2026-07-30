@@ -13,8 +13,9 @@ String _$navigationHash() => r'a20f313485d8ca71048bbabbc1cbc7906d6eb726';
 final navigationProvider = NotifierProvider<Navigation, int>.internal(
   Navigation.new,
   name: r'navigationProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$navigationHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$navigationHash,
   dependencies: const <ProviderOrFamily>[],
   allTransitiveDependencies: const <ProviderOrFamily>{},
 );
