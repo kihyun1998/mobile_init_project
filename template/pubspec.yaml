@@ -6,8 +6,17 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.0.0"
+  # Flutter 3.35.0 (Dart 3.9.0) 에서 확인했다 — 템플릿 테스트와, 이 템플릿으로
+  # 실제 생성한 프로젝트의 테스트가 양쪽 다 통과한다.
+  #
+  # 하한은 shared_preferences 2.5.5 가 flutter >=3.35.0 을 요구하는 데서 온다.
+  # 직접 의존성 중 가장 높다 (다음이 flutter_screenutil 의 >=3.10.0).
+  #
+  # 이 값은 생성되는 모든 프로젝트로 그대로 따라가므로 거짓으로 두면 안 된다.
+  # 예전의 >=3.0.0 은 의존성이 이미 반증하는 값이어서, 낮은 SDK 를 쓰는 사람의
+  # pub get 은 통과시키면서 컴파일만 실패하게 만들었다.
+  sdk: ^3.9.0
+  flutter: ">=3.35.0"
 
 dependencies:
   flutter:

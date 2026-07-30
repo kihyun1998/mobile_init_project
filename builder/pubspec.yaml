@@ -6,7 +6,14 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.2
+  # Flutter 3.35.0 (Dart 3.9.0) 에서 확인했다 — 별도로 받은 3.35.0 으로 테스트
+  # 135개 전부 통과하고, 진짜 생성까지 돌려 결과물 테스트도 통과한다.
+  #
+  # flutter create 가 찍어둔 ^3.12.2 는 그때 개발 머신에 깔려 있던 SDK 였을
+  # 뿐이고, 필요한 값보다 9개 마이너 버전 높았다. 하한은 template 을 통해
+  # 들어오는 shared_preferences 2.5.5 의 flutter >=3.35.0 에서 온다.
+  sdk: ^3.9.0
+  flutter: ">=3.35.0"
 
 dependencies:
   file_picker: ^11.0.2
