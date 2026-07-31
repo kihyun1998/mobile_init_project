@@ -41,10 +41,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // Chat
   final _chatController = TextEditingController();
   final List<_ChatMessage> _chatMessages = [
-    _ChatMessage('Hi, how can I help you today?', false, 'Sofia', 'SD'),
-    _ChatMessage('Hey, I\'m having trouble with my account.', true, 'You', 'YO'),
-    _ChatMessage('What seems to be the problem?', false, 'Sofia', 'SD'),
-    _ChatMessage('I can\'t log in to my account.', true, 'You', 'YO'),
+    const _ChatMessage('Hi, how can I help you today?', false, 'Sofia', 'SD'),
+    const _ChatMessage('Hey, I\'m having trouble with my account.', true, 'You', 'YO'),
+    const _ChatMessage('What seems to be the problem?', false, 'Sofia', 'SD'),
+    const _ChatMessage('I can\'t log in to my account.', true, 'You', 'YO'),
   ];
 
   // Report Issue
@@ -192,10 +192,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             height: 180.h,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
-                lineTouchData: LineTouchData(enabled: false),
+                lineTouchData: const LineTouchData(enabled: false),
                 lineBarsData: [
                   LineChartBarData(
                     spots: const [
@@ -207,7 +207,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     isCurved: true,
                     color: colors.chart1,
                     barWidth: 2.r,
-                    dotData: FlDotData(show: false),
+                    dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
                       color: colors.chart1.withValues(alpha: 0.15),
@@ -246,8 +246,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             height: 180.h,
             child: BarChart(
               BarChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
                 barTouchData: BarTouchData(enabled: false),
                 barGroups: List.generate(12, (i) {
@@ -330,8 +330,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             height: 80.h,
             child: BarChart(
               BarChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
                 barTouchData: BarTouchData(enabled: false),
                 barGroups: List.generate(7, (i) {
@@ -392,7 +392,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         height: 200.h,
         child: LineChart(
           LineChartData(
-            gridData: FlGridData(show: false),
+            gridData: const FlGridData(show: false),
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
@@ -416,12 +416,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   },
                 ),
               ),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
-            lineTouchData: LineTouchData(enabled: false),
+            lineTouchData: const LineTouchData(enabled: false),
             lineBarsData: [
               LineChartBarData(
                 spots: const [
@@ -431,7 +431,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 isCurved: true,
                 color: colors.chart1,
                 barWidth: 2.r,
-                dotData: FlDotData(show: false),
+                dotData: const FlDotData(show: false),
               ),
               LineChartBarData(
                 spots: const [
@@ -441,7 +441,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 isCurved: true,
                 color: colors.chart2,
                 barWidth: 2.r,
-                dotData: FlDotData(show: false),
+                dotData: const FlDotData(show: false),
                 dashArray: [5, 5],
               ),
             ],
@@ -516,9 +516,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   Widget _buildTeamMembersCard(TweakcnColors colors, S s) {
     final members = [
-      _TeamMember('Sofia Davis', 'm@example.com', 'SD'),
-      _TeamMember('Jackson Lee', 'p@example.com', 'JL'),
-      _TeamMember('Isabella Nguyen', 'i@example.com', 'IN'),
+      const _TeamMember('Sofia Davis', 'm@example.com', 'SD'),
+      const _TeamMember('Jackson Lee', 'p@example.com', 'JL'),
+      const _TeamMember('Isabella Nguyen', 'i@example.com', 'IN'),
     ];
 
     return ShadcnCard(
@@ -657,7 +657,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           SizedBox(height: 16.h),
           Row(
             children: [
-              Expanded(child: ShadcnSeparator(margin: EdgeInsets.zero)),
+              const Expanded(child: ShadcnSeparator(margin: EdgeInsets.zero)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                 child: Text(
@@ -669,7 +669,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   ),
                 ),
               ),
-              Expanded(child: ShadcnSeparator(margin: EdgeInsets.zero)),
+              const Expanded(child: ShadcnSeparator(margin: EdgeInsets.zero)),
             ],
           ),
           SizedBox(height: 16.h),
@@ -710,7 +710,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
       padding: EdgeInsets.all(16.r),
       titleWidget: Row(
         children: [
-          ShadcnAvatar(initial: 'SD', size: 36),
+          const ShadcnAvatar(initial: 'SD', size: 36),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -850,11 +850,11 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   Widget _buildPaymentsCard(TweakcnColors colors, S s) {
     final payments = [
-      _Payment('INV001', 'success', 'ken99@example.com', 316.0),
-      _Payment('INV002', 'success', 'abe45@example.com', 242.0),
-      _Payment('INV003', 'processing', 'monserrat44@example.com', 837.0),
-      _Payment('INV004', 'success', 'silas22@example.com', 874.0),
-      _Payment('INV005', 'failed', 'carmella@example.com', 721.0),
+      const _Payment('INV001', 'success', 'ken99@example.com', 316.0),
+      const _Payment('INV002', 'success', 'abe45@example.com', 242.0),
+      const _Payment('INV003', 'processing', 'monserrat44@example.com', 837.0),
+      const _Payment('INV004', 'success', 'silas22@example.com', 874.0),
+      const _Payment('INV005', 'failed', 'carmella@example.com', 721.0),
     ];
 
     return ShadcnCard(

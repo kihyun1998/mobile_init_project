@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../logger/app_logger.dart';
+
 /// Debounce 작업을 나타내는 클래스
 class DebounceOperation {
   final String key;
@@ -19,9 +21,9 @@ class DebounceOperation {
     _timer = Timer(delay, () async {
       try {
         await operation();
-      } catch (e) {
-        // 에러 로깅 (나중에 로깅 서비스로 교체 가능)
-        print('Debounce operation failed for key "$key": $e');
+      } catch (e, stackTrace) {
+        // 타이머 콜백이라 이 예외를 받아줄 곳이 없다. 삼키되 흔적은 남긴다.
+        logger.e('Debounce operation failed for key "$key"', e, stackTrace);
       }
     });
   }
@@ -31,8 +33,9 @@ class DebounceOperation {
     _timer?.cancel();
     try {
       await operation();
-    } catch (e) {
-      print('Immediate execution failed for key "$key": $e');
+    } catch (e, stackTrace) {
+      // 여기서는 호출자가 받아서 처리할 수 있으므로 남기고 다시 던진다.
+      logger.e('Immediate execution failed for key "$key"', e, stackTrace);
       rethrow;
     }
   }
