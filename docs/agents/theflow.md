@@ -251,19 +251,32 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
   바뀌어 `../template` 해석과 `Process.run('flutter', …)` 이 둘 다 죽는다.
 - **`builder/test/template_link_test.dart`** — template 컴포넌트가 빌더 위젯 트리에서
   렌더된다는 전제. 이게 깨지면 미리보기의 약속이 무너진 것이다.
-- **Windows 검증** — 개발 머신이 바뀌면 프로세스 실행과 경로 조합이 첫 번째로 터지는
+- **지금 개발 머신이 아닌 OS** — 프로세스 실행과 경로 조합이 첫 번째로 터지는
   자리다. `p.join` 을 쓰고 `runInShell: true` 로 부른다(Windows 는 `flutter.bat`).
-- **포맷은 게이트로 강제되지 않는다** (CI 없음). `dart format` 은 돌리되 실패 조건이
-  아니다.
+  로컬에서는 한 OS 만 볼 수 있으므로 **이 사각지대는 CI 가 덮는다** — 아래 참고.
+- **포맷은 게이트다.** `dart format --output=none --set-exit-if-changed lib test` 를
+  양쪽 모듈에서 통과해야 한다. CI 는 이 검사를 **ubuntu 에서만** 돌린다 —
+  `.gitattributes` 가 `* text=auto` 라 Windows 체크아웃은 CRLF 이고, 줄바꿈 때문에
+  코드가 멀쩡한데 빨개지는 것을 피하기 위해서다. 포맷은 OS 를 타지 않는다.
 
 ### 브랜치 / PR / CI
 
 - 브랜치: `<type>/<slug>` — 실물 전례 `feat/tweakcn-0.4.0`, `test/windows-process-runner`.
 - **squash PR** 로 병합하고 제목에 이슈 번호를 남긴다 (`feat: 지원 언어 선택 (#8)`).
   PR 이 이슈를 닫는다.
-- **CI 가 없다 (`.github/workflows` 없음).** "CI 초록 확인" 단계는 N/A 이고, **로컬
-  게이트가 유일한 게이트다.** 그래서 위 매트릭스를 빠뜨리면 아무도 안 잡아준다.
-  게이트를 파이프에 물려 돌리지 않는다 — `flutter test | tail -1 && commit` 은 항상
+- **CI 는 `.github/workflows/gates.yml` 하나다** (워크플로 이름 `gates`). 위 매트릭스를
+  그대로 돌리며, PR 과 main 푸시에서 뜬다. 갈리면 **바인딩이 기준이고 워크플로를
+  맞춘다** — 워크플로 주석에도 그렇게 적어뒀다.
+  - `format` 잡 — ubuntu 에서 포맷만.
+  - `gates` 잡 — **ubuntu · macOS · Windows 3종**에서 두 모듈의 analyze + test.
+    `fail-fast: false` 라 한 OS 가 깨져도 나머지 결과가 남는다. 어느 OS 에서만
+    깨지는지가 진단의 절반이다.
+  - Flutter 버전은 `FLUTTER_VERSION` 으로 **고정**한다(현재 3.44.8). `channel: stable`
+    로 두면 Flutter 가 새로 나오는 날 아무도 코드를 안 건드렸는데 main 이 빨개진다.
+    올릴 때는 로컬 게이트를 돌려보고 의도적으로 올린다.
+- **CI 가 로컬 게이트를 대체하지 않는다.** 구현 중에 CI 를 쳐다보고 있지 말 것 —
+  로컬 게이트가 같은 것을 훨씬 빨리 돌려준다. CI 의 값은 **다른 OS** 와 머지 게이트다.
+- 게이트를 파이프에 물려 돌리지 않는다 — `flutter test | tail -1 && commit` 은 항상
   커밋된다.
 
 ### 릴리스 / downstream loop
