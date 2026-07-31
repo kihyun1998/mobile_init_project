@@ -68,9 +68,8 @@ Future<void> main(List<String> args) async {
 
     final line = await firstLine.future.timeout(
       _generous,
-      onTimeout: () => throw StateError(
-        '자식이 아직 살아 있는데 첫 줄이 오지 않았다 — 출력이 버퍼링되고 있다',
-      ),
+      onTimeout: () =>
+          throw StateError('자식이 아직 살아 있는데 첫 줄이 오지 않았다 — 출력이 버퍼링되고 있다'),
     );
     expect(line, '첫줄');
 
@@ -92,11 +91,12 @@ Future<void> main() async {
 }
 ''');
 
-    final result = await runner.run(dartPath, [path]).timeout(
+    final result = await runner
+        .run(dartPath, [path])
+        .timeout(
           _generous,
-          onTimeout: () => throw StateError(
-            '자식이 stdin 을 기다리며 멈췄다 — stdin 을 닫지 않고 있다',
-          ),
+          onTimeout: () =>
+              throw StateError('자식이 stdin 을 기다리며 멈췄다 — stdin 을 닫지 않고 있다'),
         );
 
     expect(result.exitCode, 0);
@@ -120,11 +120,7 @@ void main() {
   });
 
   test('실패 문구는 긴 로그를 통째로 쏟지 않는다', () {
-    const result = ProcessRunResult(
-      exitCode: 1,
-      stdout: '',
-      stderr: '',
-    );
+    const result = ProcessRunResult(exitCode: 1, stdout: '', stderr: '');
     expect(result.failureOutput, isEmpty);
 
     final long = ProcessRunResult(

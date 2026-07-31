@@ -28,8 +28,9 @@ void main() {
       ..createSync(recursive: true);
     Directory(p.join(dir.path, 'lib')).createSync();
     File(p.join(dir.path, 'tweakcn.css')).writeAsStringSync(':root {}');
-    File(p.join(dir.path, 'pubspec.yaml'))
-        .writeAsStringSync('name: someone_elses_app\n');
+    File(
+      p.join(dir.path, 'pubspec.yaml'),
+    ).writeAsStringSync('name: someone_elses_app\n');
     return dir;
   }
 
@@ -70,9 +71,7 @@ void main() {
 
   group('찾기', () {
     test('기본 위치에 있으면 저장된 것 없이도 찾는다', () async {
-      final found = await locator(
-        candidates: [realTemplate.path],
-      ).locate();
+      final found = await locator(candidates: [realTemplate.path]).locate();
 
       expect(found?.path, realTemplate.path);
       expect(store.written, isNull, reason: '찾기만 했는데 저장하면 안 된다');
@@ -112,7 +111,10 @@ void main() {
       // 순간 물어봐야 한다. 기본 위치까지 없는 이 경우가 진짜 그 상황이다.
       store.value = p.join(scratch.path, '지워진곳');
 
-      expect(await locator(candidates: [p.join(scratch.path, '여기도없음')]).locate(), isNull);
+      expect(
+        await locator(candidates: [p.join(scratch.path, '여기도없음')]).locate(),
+        isNull,
+      );
     });
 
     test('기본 위치 목록이 개발 중 실제로 맞는다', () async {
@@ -141,10 +143,7 @@ void main() {
 
   group('고르기', () {
     test('템플릿이면 기억한다', () async {
-      final result = await chooseTemplate(
-        store,
-        () async => realTemplate.path,
-      );
+      final result = await chooseTemplate(store, () async => realTemplate.path);
 
       expect(result.problem, isNull);
       expect(result.directory?.path, realTemplate.path);
@@ -159,11 +158,7 @@ void main() {
 
       expect(result.directory, isNull);
       expect(result.problem, contains('다른 Flutter 프로젝트'));
-      expect(
-        store.written,
-        isNull,
-        reason: '엉뚱한 폴더를 저장하면 다음 실행에도 같은 이유로 실패한다',
-      );
+      expect(store.written, isNull, reason: '엉뚱한 폴더를 저장하면 다음 실행에도 같은 이유로 실패한다');
     });
 
     test('취소하면 아무 일도 없다', () async {

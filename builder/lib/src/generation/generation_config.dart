@@ -26,8 +26,8 @@ class GenerationConfig {
     this.includeExample = true,
     String description = '',
     String displayName = '',
-  })  : description = _or(description, defaultDescription),
-        displayName = _or(displayName, projectName.value);
+  }) : description = _or(description, defaultDescription),
+       displayName = _or(displayName, projectName.value);
 
   static const defaultDescription = 'A new Flutter project.';
 

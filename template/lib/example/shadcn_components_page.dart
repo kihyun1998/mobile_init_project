@@ -42,7 +42,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   final _chatController = TextEditingController();
   final List<_ChatMessage> _chatMessages = [
     const _ChatMessage('Hi, how can I help you today?', false, 'Sofia', 'SD'),
-    const _ChatMessage('Hey, I\'m having trouble with my account.', true, 'You', 'YO'),
+    const _ChatMessage(
+      'Hey, I\'m having trouble with my account.',
+      true,
+      'You',
+      'YO',
+    ),
     const _ChatMessage('What seems to be the problem?', false, 'Sofia', 'SD'),
     const _ChatMessage('I can\'t log in to my account.', true, 'You', 'YO'),
   ];
@@ -126,7 +131,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           IconButton(
             onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
             icon: Icon(
-              mode == AppMode.light ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              mode == AppMode.light
+                  ? Icons.dark_mode_outlined
+                  : Icons.light_mode_outlined,
               color: colors.foreground,
               size: 20.r,
             ),
@@ -199,10 +206,18 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 lineBarsData: [
                   LineChartBarData(
                     spots: const [
-                      FlSpot(0, 3), FlSpot(1, 1.5), FlSpot(2, 4),
-                      FlSpot(3, 3.5), FlSpot(4, 5), FlSpot(5, 3),
-                      FlSpot(6, 4.5), FlSpot(7, 6), FlSpot(8, 5.5),
-                      FlSpot(9, 7), FlSpot(10, 6), FlSpot(11, 8),
+                      FlSpot(0, 3),
+                      FlSpot(1, 1.5),
+                      FlSpot(2, 4),
+                      FlSpot(3, 3.5),
+                      FlSpot(4, 5),
+                      FlSpot(5, 3),
+                      FlSpot(6, 4.5),
+                      FlSpot(7, 6),
+                      FlSpot(8, 5.5),
+                      FlSpot(9, 7),
+                      FlSpot(10, 6),
+                      FlSpot(11, 8),
                     ],
                     isCurved: true,
                     color: colors.chart1,
@@ -291,7 +306,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
               _circleButton(
                 icon: Icons.remove,
                 colors: colors,
-                onTap: () => setState(() => _moveGoal = max(100, _moveGoal - 10)),
+                onTap: () =>
+                    setState(() => _moveGoal = max(100, _moveGoal - 10)),
               ),
               SizedBox(width: 24.w),
               Column(
@@ -321,7 +337,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
               _circleButton(
                 icon: Icons.add,
                 colors: colors,
-                onTap: () => setState(() => _moveGoal = min(1000, _moveGoal + 10)),
+                onTap: () =>
+                    setState(() => _moveGoal = min(1000, _moveGoal + 10)),
               ),
             ],
           ),
@@ -341,7 +358,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     barRods: [
                       BarChartRodData(
                         toY: heights[i] * _moveGoal / 350,
-                        color: colors.chart1.withValues(alpha: 0.6 + heights[i] * 0.4),
+                        color: colors.chart1.withValues(
+                          alpha: 0.6 + heights[i] * 0.4,
+                        ),
                         width: 28.w,
                         borderRadius: BorderRadius.circular(4.r),
                       ),
@@ -381,8 +400,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
   // ─────────────────────────────────────────
   Widget _buildExerciseMinutesCard(TweakcnColors colors, S s) {
     final monthLabels = [
-      s.monthJan, s.monthFeb, s.monthMar,
-      s.monthApr, s.monthMay, s.monthJun,
+      s.monthJan,
+      s.monthFeb,
+      s.monthMar,
+      s.monthApr,
+      s.monthMay,
+      s.monthJun,
     ];
 
     return ShadcnCard(
@@ -416,17 +439,27 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   },
                 ),
               ),
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
             ),
             borderData: FlBorderData(show: false),
             lineTouchData: const LineTouchData(enabled: false),
             lineBarsData: [
               LineChartBarData(
                 spots: const [
-                  FlSpot(0, 30), FlSpot(1, 45), FlSpot(2, 35),
-                  FlSpot(3, 55), FlSpot(4, 48), FlSpot(5, 62),
+                  FlSpot(0, 30),
+                  FlSpot(1, 45),
+                  FlSpot(2, 35),
+                  FlSpot(3, 55),
+                  FlSpot(4, 48),
+                  FlSpot(5, 62),
                 ],
                 isCurved: true,
                 color: colors.chart1,
@@ -435,8 +468,12 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
               ),
               LineChartBarData(
                 spots: const [
-                  FlSpot(0, 20), FlSpot(1, 25), FlSpot(2, 30),
-                  FlSpot(3, 35), FlSpot(4, 32), FlSpot(5, 40),
+                  FlSpot(0, 20),
+                  FlSpot(1, 25),
+                  FlSpot(2, 30),
+                  FlSpot(3, 35),
+                  FlSpot(4, 32),
+                  FlSpot(5, 40),
                 ],
                 isCurved: true,
                 color: colors.chart2,
@@ -453,11 +490,17 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         children: [
           _legendDot(colors.chart1),
           SizedBox(width: 4.w),
-          Text(s.thisYear, style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
+          Text(
+            s.thisYear,
+            style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground),
+          ),
           SizedBox(width: 16.w),
           _legendDot(colors.chart2),
           SizedBox(width: 4.w),
-          Text(s.lastYear, style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground)),
+          Text(
+            s.lastYear,
+            style: TextStyle(fontSize: 11.sp, color: colors.mutedForeground),
+          ),
         ],
       ),
     );
@@ -556,8 +599,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 ),
                 ShadcnSelect<String>(
                   value: _teamRoles[m.name],
-                  onChanged: (val) =>
-                      setState(() => _teamRoles[m.name] = val),
+                  onChanged: (val) => setState(() => _teamRoles[m.name] = val),
                   items: [
                     ShadcnSelectItem(value: 'owner', label: s.roleOwner),
                     ShadcnSelectItem(value: 'member', label: s.roleMember),
@@ -739,12 +781,14 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
       content: Column(
         children: [
           ShadcnSeparator(margin: EdgeInsets.only(bottom: 12.h)),
-          ..._chatMessages.map((msg) => ShadcnChatBubble(
-                message: msg.text,
-                isSent: msg.isSent,
-                senderName: msg.isSent ? null : msg.name,
-                senderInitial: msg.initial,
-              )),
+          ..._chatMessages.map(
+            (msg) => ShadcnChatBubble(
+              message: msg.text,
+              isSent: msg.isSent,
+              senderName: msg.isSent ? null : msg.name,
+              senderInitial: msg.initial,
+            ),
+          ),
           SizedBox(height: 8.h),
           Row(
             children: [
@@ -794,7 +838,11 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                   borderRadius: BorderRadius.circular(8.r),
                   color: colors.primary,
                 ),
-                child: Icon(Icons.palette, size: 20.r, color: colors.primaryForeground),
+                child: Icon(
+                  Icons.palette,
+                  size: 20.r,
+                  color: colors.primaryForeground,
+                ),
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -836,7 +884,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             runSpacing: 6.h,
             children: const [
               ShadcnBadge(label: 'shadcn/ui'),
-              ShadcnBadge(label: 'themes', variant: ShadcnBadgeVariant.secondary),
+              ShadcnBadge(
+                label: 'themes',
+                variant: ShadcnBadgeVariant.secondary,
+              ),
               ShadcnBadge(label: 'CSS', variant: ShadcnBadgeVariant.outline),
             ],
           ),
@@ -964,10 +1015,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 Expanded(
                   child: Text(
                     'https://example.com/link/to/doc',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: colors.foreground,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: colors.foreground),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -975,7 +1023,9 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 GestureDetector(
                   onTap: () {
                     Clipboard.setData(
-                      const ClipboardData(text: 'https://example.com/link/to/doc'),
+                      const ClipboardData(
+                        text: 'https://example.com/link/to/doc',
+                      ),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -984,7 +1034,11 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                       ),
                     );
                   },
-                  child: Icon(Icons.copy, size: 16.r, color: colors.mutedForeground),
+                  child: Icon(
+                    Icons.copy,
+                    size: 16.r,
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ],
             ),
@@ -1003,47 +1057,49 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             ('Olivia Martin', 'm@example.com', s.canEdit),
             ('Isabella Nguyen', 'b@example.com', s.canView),
             ('Sofia Davis', 'p@example.com', s.canView),
-          ].map((person) => Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Row(
-                  children: [
-                    ShadcnAvatar(
-                      initial: person.$1.split(' ').map((n) => n[0]).join(),
-                      size: 32,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            person.$1,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: colors.foreground,
-                            ),
+          ].map(
+            (person) => Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: Row(
+                children: [
+                  ShadcnAvatar(
+                    initial: person.$1.split(' ').map((n) => n[0]).join(),
+                    size: 32,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          person.$1,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: colors.foreground,
                           ),
-                          Text(
-                            person.$2,
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: colors.mutedForeground,
-                            ),
+                        ),
+                        Text(
+                          person.$2,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: colors.mutedForeground,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      person.$3,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: colors.mutedForeground,
-                      ),
+                  ),
+                  Text(
+                    person.$3,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: colors.mutedForeground,
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1069,7 +1125,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     ShadcnSelectItem(value: 'team', label: s.areaTeam),
                     ShadcnSelectItem(value: 'billing', label: s.areaBilling),
                     ShadcnSelectItem(value: 'account', label: s.areaAccount),
-                    ShadcnSelectItem(value: 'deployments', label: s.areaDeployments),
+                    ShadcnSelectItem(
+                      value: 'deployments',
+                      label: s.areaDeployments,
+                    ),
                   ],
                 ),
               ),
@@ -1083,7 +1142,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                     ShadcnSelectItem(value: 'low', label: s.severityLow),
                     ShadcnSelectItem(value: 'medium', label: s.severityMedium),
                     ShadcnSelectItem(value: 'high', label: s.severityHigh),
-                    ShadcnSelectItem(value: 'critical', label: s.severityCritical),
+                    ShadcnSelectItem(
+                      value: 'critical',
+                      label: s.severityCritical,
+                    ),
                   ],
                 ),
               ),
@@ -1115,10 +1177,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
           ),
           SizedBox(width: 8.w),
           Expanded(
-            child: ShadcnButton(
-              onPressed: () {},
-              child: Text(s.submit),
-            ),
+            child: ShadcnButton(onPressed: () {}, child: Text(s.submit)),
           ),
         ],
       ),

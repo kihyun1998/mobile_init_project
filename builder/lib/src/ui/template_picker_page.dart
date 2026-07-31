@@ -11,11 +11,7 @@ import '../template/template_locator.dart';
 /// 고른 폴더를 확인하고 기억하는 일은 하지 않는다. 그 흐름은 폴더를 도중에
 /// 바꾸는 경우와 똑같아서, 두 벌로 두면 한쪽만 고치는 날이 온다.
 class TemplatePickerPage extends StatelessWidget {
-  const TemplatePickerPage({
-    super.key,
-    required this.onBrowse,
-    this.problem,
-  });
+  const TemplatePickerPage({super.key, required this.onBrowse, this.problem});
 
   static const browseKey = Key('template.browse');
 
@@ -41,8 +37,9 @@ class TemplatePickerPage extends StatelessWidget {
               children: [
                 Text(
                   'template 폴더를 알려주세요',
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(color: colors.foreground),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineSmall?.copyWith(color: colors.foreground),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -54,10 +51,7 @@ class TemplatePickerPage extends StatelessWidget {
                 Text(
                   '이 폴더에 ${TemplateLocator.requiredEntries.join(', ')} 이(가) '
                   '있어야 합니다.',
-                  style: TextStyle(
-                    color: colors.mutedForeground,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: colors.mutedForeground, fontSize: 12),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(

@@ -98,14 +98,16 @@ environment:
   /// 표시 이름이 들어갈 자리를 진짜 flutter create 출력과 같은 모양으로 만든다.
   /// 안드로이드 라벨은 패키지 이름 그대로다.
   void _writeManifest(Directory root, String name) {
-    File(p.join(
-      root.path,
-      'android',
-      'app',
-      'src',
-      'main',
-      'AndroidManifest.xml',
-    ))
+    File(
+        p.join(
+          root.path,
+          'android',
+          'app',
+          'src',
+          'main',
+          'AndroidManifest.xml',
+        ),
+      )
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">

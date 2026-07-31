@@ -4,12 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/theme/tweakcn_theme.g.dart';
 
 class ShadcnAvatar extends StatelessWidget {
-  const ShadcnAvatar({
-    super.key,
-    this.initial,
-    this.size = 40,
-    this.imageUrl,
-  });
+  const ShadcnAvatar({super.key, this.initial, this.size = 40, this.imageUrl});
 
   final String? initial;
   final double size;

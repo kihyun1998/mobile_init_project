@@ -12,12 +12,7 @@ enum ShadcnButtonVariant {
   link,
 }
 
-enum ShadcnButtonSize {
-  defaultSize,
-  sm,
-  lg,
-  icon,
-}
+enum ShadcnButtonSize { defaultSize, sm, lg, icon }
 
 class ShadcnButton extends StatelessWidget {
   const ShadcnButton({
@@ -57,8 +52,9 @@ class ShadcnButton extends StatelessWidget {
                 height: 16.r,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.r,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(_getLoadingColor(colors)),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _getLoadingColor(colors),
+                  ),
                 ),
               )
             : child,

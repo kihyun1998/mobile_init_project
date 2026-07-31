@@ -24,8 +24,7 @@ class ShadcnDataTable<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
-    final allSelected =
-        rows.isNotEmpty && selectedRows.length == rows.length;
+    final allSelected = rows.isNotEmpty && selectedRows.length == rows.length;
 
     return Column(
       children: [
@@ -73,8 +72,7 @@ class ShadcnDataTable<T> extends StatelessWidget {
                   : Colors.transparent,
               border: Border(bottom: BorderSide(color: colors.border)),
             ),
-            padding:
-                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Row(
               children: [
                 if (showCheckboxes) ...[
@@ -85,11 +83,11 @@ class ShadcnDataTable<T> extends StatelessWidget {
                   SizedBox(width: 12.w),
                 ],
                 ...row.cells.asMap().entries.map(
-                      (cellEntry) => Expanded(
-                        flex: columns[cellEntry.key].flex,
-                        child: cellEntry.value,
-                      ),
-                    ),
+                  (cellEntry) => Expanded(
+                    flex: columns[cellEntry.key].flex,
+                    child: cellEntry.value,
+                  ),
+                ),
               ],
             ),
           );

@@ -1,0 +1,103 @@
+# 이 저장소의 게이트를 CI 에서 그대로 돌린다.
+#
+# 게이트 매트릭스의 근거는 docs/agents/theflow.md 의 Step 7 이다. 여기와
+# 그쪽이 갈리면 그쪽이 기준이고, 이 파일을 맞춘다.
+#
+# **루트에 pubspec.yaml 이 없다.** Flutter 프로젝트가 둘이고 워크스페이스로
+# 묶여 있지 않아서 "전부 테스트" 하는 top-level 명령이 존재하지 않는다.
+# 그래서 두 모듈을 각각 돌린다 — 이걸 한 번으로 줄이려는 시도가 곧 사각지대다.
+name: gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  # 로컬에서 확인한 버전으로 고정한다. channel: stable 로 두면 Flutter 가
+  # 새로 나오는 날 아무도 코드를 건드리지 않았는데 main 이 빨개진다.
+  # 올릴 때는 로컬에서 게이트를 돌려보고 이 줄을 의도적으로 올린다.
+  FLUTTER_VERSION: 3.44.8
+
+# 같은 브랜치에 연달아 푸시하면 앞의 실행은 의미가 없다. 취소해서 러너를
+# 아끼되, main 은 취소하지 않는다 — 머지된 커밋의 결과는 남아야 한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # 포맷은 OS 를 타지 않으므로 한 번만 본다.
+  #
+  # 3종에서 다 돌리면 오히려 위험하다 — .gitattributes 가 `* text=auto` 라
+  # Windows 체크아웃은 CRLF 인데, 포맷터가 줄바꿈을 어떻게 다루느냐에 따라
+  # 코드가 멀쩡해도 빨개질 수 있다. 게이트는 실패할 수 있어야 하지만
+  # 엉뚱한 이유로 실패하면 사람들이 게이트를 무시하기 시작한다.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      # dart format 자체는 의존성이 필요 없지만, 포맷터가 언어 버전을
+      # pubspec 의 sdk 제약에서 읽으므로 프로젝트가 해석된 상태여야 한다.
+      - name: template
+        working-directory: template
+        run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed lib test
+      - name: builder
+        working-directory: builder
+        run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed lib test
+
+  # analyze 와 test 는 3종 전부에서 돈다.
+  #
+  # CLAUDE.md 가 "macOS 와 Windows 양쪽에서 돈다" 를 불변식으로 걸어놨고,
+  # 개발은 한 번에 한 머신에서만 이루어진다. CI 가 유일하게 값을 주는 지점이
+  # 여기다 — 지금 개발 머신이 아닌 쪽이 항상 사각지대다.
+  #
+  # 전례: 커밋 aec8583. 프로세스 러너 검증이 `sh -c` 를 쓰는 바람에 Windows
+  # 에서 통째로 skip 됐고, 하필 Windows 가 `flutter.bat` 때문에 가장 확인이
+  # 필요한 플랫폼이었다. 지금 그 테스트는 진짜 프로세스를 띄우므로 러너 OS 를
+  # 실제로 탄다.
+  gates:
+    strategy:
+      # 한 OS 가 깨져도 나머지 결과를 봐야 한다. 어디서만 깨지는지가 진단의
+      # 절반이다.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      # template 이 먼저다. builder 가 path: 로 이걸 물고 있어서, 여기가
+      # 깨졌으면 builder 쪽 실패는 증상일 뿐이다.
+      - name: template — pub get
+        working-directory: template
+        run: flutter pub get
+      - name: template — analyze
+        working-directory: template
+        run: flutter analyze
+      - name: template — test
+        working-directory: template
+        run: flutter test
+
+      # builder 테스트는 path: 의존 덕에 template 코드를 컴파일하지만
+      # template/test/ 를 돌리지는 않는다. 위 두 단계를 이것으로 대체할 수 없다.
+      - name: builder — pub get
+        working-directory: builder
+        run: flutter pub get
+      - name: builder — analyze
+        working-directory: builder
+        run: flutter analyze
+      - name: builder — test
+        working-directory: builder
+        run: flutter test

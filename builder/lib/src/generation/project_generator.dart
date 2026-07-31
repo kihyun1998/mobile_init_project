@@ -17,10 +17,7 @@ export 'generation_result.dart';
 /// 프로젝트의 android/ios 스캐폴드가 설치된 Flutter 기준으로 항상 최신이고,
 /// 패키지명과 번들 ID 가 처음부터 제대로 박힌다.
 class ProjectGenerator {
-  ProjectGenerator({
-    required this.templateDir,
-    required this.processRunner,
-  });
+  ProjectGenerator({required this.templateDir, required this.processRunner});
 
   final Directory templateDir;
   final ProcessRunner processRunner;
@@ -142,9 +139,7 @@ class ProjectGenerator {
       throw GenerationException('템플릿을 찾을 수 없습니다: ${templateDir.path}');
     }
     if (!config.outputParent.existsSync()) {
-      throw GenerationException(
-        '출력 폴더가 없습니다: ${config.outputParent.path}',
-      );
+      throw GenerationException('출력 폴더가 없습니다: ${config.outputParent.path}');
     }
 
     final target = _targetDirectory(config);
@@ -155,9 +150,8 @@ class ProjectGenerator {
     }
   }
 
-  Directory _targetDirectory(GenerationConfig config) => Directory(
-        p.join(config.outputParent.path, config.projectName.value),
-      );
+  Directory _targetDirectory(GenerationConfig config) =>
+      Directory(p.join(config.outputParent.path, config.projectName.value));
 
   Future<void> _runFlutterCreate(
     GenerationConfig config,
@@ -242,7 +236,8 @@ class ProjectGenerator {
 
     // 템플릿 안의 절대 참조는 두 곳뿐이지만, 새 파일이 늘어나면 조용히 깨지므로
     // 개수를 가정하지 않고 전부 훑는다.
-    for (final file in projectRoot.listSync(recursive: true).whereType<File>()) {
+    for (final file
+        in projectRoot.listSync(recursive: true).whereType<File>()) {
       if (!_textExtensions.contains(p.extension(file.path))) continue;
       if (p.basename(file.path) == 'pubspec.yaml') continue;
 
@@ -331,8 +326,9 @@ class HomeScreen extends StatelessWidget {
     );
     if (exampleDir.existsSync()) exampleDir.deleteSync(recursive: true);
 
-    File(p.joinAll([projectRoot.path, ...homeScreenSegments]))
-        .writeAsStringSync(emptyHomeScreenSource);
+    File(
+      p.joinAll([projectRoot.path, ...homeScreenSegments]),
+    ).writeAsStringSync(emptyHomeScreenSource);
 
     _rewriteIfPresent(
       File(p.join(projectRoot.path, 'pubspec.yaml')),
@@ -384,12 +380,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   /// 번역 원본이 있는 자리.
-  static const arbDirSegments = [
-    'lib',
-    'core',
-    'localization',
-    'l10n',
-  ];
+  static const arbDirSegments = ['lib', 'core', 'localization', 'l10n'];
 
   /// 고르지 않은 언어를 걷어낸다.
   ///
@@ -397,9 +388,7 @@ class HomeScreen extends StatelessWidget {
   /// 후처리의 `intl_utils:generate` 가 l10n 을 통째로 다시 만들면서 고아가 된
   /// `messages_<code>.dart` 까지 알아서 지운다.
   void _applyLanguages(Directory projectRoot, LanguageSelection languages) {
-    final arbDir = Directory(
-      p.joinAll([projectRoot.path, ...arbDirSegments]),
-    );
+    final arbDir = Directory(p.joinAll([projectRoot.path, ...arbDirSegments]));
     if (arbDir.existsSync()) {
       final keep = languages.languages
           .map((language) => 'intl_${language.code}.arb')
@@ -486,9 +475,9 @@ class HomeScreen extends StatelessWidget {
   void _rewriteDartTitle(Directory projectRoot, String displayName) {
     final quoted = "'${_escapeDartLiteral(displayName)}'";
 
-    for (final file in Directory(p.join(projectRoot.path, 'lib'))
-        .listSync(recursive: true)
-        .whereType<File>()) {
+    for (final file in Directory(
+      p.join(projectRoot.path, 'lib'),
+    ).listSync(recursive: true).whereType<File>()) {
       if (p.extension(file.path) != '.dart') continue;
 
       final content = file.readAsStringSync();

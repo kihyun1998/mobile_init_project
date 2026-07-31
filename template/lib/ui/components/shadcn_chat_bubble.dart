@@ -27,8 +27,9 @@ class ShadcnChatBubble extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
-        mainAxisAlignment:
-            isSent ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isSent
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isSent) ...[
@@ -37,8 +38,9 @@ class ShadcnChatBubble extends StatelessWidget {
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment:
-                  isSent ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isSent
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 if (senderName != null && !isSent)
                   Padding(
@@ -53,24 +55,30 @@ class ShadcnChatBubble extends StatelessWidget {
                     ),
                   ),
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isSent ? colors.primary : colors.muted,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(12.r),
                       topRight: Radius.circular(12.r),
-                      bottomLeft:
-                          isSent ? Radius.circular(12.r) : Radius.circular(2.r),
-                      bottomRight:
-                          isSent ? Radius.circular(2.r) : Radius.circular(12.r),
+                      bottomLeft: isSent
+                          ? Radius.circular(12.r)
+                          : Radius.circular(2.r),
+                      bottomRight: isSent
+                          ? Radius.circular(2.r)
+                          : Radius.circular(12.r),
                     ),
                   ),
                   child: Text(
                     message,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: isSent ? colors.primaryForeground : colors.foreground,
+                      color: isSent
+                          ? colors.primaryForeground
+                          : colors.foreground,
                     ),
                   ),
                 ),

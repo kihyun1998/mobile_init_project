@@ -23,15 +23,15 @@ class SVGIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return FutureBuilder(
       future: SVGUtil().getSVG(
-          asset: asset, svgColor: color, svgSize: size, isCustom: isCustom),
+        asset: asset,
+        svgColor: color,
+        svgSize: size,
+        isCustom: isCustom,
+      ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
 
-        return SvgPicture.string(
-          snapshot.data!,
-          width: size,
-          height: size,
-        );
+        return SvgPicture.string(snapshot.data!, width: size, height: size);
       },
     );
   }

@@ -31,8 +31,8 @@ class ShadcnSwitch extends StatelessWidget {
           color: disabled
               ? colors.mutedForeground
               : value
-                  ? colors.primary
-                  : colors.border,
+              ? colors.primary
+              : colors.border,
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 200),
@@ -47,8 +47,8 @@ class ShadcnSwitch extends StatelessWidget {
               color: disabled
                   ? colors.mutedForeground
                   : value
-                      ? colors.primaryForeground
-                      : colors.foreground,
+                  ? colors.primaryForeground
+                  : colors.foreground,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -97,7 +97,9 @@ class ShadcnSwitchWithLabel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    color: disabled ? colors.mutedForeground : colors.foreground,
+                    color: disabled
+                        ? colors.mutedForeground
+                        : colors.foreground,
                   ),
                 ),
                 if (description != null) ...[
@@ -117,11 +119,7 @@ class ShadcnSwitchWithLabel extends StatelessWidget {
             ),
           ),
           SizedBox(width: 12.w),
-          ShadcnSwitch(
-            value: value,
-            onChanged: onChanged,
-            disabled: disabled,
-          ),
+          ShadcnSwitch(value: value, onChanged: onChanged, disabled: disabled),
         ],
       ),
     );

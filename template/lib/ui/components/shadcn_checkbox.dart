@@ -37,17 +37,13 @@ class ShadcnCheckbox extends StatelessWidget {
                 color: value
                     ? colors.primary
                     : disabled
-                        ? colors.mutedForeground
-                        : colors.primary,
+                    ? colors.mutedForeground
+                    : colors.primary,
                 width: 1.r,
               ),
             ),
             child: value
-                ? Icon(
-                    Icons.check,
-                    size: 12.r,
-                    color: colors.primaryForeground,
-                  )
+                ? Icon(Icons.check, size: 12.r, color: colors.primaryForeground)
                 : null,
           ),
           if (label != null) ...[

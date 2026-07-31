@@ -1,7 +1,6 @@
 enum DebounceKey {
   locale('locale'),
-  theme('theme'),
-  ;
+  theme('theme');
 
   final String key;
   const DebounceKey(this.key);

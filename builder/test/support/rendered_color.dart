@@ -9,7 +9,10 @@ import 'package:mobile_init_project/ui/components/shadcn_card.dart';
 Color renderedCardColor(WidgetTester tester) {
   final container = tester.widget<Container>(
     find
-        .descendant(of: find.byType(ShadcnCard), matching: find.byType(Container))
+        .descendant(
+          of: find.byType(ShadcnCard),
+          matching: find.byType(Container),
+        )
         .first,
   );
   return (container.decoration! as BoxDecoration).color!;

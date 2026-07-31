@@ -80,9 +80,9 @@ class SystemProcessRunner implements ProcessRunner {
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .forEach((line) {
-        into.writeln(line);
-        onOutput?.call(line);
-      });
+            into.writeln(line);
+            onOutput?.call(line);
+          });
     }
 
     try {

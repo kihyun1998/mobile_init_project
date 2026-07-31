@@ -78,8 +78,8 @@ class ShadcnInput extends StatelessWidget {
               color: hasError
                   ? colors.destructive
                   : enabled
-                      ? colors.border
-                      : colors.mutedForeground,
+                  ? colors.border
+                  : colors.mutedForeground,
               width: 1.r,
             ),
           ),

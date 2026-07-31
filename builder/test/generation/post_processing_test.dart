@@ -38,22 +38,20 @@ void main() {
     );
   }
 
-  List<String> commandsRun() =>
-      runner.invocations.map((i) => '${i.executable} ${i.arguments.join(' ')}').toList();
+  List<String> commandsRun() => runner.invocations
+      .map((i) => '${i.executable} ${i.arguments.join(' ')}')
+      .toList();
 
   test('의존성 설치 → l10n 생성 → 코드 생성 순서로 실행된다', () async {
     await generate();
 
     final commands = commandsRun();
     expect(commands.first, startsWith('flutter create'));
-    expect(
-      commands.sublist(1),
-      [
-        'flutter pub get',
-        'dart run intl_utils:generate',
-        'dart run build_runner build --delete-conflicting-outputs',
-      ],
-    );
+    expect(commands.sublist(1), [
+      'flutter pub get',
+      'dart run intl_utils:generate',
+      'dart run build_runner build --delete-conflicting-outputs',
+    ]);
   });
 
   test('후처리는 새 프로젝트 폴더 안에서 실행된다', () async {
@@ -82,7 +80,9 @@ void main() {
   });
 
   test('명령 출력이 진행 중에 흘러나온다', () async {
-    runner = FakeProcessRunner(outputLines: ['Resolving...', 'Got dependencies!']);
+    runner = FakeProcessRunner(
+      outputLines: ['Resolving...', 'Got dependencies!'],
+    );
 
     final lines = <String>[];
     await generate(
@@ -141,7 +141,10 @@ void main() {
   });
 
   test('flutter create 가 실패하면 쓸 프로젝트가 없으므로 예외다', () async {
-    runner = FakeProcessRunner(failingCommand: 'create', stderr: '디스크가 가득 찼습니다');
+    runner = FakeProcessRunner(
+      failingCommand: 'create',
+      stderr: '디스크가 가득 찼습니다',
+    );
 
     await expectLater(generate(), throwsA(isA<GenerationException>()));
   });

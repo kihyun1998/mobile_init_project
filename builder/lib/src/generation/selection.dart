@@ -11,8 +11,9 @@ List<T> orderedNonEmpty<T>(
   String emptyMessage,
 ) {
   final picked = chosen.toSet();
-  final ordered =
-      declarationOrder.where(picked.contains).toList(growable: false);
+  final ordered = declarationOrder
+      .where(picked.contains)
+      .toList(growable: false);
 
   if (ordered.isEmpty) throw GenerationException(emptyMessage);
   return ordered;

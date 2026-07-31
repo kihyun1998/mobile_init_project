@@ -4,8 +4,7 @@ enum SVGAsset {
   windowClose('assets/icons/titlebar/ico_window_close.svg'),
   windowMinimize('assets/icons/titlebar/ico_window_minimize.svg'),
   windowMaximize('assets/icons/titlebar/ico_window_maximize.svg'),
-  windowRestore('assets/icons/titlebar/ico_window_restore.svg'),
-  ;
+  windowRestore('assets/icons/titlebar/ico_window_restore.svg');
 
   final String path;
 
