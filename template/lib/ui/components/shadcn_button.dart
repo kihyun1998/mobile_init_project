@@ -75,7 +75,6 @@ class ShadcnButton extends StatelessWidget {
       case ShadcnButtonSize.icon:
         return 36.h;
       case ShadcnButtonSize.defaultSize:
-      default:
         return 36.h;
     }
   }
@@ -89,7 +88,6 @@ class ShadcnButton extends StatelessWidget {
       case ShadcnButtonSize.icon:
         return EdgeInsets.all(8.r);
       case ShadcnButtonSize.defaultSize:
-      default:
         return EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h);
     }
   }
@@ -103,7 +101,6 @@ class ShadcnButton extends StatelessWidget {
       case ShadcnButtonSize.icon:
         return 14.sp;
       case ShadcnButtonSize.defaultSize:
-      default:
         return 14.sp;
     }
   }

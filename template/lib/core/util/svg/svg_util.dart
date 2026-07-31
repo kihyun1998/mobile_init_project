@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../logger/app_logger.dart';
 import 'enum/color_target.dart';
 import 'model/enum_svg_asset.dart';
 
@@ -65,6 +66,10 @@ class SVGUtil {
 
       return svgString;
     } catch (error, stackTrace) {
+      // 아이콘 하나가 안 그려지는 것으로 앱을 멈추지 않는다. 빈 문자열을
+      // 돌려주면 호출부가 빈 자리로 렌더한다. 다만 에셋 경로 오타처럼 개발
+      // 중에 잡아야 할 실수가 여기로 오므로, 조용히 삼키지는 않는다.
+      logger.e('SVG 처리 실패: ${asset.path}', error, stackTrace);
       return "";
     }
   }

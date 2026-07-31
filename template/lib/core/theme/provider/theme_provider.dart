@@ -1,10 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../main.dart';
 import '../../const/enum_debounce_key.dart';
 import '../../const/enum_storage_key.dart';
 import '../../util/debounce/debounce_service.dart';
+import '../../util/logger/app_logger.dart';
 import '../foundation/app_mode.dart';
 
 part 'theme_provider.g.dart';
@@ -81,6 +81,12 @@ class Theme extends _$Theme {
   Future<void> _saveThemeMode(AppMode mode) async {
     try {
       await sharedPrefs.setString(StorageKey.theme.key, mode.toJson());
-    } catch (e) {}
+    } catch (e, stackTrace) {
+      // 삼키는 것이 의도다. 이 함수는 dispose() 경로에서도 불리므로 여기서
+      // 던지면 화면을 떠나는 것 자체가 실패한다. 저장이 한 번 실패해도 다음
+      // 테마 변경에서 다시 저장되므로 잃는 것은 그 사이의 설정뿐이다.
+      // 다만 흔적은 남긴다 — 이유 없이 조용한 것과 이유 있게 조용한 것은 다르다.
+      logger.e('테마 저장 실패', e, stackTrace);
+    }
   }
 }
