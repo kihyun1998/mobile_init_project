@@ -55,6 +55,10 @@ cd builder  && flutter run -d macos                         # 빌더 실행
 
 ## Agent skills
 
+### 작업 방식
+
+기능 슬라이스·버그 수정·공개 표면을 건드리는 리팩토링은 `theflow` 를 따른다. 프로젝트별 값(모듈 맵, 레퍼런스 라우팅, 경계 규칙, 증명 방법, 성역 경로, 게이트 매트릭스)은 전부 `docs/agents/theflow.md` 에 있다.
+
 ### 이슈 트래커
 
 이슈는 `kihyun1998/mobile_init_project`의 GitHub 이슈로 관리하며 `gh` CLI를 사용한다. `docs/agents/issue-tracker.md` 참고.
