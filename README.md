@@ -1,5 +1,7 @@
 # mobile_init_project
 
+[![gates](https://github.com/kihyun1998/mobile_init_project/actions/workflows/gates.yml/badge.svg?branch=main)](https://github.com/kihyun1998/mobile_init_project/actions/workflows/gates.yml)
+
 A new Flutter project.
 
 ## Getting Started

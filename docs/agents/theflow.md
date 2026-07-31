@@ -253,9 +253,11 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
     그 사건 때문에 생겼다.
 - **생성물의 줄바꿈은 `.gitattributes` 가 `eol=lf` 로 못박고 있다.** 생성 도구는
   항상 LF 로 쓰는데 `text=auto` 아래 Windows 체크아웃은 CRLF 라, 못박지 않으면
-  도구를 한 번 돌리는 것만으로 **내용이 같은 파일 20개가 수정으로 뜬다**
-  (`git diff` 는 아무것도 못 보여주는데 `status` 만 더러운 상태가 된다).
-  생성물을 새로 추가하면 그 규칙에도 넣는다.
+  도구를 한 번 돌리는 것만으로 **커밋된 생성물이 통째로 수정으로 뜬다** —
+  내용은 한 글자도 안 바뀐 채로. (`git diff` 는 아무것도 못 보여주는데 `status`
+  만 더러운 상태가 된다.) 생성물을 새로 추가하면 그 규칙에도 넣는다. 지금 무엇이
+  덮여 있는지는 `git ls-files --eol` 로 본다 — `w/crlf` 인 생성물이 있으면 빠진
+  것이다.
 - **`builder/test/macos_sandbox_test.dart`** — `flutter create` 로 `macos/` 를 다시
   만들면 app-sandbox 가 기본값으로 되살아나고, 그러면 `Directory.current` 가 컨테이너로
   바뀌어 `../template` 해석과 `Process.run('flutter', …)` 이 둘 다 죽는다.
@@ -283,7 +285,8 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
   - `gates` 잡 — **ubuntu · macOS · Windows 3종**에서 두 모듈의 analyze + test.
     `fail-fast: false` 라 한 OS 가 깨져도 나머지 결과가 남는다. 어느 OS 에서만
     깨지는지가 진단의 절반이다.
-  - Flutter 버전은 `FLUTTER_VERSION` 으로 **고정**한다(현재 3.44.8). `channel: stable`
+  - Flutter 버전은 워크플로의 `FLUTTER_VERSION` 으로 **고정**한다. 값은 그 파일이
+    출처이니 여기 옮겨 적지 않는다 — 두 곳에 두면 한쪽이 낡는다. `channel: stable`
     로 두면 Flutter 가 새로 나오는 날 아무도 코드를 안 건드렸는데 main 이 빨개진다.
     올릴 때는 로컬 게이트를 돌려보고 의도적으로 올린다.
 - **CI 가 로컬 게이트를 대체하지 않는다.** 구현 중에 CI 를 쳐다보고 있지 말 것 —
