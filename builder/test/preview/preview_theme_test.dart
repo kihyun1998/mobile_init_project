@@ -39,14 +39,20 @@ void main() {
     expect(_colors(themes.dark).background, const Color(0xFF000000));
   });
 
-  test('CSS 에 없는 토큰은 생성기와 같이 투명이다', () {
+  test('CSS 에 없는 토큰은 extension 에서 생성기와 같이 투명이다', () {
     // 템플릿 색으로 채우면 미리보기만 멀쩡하고 생성된 앱은 투명해진다.
     // 예쁘게 보이는 것보다 같게 보이는 것이 중요하다.
+    //
+    // ColorScheme 은 규칙이 다르다 — 생성기가 파생 fallback 을 넣으므로
+    // 미리보기도 그렇게 한다. preview_colorscheme_parity_test.dart 참고.
     final themes = PreviewTheme.fromCss(_css);
 
     expect(_colors(themes.light).secondary, const Color(0x00000000));
     expect(_colors(themes.light).ring, const Color(0x00000000));
-    expect(_colors(themes.light).secondary, isNot(TweakcnColors.light.secondary));
+    expect(
+      _colors(themes.light).secondary,
+      isNot(TweakcnColors.light.secondary),
+    );
   });
 
   test('빠진 토큰이 무엇인지 알려준다', () {
@@ -88,10 +94,12 @@ void main() {
     expect(radius.lg, isNot(TweakcnRadius.standard.lg));
   });
 
-  test('ColorScheme 은 생성기 매핑을 따른다 (input→outlineVariant, card→surfaceContainerLowest)', () {
-    // 템플릿 CSS 는 border==input, card==background 라 틀려도 티가 안 난다.
-    // 일부러 값을 다르게 준 CSS 로 고정한다.
-    final theme = PreviewTheme.fromCss('''
+  test(
+    'ColorScheme 은 생성기 매핑을 따른다 (input→outlineVariant, card→surfaceContainerLowest)',
+    () {
+      // 템플릿 CSS 는 border==input, card==background 라 틀려도 티가 안 난다.
+      // 일부러 값을 다르게 준 CSS 로 고정한다.
+      final theme = PreviewTheme.fromCss('''
 :root {
   --border: #111111;
   --input: #222222;
@@ -101,12 +109,16 @@ void main() {
 }
 ''').light;
 
-    expect(theme.colorScheme.outline, const Color(0xFF111111));
-    expect(theme.colorScheme.outlineVariant, const Color(0xFF222222));
-    expect(theme.colorScheme.surface, const Color(0xFF333333));
-    expect(theme.colorScheme.surfaceContainerLowest, const Color(0xFF444444));
-    expect(theme.colorScheme.surfaceContainerHighest, const Color(0xFF555555));
-  });
+      expect(theme.colorScheme.outline, const Color(0xFF111111));
+      expect(theme.colorScheme.outlineVariant, const Color(0xFF222222));
+      expect(theme.colorScheme.surface, const Color(0xFF333333));
+      expect(theme.colorScheme.surfaceContainerLowest, const Color(0xFF444444));
+      expect(
+        theme.colorScheme.surfaceContainerHighest,
+        const Color(0xFF555555),
+      );
+    },
+  );
 
   test('미리보기가 반영 못 하는 폰트를 알려준다', () {
     final themes = PreviewTheme.fromCss(
