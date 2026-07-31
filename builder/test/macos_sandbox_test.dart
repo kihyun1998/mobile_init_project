@@ -18,9 +18,7 @@ void main() {
 
   for (final name in ['DebugProfile', 'Release']) {
     test('$name.entitlements 에 앱 샌드박스가 꺼져 있다', () {
-      final file = File(
-        p.join('macos', 'Runner', '$name.entitlements'),
-      );
+      final file = File(p.join('macos', 'Runner', '$name.entitlements'));
 
       expect(file.existsSync(), isTrue, reason: '${file.path} 가 없다');
 

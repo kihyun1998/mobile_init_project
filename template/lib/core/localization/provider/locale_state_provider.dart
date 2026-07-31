@@ -37,8 +37,9 @@ class LocaleState extends _$LocaleState {
   /// 저장된 것이 없을 때 쓸 언어
   static Locale get defaultLocale => defaultAmong(supportedLocales);
 
-  static bool isSupported(Locale locale) => supportedLocales
-      .any((supported) => supported.languageCode == locale.languageCode);
+  static bool isSupported(Locale locale) => supportedLocales.any(
+    (supported) => supported.languageCode == locale.languageCode,
+  );
 
   /// [supported] 중 기본으로 쓸 언어
   ///
@@ -47,9 +48,9 @@ class LocaleState extends _$LocaleState {
   /// 목록을 인자로 받는 이유는 시험할 수 있게 하려는 것이다.
   /// [supportedLocales] 는 생성된 코드가 정해서 테스트가 바꿀 수 없다.
   static Locale defaultAmong(List<Locale> supported) => supported.firstWhere(
-        (locale) => locale.languageCode == 'ko',
-        orElse: () => supported.first,
-      );
+    (locale) => locale.languageCode == 'ko',
+    orElse: () => supported.first,
+  );
 
   /// [current] 다음에 올 언어
   ///
@@ -105,8 +106,9 @@ class LocaleState extends _$LocaleState {
   /// 앱 종료 시나 긴급히 저장이 필요한 경우 사용
   /// 반환값: 저장 작업이 있었으면 true, 없었으면 false
   Future<bool> flushLocaleSave() async {
-    return await DebounceService.instance
-        .executeImmediately(DebounceKey.locale.key);
+    return await DebounceService.instance.executeImmediately(
+      DebounceKey.locale.key,
+    );
   }
 
   /// Provider 정리 시 대기 중인 저장 작업 완료

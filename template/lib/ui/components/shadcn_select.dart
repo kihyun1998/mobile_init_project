@@ -23,9 +23,9 @@ class ShadcnSelect<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
     final selectedItem = items.cast<ShadcnSelectItem<T>?>().firstWhere(
-          (item) => item?.value == value,
-          orElse: () => null,
-        );
+      (item) => item?.value == value,
+      orElse: () => null,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,16 +52,18 @@ class ShadcnSelect<T> extends StatelessWidget {
           ),
           offset: Offset(0, 4.h),
           itemBuilder: (context) => items
-              .map((item) => PopupMenuItem<T>(
-                    value: item.value,
-                    child: Text(
-                      item.label,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: colors.popoverForeground,
-                      ),
+              .map(
+                (item) => PopupMenuItem<T>(
+                  value: item.value,
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: colors.popoverForeground,
                     ),
-                  ))
+                  ),
+                ),
+              )
               .toList(),
           child: Container(
             height: 36.h,

@@ -22,9 +22,7 @@ class AppBottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border(
-          top: BorderSide(color: colors.border, width: 1),
-        ),
+        border: Border(top: BorderSide(color: colors.border, width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -58,8 +56,9 @@ class AppBottomNavBar extends StatelessWidget {
                         _getLabel(context, tab),
                         style: TextStyle(
                           fontSize: 11.sp,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           color: isSelected
                               ? colors.primary
                               : colors.mutedForeground,

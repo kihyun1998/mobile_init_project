@@ -6,7 +6,10 @@ import 'process_runner.dart';
 ///
 /// [ProcessRunner] 를 재사용하는 이유는 테스트에서 진짜 창이 뜨지 않게 하기
 /// 위해서다. 가짜 러너를 꽂으면 어떤 명령을 부르려 했는지만 확인된다.
-Future<ProcessRunResult> revealInFileManager(String path, ProcessRunner runner) {
+Future<ProcessRunResult> revealInFileManager(
+  String path,
+  ProcessRunner runner,
+) {
   final (executable, arguments) = switch (Platform.operatingSystem) {
     'macos' => ('open', [path]),
     'windows' => ('explorer', [path]),

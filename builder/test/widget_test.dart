@@ -58,10 +58,7 @@ void main() {
     String? description,
     String? displayName,
   }) async {
-    await tester.enterText(
-      find.byKey(GenerateFormPage.nameFieldKey),
-      name,
-    );
+    await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), name);
     await tester.enterText(
       find.byKey(GenerateFormPage.organizationFieldKey),
       org,
@@ -94,10 +91,7 @@ void main() {
     await fillAndSubmit(tester, name: 'my_app');
 
     expect(find.text('만들었습니다'), findsOneWidget);
-    expect(
-      find.text(p.join(outputParent.path, 'my_app')),
-      findsOneWidget,
-    );
+    expect(find.text(p.join(outputParent.path, 'my_app')), findsOneWidget);
     // flutter create 하나로 끝나지 않는다 — 후처리까지 돌아야 바로 실행된다.
     expect(runner.invocations.first.arguments.first, 'create');
     expect(runner.invocations, hasLength(4));
@@ -123,8 +117,9 @@ void main() {
       contains("'내 가계부'"),
     );
     expect(
-      File(p.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'))
-          .readAsStringSync(),
+      File(
+        p.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+      ).readAsStringSync(),
       contains('android:label="내 가계부"'),
     );
     expect(
@@ -209,8 +204,9 @@ void main() {
     expect(File(p.join(l10n, 'intl_ko.arb')).existsSync(), isTrue);
     expect(File(p.join(l10n, 'intl_en.arb')).existsSync(), isFalse);
     expect(
-      File(p.join(outputParent.path, 'my_app', 'pubspec.yaml'))
-          .readAsStringSync(),
+      File(
+        p.join(outputParent.path, 'my_app', 'pubspec.yaml'),
+      ).readAsStringSync(),
       contains('main_locale: ko'),
     );
   });
@@ -235,10 +231,7 @@ void main() {
     await fillAndSubmit(tester, name: 'My-App');
 
     expect(find.text('만들었습니다'), findsNothing);
-    expect(
-      find.textContaining('Dart 패키지 이름으로 쓸 수 없습니다'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Dart 패키지 이름으로 쓸 수 없습니다'), findsOneWidget);
     expect(runner.invocations, isEmpty);
   });
 
@@ -265,10 +258,7 @@ void main() {
     expect(find.textContaining('코드 생성이 터졌습니다'), findsOneWidget);
     // 프로젝트는 남아 있으니 경로도 보여야 한다.
     expect(find.text(p.join(outputParent.path, 'my_app')), findsOneWidget);
-    expect(
-      Directory(p.join(outputParent.path, 'my_app')).existsSync(),
-      isTrue,
-    );
+    expect(Directory(p.join(outputParent.path, 'my_app')).existsSync(), isTrue);
   });
 
   testWidgets('폴더 열기 버튼이 파일 관리자를 호출한다', (tester) async {

@@ -7,11 +7,7 @@ import '../ui/screens/profile/profile_screen.dart';
 /// 바텀 네비게이션 탭 정의
 /// 탭 추가/삭제 시 이 파일만 수정하면 됨
 enum AppTab {
-  home(
-    icon: Icons.home_outlined,
-    activeIcon: Icons.home,
-    labelKey: 'tabHome',
-  ),
+  home(icon: Icons.home_outlined, activeIcon: Icons.home, labelKey: 'tabHome'),
   search(
     icon: Icons.search_outlined,
     activeIcon: Icons.search,

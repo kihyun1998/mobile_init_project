@@ -179,8 +179,9 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
               children: [
                 Text(
                   '새 프로젝트 만들기',
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(color: colors.foreground),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineSmall?.copyWith(color: colors.foreground),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -204,7 +205,8 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   // 데스크톱·웹의 표시 이름까지는 아직 손대지 않는다.
                   // 그 자리엔 프로젝트 이름이 그대로 남으므로 여기서
                   // "홈 화면 어디서나" 라고 하면 거짓말이 된다.
-                  helper: '앱 타이틀과 안드로이드·iOS 홈 화면 아이콘 밑에 보입니다. '
+                  helper:
+                      '앱 타이틀과 안드로이드·iOS 홈 화면 아이콘 밑에 보입니다. '
                       '비워두면 프로젝트 이름을 씁니다.',
                   controller: _displayName,
                   enabled: !_running,
@@ -519,7 +521,9 @@ class _ResultBanner extends StatelessWidget {
     final ok = result.succeeded;
 
     return _Banner(
-      background: ok ? colors.muted : colors.destructive.withValues(alpha: 0.12),
+      background: ok
+          ? colors.muted
+          : colors.destructive.withValues(alpha: 0.12),
       border: ok ? colors.border : colors.destructive,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -59,8 +59,9 @@ class Theme extends _$Theme {
 
   /// 현재 대기 중인 테마 저장 작업을 즉시 실행
   Future<bool> flushThemeSave() async {
-    return await DebounceService.instance
-        .executeImmediately(DebounceKey.theme.key);
+    return await DebounceService.instance.executeImmediately(
+      DebounceKey.theme.key,
+    );
   }
 
   /// Provider 정리 시 대기 중인 저장 작업 완료

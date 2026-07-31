@@ -18,10 +18,12 @@ class SVGUtil {
   static final RegExp _fillRegex = RegExp(r'fill="(?!none")[^"]*"');
   static final RegExp _strokeRegex = RegExp(r'stroke="[^"]*"');
 
-  static final RegExp _fillCustomRegex =
-      RegExp(r'fill="(?!(none|white))"[^"]*"');
-  static final RegExp _strokeCustomRegex =
-      RegExp(r'stroke="(?!(none|white))"[^"]*"');
+  static final RegExp _fillCustomRegex = RegExp(
+    r'fill="(?!(none|white))"[^"]*"',
+  );
+  static final RegExp _strokeCustomRegex = RegExp(
+    r'stroke="(?!(none|white))"[^"]*"',
+  );
 
   final Map<SVGAsset, Map<String, String>> _processedSVGCache = {};
 
@@ -34,8 +36,11 @@ class SVGUtil {
   }) async {
     try {
       // 1. 캐시 키 생성
-      final cacheKey =
-          _generateCacheKey(color: svgColor, size: svgSize, isCustom: isCustom);
+      final cacheKey = _generateCacheKey(
+        color: svgColor,
+        size: svgSize,
+        isCustom: isCustom,
+      );
 
       // 2. 캐시된 결과 확인
       if (_processedSVGCache[asset]?[cacheKey] != null) {
@@ -88,38 +93,36 @@ class SVGUtil {
   }) {
     final colorHex = _colorToHex(color);
 
-    return svgString.replaceAllMapped(
-      _svgNPathRegex,
-      (match) {
-        String tag = match.group(0)!;
+    return svgString.replaceAllMapped(_svgNPathRegex, (match) {
+      String tag = match.group(0)!;
 
-        switch (target) {
-          case ColorTarget.fill:
-            tag = _applyFillOnly(tag, colorHex, isCustom);
-            break;
+      switch (target) {
+        case ColorTarget.fill:
+          tag = _applyFillOnly(tag, colorHex, isCustom);
+          break;
 
-          case ColorTarget.stroke:
-            tag = _applyStrokeOnly(tag, colorHex, isCustom);
-            break;
+        case ColorTarget.stroke:
+          tag = _applyStrokeOnly(tag, colorHex, isCustom);
+          break;
 
-          case ColorTarget.both:
-            tag = _applyBoth(tag, colorHex, isCustom);
-            break;
+        case ColorTarget.both:
+          tag = _applyBoth(tag, colorHex, isCustom);
+          break;
 
-          case ColorTarget.auto:
-            tag = _applyAuto(tag, colorHex, isCustom);
-            break;
-        }
+        case ColorTarget.auto:
+          tag = _applyAuto(tag, colorHex, isCustom);
+          break;
+      }
 
-        return tag;
-      },
-    );
+      return tag;
+    });
   }
 
-// 각각의 적용 메서드들
+  // 각각의 적용 메서드들
   String _applyAuto(String tag, String colorHex, bool isCustom) {
-    bool hasFill =
-        isCustom ? _fillCustomRegex.hasMatch(tag) : _fillRegex.hasMatch(tag);
+    bool hasFill = isCustom
+        ? _fillCustomRegex.hasMatch(tag)
+        : _fillRegex.hasMatch(tag);
     bool hasStroke = isCustom
         ? _strokeCustomRegex.hasMatch(tag)
         : _strokeRegex.hasMatch(tag);
@@ -140,7 +143,9 @@ class SVGUtil {
     if (isCustom) {
       if (_fillCustomRegex.hasMatch(tag)) {
         return tag.replaceAllMapped(
-            _fillCustomRegex, (match) => 'fill="$colorHex"');
+          _fillCustomRegex,
+          (match) => 'fill="$colorHex"',
+        );
       } else if (!tag.contains('fill=')) {
         return _addAttribute(tag, 'fill', colorHex);
       }
@@ -158,14 +163,18 @@ class SVGUtil {
     if (isCustom) {
       if (_strokeCustomRegex.hasMatch(tag)) {
         return tag.replaceAllMapped(
-            _strokeCustomRegex, (match) => 'stroke="$colorHex"');
+          _strokeCustomRegex,
+          (match) => 'stroke="$colorHex"',
+        );
       } else if (!tag.contains('stroke=')) {
         return _addAttribute(tag, 'stroke', colorHex);
       }
     } else {
       if (_strokeRegex.hasMatch(tag)) {
         return tag.replaceAllMapped(
-            _strokeRegex, (match) => 'stroke="$colorHex"');
+          _strokeRegex,
+          (match) => 'stroke="$colorHex"',
+        );
       } else if (!tag.contains('stroke=')) {
         return _addAttribute(tag, 'stroke', colorHex);
       }

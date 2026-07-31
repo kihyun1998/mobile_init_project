@@ -11,7 +11,7 @@ import 'template_path_store.dart';
 /// 옮긴 경우처럼 못 찾을 때만 사용자에게 묻고, 그 답을 기억한다.
 class TemplateLocator {
   TemplateLocator({required this.store, List<String>? candidates})
-      : candidates = candidates ?? defaultCandidates;
+    : candidates = candidates ?? defaultCandidates;
 
   final TemplatePathStore store;
 

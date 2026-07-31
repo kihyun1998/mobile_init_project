@@ -16,9 +16,7 @@ Future<String?> systemDirectoryChooser() =>
 /// 셋 중 하나다: 취소했거나(둘 다 null), 템플릿이 아니거나([problem]),
 /// 받아들여져 저장됐거나([directory]).
 class TemplatePick {
-  const TemplatePick.cancelled()
-      : directory = null,
-        problem = null;
+  const TemplatePick.cancelled() : directory = null, problem = null;
   const TemplatePick.rejected(String this.problem) : directory = null;
   const TemplatePick.accepted(Directory this.directory) : problem = null;
 

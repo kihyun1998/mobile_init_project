@@ -12,25 +12,16 @@ class SearchScreen extends StatelessWidget {
     final colors = context.tweakcnColors;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).tabSearch),
-      ),
+      appBar: AppBar(title: Text(S.of(context).tabSearch)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search,
-              size: 64.r,
-              color: colors.mutedForeground,
-            ),
+            Icon(Icons.search, size: 64.r, color: colors.mutedForeground),
             SizedBox(height: 16.h),
             Text(
               S.of(context).tabSearch,
-              style: TextStyle(
-                fontSize: 18.sp,
-                color: colors.mutedForeground,
-              ),
+              style: TextStyle(fontSize: 18.sp, color: colors.mutedForeground),
             ),
           ],
         ),

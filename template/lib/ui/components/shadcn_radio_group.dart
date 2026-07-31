@@ -20,11 +20,13 @@ class ShadcnRadioGroup<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: items
-          .map((item) => _RadioTile(
-                item: item,
-                selected: value == item.value,
-                onTap: () => onChanged?.call(item.value),
-              ))
+          .map(
+            (item) => _RadioTile(
+              item: item,
+              selected: value == item.value,
+              onTap: () => onChanged?.call(item.value),
+            ),
+          )
           .toList(),
     );
   }
@@ -79,10 +81,7 @@ class _RadioTile<T> extends StatelessWidget {
               height: 16.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors.primary,
-                  width: 1.r,
-                ),
+                border: Border.all(color: colors.primary, width: 1.r),
               ),
               child: selected
                   ? Center(

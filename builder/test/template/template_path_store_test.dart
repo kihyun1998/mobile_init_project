@@ -34,8 +34,10 @@ void main() {
     expect(pick.directory, isNotNull);
 
     // 기본 위치는 일부러 막아둔다. 저장된 것이 아니면 찾을 수 없어야 한다.
-    final next = await TemplateLocator(store: store, candidates: const [])
-        .locate();
+    final next = await TemplateLocator(
+      store: store,
+      candidates: const [],
+    ).locate();
 
     expect(next?.path, realTemplate.path);
   });
@@ -45,8 +47,10 @@ void main() {
     await store.write(gone.path);
     gone.deleteSync();
 
-    final next = await TemplateLocator(store: store, candidates: const [])
-        .locate();
+    final next = await TemplateLocator(
+      store: store,
+      candidates: const [],
+    ).locate();
 
     expect(next, isNull);
   });

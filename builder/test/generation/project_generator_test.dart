@@ -113,7 +113,9 @@ void main() {
 
     // 템플릿에만 있는 플랫폼 파일이 넘어오면 안 된다.
     expect(
-      File(p.join(root.path, 'android', 'app', 'build.gradle.kts')).existsSync(),
+      File(
+        p.join(root.path, 'android', 'app', 'build.gradle.kts'),
+      ).existsSync(),
       isFalse,
       reason: '템플릿의 android/ 가 복사됐다',
     );
@@ -142,7 +144,9 @@ void main() {
     final offenders = root
         .listSync(recursive: true)
         .whereType<File>()
-        .where((f) => _readTextOrNull(f)?.contains('mobile_init_project') ?? false)
+        .where(
+          (f) => _readTextOrNull(f)?.contains('mobile_init_project') ?? false,
+        )
         .map((f) => p.relative(f.path, from: root.path))
         .toList();
 
@@ -189,9 +193,7 @@ void main() {
 
   group('플랫폼', () {
     test('고른 플랫폼만 --platforms 로 넘어간다', () async {
-      await generate(
-        platforms: [ProjectPlatform.web, ProjectPlatform.android],
-      );
+      await generate(platforms: [ProjectPlatform.web, ProjectPlatform.android]);
 
       expect(
         runner.invocations.first.arguments,
@@ -229,7 +231,10 @@ void main() {
 
       expect(read(root, p.join('lib', 'main.dart')), contains("'내 가계부'"));
       expect(
-        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        read(
+          root,
+          p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+        ),
         contains('android:label="내 가계부"'),
       );
       expect(
@@ -246,7 +251,10 @@ void main() {
       // 검사는 결과가 맞는지만 보고, 치환이 실제로 돌았는지는 구분하지 못한다
       // — 그건 위의 '내 가계부' 검사가 본다.
       expect(
-        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        read(
+          root,
+          p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+        ),
         contains('android:label="my_app"'),
       );
       // plist 는 다르다. flutter create 가 'My App' 을 넣어두므로 치환이
@@ -277,7 +285,8 @@ void main() {
       expect(
         File(p.join(templateDir.path, 'lib', 'main.dart')).readAsStringSync(),
         contains("title: '${ProjectGenerator.templateDisplayName}'"),
-        reason: '템플릿의 앱 타이틀이 바뀌었다. '
+        reason:
+            '템플릿의 앱 타이틀이 바뀌었다. '
             'ProjectGenerator.templateDisplayName 도 같이 고쳐야 한다.',
       );
     });
@@ -291,7 +300,10 @@ void main() {
         contains(r"'Ki\'s \$A & B'"),
       );
       expect(
-        read(root, p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml')),
+        read(
+          root,
+          p.join('android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+        ),
         contains('android:label="Ki\'s \$A &amp; B"'),
       );
       expect(
@@ -347,9 +359,10 @@ void main() {
       expect(home, contains('class HomeScreen extends StatelessWidget'));
       // 스텁이 템플릿 API 를 끌어들이면 그 API 가 바뀔 때 조용히 낡는다.
       expect(
-        RegExp(r"^import .*$", multiLine: true)
-            .allMatches(home)
-            .map((m) => m.group(0)),
+        RegExp(
+          r"^import .*$",
+          multiLine: true,
+        ).allMatches(home).map((m) => m.group(0)),
         ["import 'package:flutter/material.dart';"],
       );
     });
@@ -364,10 +377,12 @@ void main() {
           .listSync(recursive: true)
           .whereType<File>()
           .map((f) => (f, _readTextOrNull(f) ?? ''))
-          .where((e) =>
-              e.$2.contains('ShadcnComponentsPage') ||
-              e.$2.contains('example/') ||
-              e.$2.contains('fl_chart'))
+          .where(
+            (e) =>
+                e.$2.contains('ShadcnComponentsPage') ||
+                e.$2.contains('example/') ||
+                e.$2.contains('fl_chart'),
+          )
           .map((e) => p.relative(e.$1.path, from: root.path))
           .toList();
 
@@ -420,7 +435,8 @@ void main() {
         expect(
           templateHome,
           contains(shape),
-          reason: '템플릿 홈 화면이 바뀌었다. '
+          reason:
+              '템플릿 홈 화면이 바뀌었다. '
               'ProjectGenerator.emptyHomeScreenSource 도 같이 고쳐야 한다.',
         );
         expect(ProjectGenerator.emptyHomeScreenSource, contains(shape));
@@ -430,8 +446,9 @@ void main() {
     test('예제에서만 쓰는 의존성이라고 적어둔 것이 실제로 예제에서만 쓰인다', () {
       // 템플릿이 이 이름을 더 이상 선언하지 않으면 제거는 조용한 no-op 이
       // 되고, 목록만 낡은 채로 남는다.
-      final pubspec =
-          File(p.join(templateDir.path, 'pubspec.yaml')).readAsStringSync();
+      final pubspec = File(
+        p.join(templateDir.path, 'pubspec.yaml'),
+      ).readAsStringSync();
       for (final name in ProjectGenerator.exampleOnlyDependencies) {
         expect(
           pubspec,
@@ -445,22 +462,20 @@ void main() {
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => p.extension(f.path) == '.dart')
-          .where((f) => ProjectGenerator.exampleOnlyDependencies
-              .any((d) => f.readAsStringSync().contains('package:$d/')))
+          .where(
+            (f) => ProjectGenerator.exampleOnlyDependencies.any(
+              (d) => f.readAsStringSync().contains('package:$d/'),
+            ),
+          )
           .map((f) => p.relative(f.path, from: templateDir.path));
 
-      expect(
-        users,
-        everyElement(startsWith(p.joinAll(['lib', 'example']))),
-      );
+      expect(users, everyElement(startsWith(p.joinAll(['lib', 'example']))));
     });
   });
 
   group('지원 언어', () {
-    String arb(String code) => p.joinAll([
-          ...ProjectGenerator.arbDirSegments,
-          'intl_$code.arb',
-        ]);
+    String arb(String code) =>
+        p.joinAll([...ProjectGenerator.arbDirSegments, 'intl_$code.arb']);
 
     test('둘 다 고르면 둘 다 남는다', () async {
       final root = await generate();
@@ -505,9 +520,9 @@ void main() {
       expect(entry, greaterThan(header));
       // 블록이 끝나기 전이어야 한다.
       expect(
-        lines.sublist(header + 1, entry).every(
-              (l) => l.trim().isEmpty || l.startsWith(' '),
-            ),
+        lines
+            .sublist(header + 1, entry)
+            .every((l) => l.trim().isEmpty || l.startsWith(' ')),
         isTrue,
       );
     });
@@ -535,11 +550,13 @@ void main() {
       // main_locale 이 가리키는 arb 가 S 의 API 면을 정한다. 키가 어긋나면
       // 어느 언어를 고르냐에 따라 없는 메서드가 생긴다.
       Set<String> keysOf(String code) {
-        final raw = File(p.joinAll([
-          templateDir.path,
-          ...ProjectGenerator.arbDirSegments,
-          'intl_$code.arb',
-        ])).readAsStringSync();
+        final raw = File(
+          p.joinAll([
+            templateDir.path,
+            ...ProjectGenerator.arbDirSegments,
+            'intl_$code.arb',
+          ]),
+        ).readAsStringSync();
         return (jsonDecode(raw) as Map<String, dynamic>).keys
             .where((k) => !k.startsWith('@'))
             .toSet();
@@ -615,20 +632,30 @@ flutter_tweakcn_generator:
       // 실제로 언어가 줄어드는 건 후처리의 intl_utils:generate 다. 가짜
       // 러너는 그걸 돌리지 않으므로 여기서는 검사할 수 없다 —
       // tool/smoke_generate.dart 가 진짜로 돌려보고 확인한다.
-      final generated = File(p.join(root.path, 'lib', 'core', 'localization',
-          'generated', 'l10n.dart'));
-
-      expect(generated.existsSync(), isTrue);
-      expect(
-        generated.readAsStringSync(),
-        File(p.joinAll([
-          templateDir.path,
+      final generated = File(
+        p.join(
+          root.path,
           'lib',
           'core',
           'localization',
           'generated',
           'l10n.dart',
-        ])).readAsStringSync(),
+        ),
+      );
+
+      expect(generated.existsSync(), isTrue);
+      expect(
+        generated.readAsStringSync(),
+        File(
+          p.joinAll([
+            templateDir.path,
+            'lib',
+            'core',
+            'localization',
+            'generated',
+            'l10n.dart',
+          ]),
+        ).readAsStringSync(),
       );
     });
 
@@ -654,14 +681,18 @@ flutter_tweakcn_generator:
       // 템플릿에 언어가 하나 늘었는데 AppLanguage 에 없으면, 그 arb 는
       // 어떻게 골라도 지워진다. 반대로 목록에만 있으면 고를 수는 있는데
       // 아무 효과가 없다.
-      final onDisk = Directory(
-        p.joinAll([templateDir.path, ...ProjectGenerator.arbDirSegments]),
-      )
-          .listSync()
-          .whereType<File>()
-          .where((f) => p.extension(f.path) == '.arb')
-          .map((f) => p.basenameWithoutExtension(f.path).split('_').last)
-          .toSet();
+      final onDisk =
+          Directory(
+                p.joinAll([
+                  templateDir.path,
+                  ...ProjectGenerator.arbDirSegments,
+                ]),
+              )
+              .listSync()
+              .whereType<File>()
+              .where((f) => p.extension(f.path) == '.arb')
+              .map((f) => p.basenameWithoutExtension(f.path).split('_').last)
+              .toSet();
 
       expect(onDisk, AppLanguage.values.map((l) => l.code).toSet());
     });
@@ -691,10 +722,7 @@ flutter_tweakcn_generator:
         processRunner: runner,
       );
 
-      await expectLater(
-        generate(),
-        throwsA(isA<GenerationException>()),
-      );
+      await expectLater(generate(), throwsA(isA<GenerationException>()));
       expect(runner.invocations, isEmpty);
     });
 

@@ -1,7 +1,6 @@
 enum StorageKey {
   locale('locale'),
-  theme('theme'),
-  ;
+  theme('theme');
 
   final String key;
 

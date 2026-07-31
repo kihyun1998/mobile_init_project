@@ -45,7 +45,8 @@ class ShadcnCard extends StatelessWidget {
           if (title != null || titleWidget != null)
             Padding(
               padding: padding ?? EdgeInsets.all(16.r),
-              child: titleWidget ??
+              child:
+                  titleWidget ??
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

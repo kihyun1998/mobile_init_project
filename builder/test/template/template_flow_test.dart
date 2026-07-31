@@ -106,8 +106,9 @@ void main() {
       ..createSync(recursive: true);
     Directory(p.join(copy.path, 'lib')).createSync();
     File(p.join(copy.path, 'tweakcn.css')).writeAsStringSync(':root {}');
-    File(p.join(copy.path, 'pubspec.yaml'))
-        .writeAsStringSync('name: mobile_init_project\n');
+    File(
+      p.join(copy.path, 'pubspec.yaml'),
+    ).writeAsStringSync('name: mobile_init_project\n');
 
     await pumpApp(tester, chosen: copy.path);
     await tapBrowse(tester);
@@ -127,11 +128,7 @@ void main() {
 
     expect(find.textContaining('템플릿 폴더가 아닌 것 같습니다'), findsOneWidget);
     expect(find.byKey(GenerateFormPage.nameFieldKey), findsNothing);
-    expect(
-      store.written,
-      isNull,
-      reason: '저장해두면 다음 실행에도 같은 이유로 실패한다',
-    );
+    expect(store.written, isNull, reason: '저장해두면 다음 실행에도 같은 이유로 실패한다');
   });
 
   testWidgets('취소하면 묻는 화면에 그대로 남는다', (tester) async {

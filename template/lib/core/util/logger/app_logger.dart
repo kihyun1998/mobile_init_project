@@ -10,10 +10,7 @@ class AppLogger {
 
   /// kDebugMode일 때만 출력, 릴리즈에서는 자동 비활성화
   final Logger _logger = Logger(
-    printer: PrettyPrinter(
-      methodCount: 0,
-      printEmojis: true,
-    ),
+    printer: PrettyPrinter(methodCount: 0, printEmojis: true),
     level: kDebugMode ? Level.debug : Level.off,
   );
 
