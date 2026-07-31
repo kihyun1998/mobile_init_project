@@ -242,10 +242,20 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
 - **`builder` 테스트는 `template/test/` 를 돌리지 않는다.** `path:` 의존이라 template
   코드를 **컴파일** 할 뿐이다. template 만 고쳤어도 양쪽 다 돌린다 — 컴포넌트 변경이
   빌더 미리보기를 깨는 것이 정확히 이 저장소가 막으려는 사고다.
-- **생성물은 커밋되어 있고 게이트가 재생성해주지 않는다.** provider·arb·`tweakcn.css`
-  를 고쳤으면 `dart run build_runner build --delete-conflicting-outputs` /
-  `dart run intl_utils:generate` 를 직접 돌려 산출물을 커밋한다. 안 돌리면 게이트는
-  초록인데 생성물만 낡는다.
+- **생성물은 커밋되어 있다.** provider·arb·`tweakcn.css` 를 고쳤으면
+  `dart run build_runner build --delete-conflicting-outputs` /
+  `dart run intl_utils:generate` 를 직접 돌려 산출물을 커밋한다. **로컬 게이트는
+  이걸 안 본다** — analyze 도 test 도 낡은 생성물을 초록으로 통과시킨다. CI 의
+  `codegen` 잡이 재생성 후 `git diff --exit-code` 로 잡아주지만, 그건 PR 을 올린
+  뒤에야 알려주므로 로컬에서 먼저 돌리는 편이 빠르다.
+  - 전례: PR #16 이 `theme_provider.dart` 를 고치고 재생성을 잊어서 riverpod 소스
+    해시가 낡은 채로 머지됐다. 그때 4개 잡이 전부 초록이었다 — `codegen` 잡은
+    그 사건 때문에 생겼다.
+- **생성물의 줄바꿈은 `.gitattributes` 가 `eol=lf` 로 못박고 있다.** 생성 도구는
+  항상 LF 로 쓰는데 `text=auto` 아래 Windows 체크아웃은 CRLF 라, 못박지 않으면
+  도구를 한 번 돌리는 것만으로 **내용이 같은 파일 20개가 수정으로 뜬다**
+  (`git diff` 는 아무것도 못 보여주는데 `status` 만 더러운 상태가 된다).
+  생성물을 새로 추가하면 그 규칙에도 넣는다.
 - **`builder/test/macos_sandbox_test.dart`** — `flutter create` 로 `macos/` 를 다시
   만들면 app-sandbox 가 기본값으로 되살아나고, 그러면 `Directory.current` 가 컨테이너로
   바뀌어 `../template` 해석과 `Process.run('flutter', …)` 이 둘 다 죽는다.
@@ -268,6 +278,8 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
   그대로 돌리며, PR 과 main 푸시에서 뜬다. 갈리면 **바인딩이 기준이고 워크플로를
   맞춘다** — 워크플로 주석에도 그렇게 적어뒀다.
   - `format` 잡 — ubuntu 에서 포맷만.
+  - `codegen` 잡 — ubuntu 에서 l10n·codegen 을 재생성하고 `git diff --exit-code`.
+    커밋된 생성물이 소스보다 낡았는지를 보는 유일한 게이트다.
   - `gates` 잡 — **ubuntu · macOS · Windows 3종**에서 두 모듈의 analyze + test.
     `fail-fast: false` 라 한 OS 가 깨져도 나머지 결과가 남는다. 어느 OS 에서만
     깨지는지가 진단의 절반이다.
