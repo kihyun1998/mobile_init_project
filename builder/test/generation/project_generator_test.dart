@@ -739,10 +739,22 @@ flutter_tweakcn_generator:
         p.join(templateDir.path, 'pubspec.yaml'),
       ).readAsStringSync();
 
-      final input = RegExp(
-        r'^flutter_tweakcn_generator:\n(?:.*\n)*?\s+input:\s*(\S+)',
-        multiLine: true,
-      ).firstMatch(pubspec)?.group(1);
+      // 줄바꿈을 정규식에 박지 않는다. `.gitattributes` 가 `* text=auto` 라
+      // Windows 체크아웃의 pubspec 은 CRLF 이고, `\n` 을 박은 패턴은 거기서
+      // 조용히 아무것도 못 찾는다 — 실제로 Windows CI 에서만 빨개졌다.
+      final lines = pubspec.split(RegExp(r'\r?\n'));
+      final header = lines.indexWhere(
+        (l) => l.trimRight() == 'flutter_tweakcn_generator:',
+      );
+      String? input;
+      for (final line in lines.skip(header + 1)) {
+        if (!line.startsWith(' ')) break;
+        final match = RegExp(r'^\s+input:\s*(\S+)').firstMatch(line);
+        if (match != null) {
+          input = match.group(1);
+          break;
+        }
+      }
 
       expect(
         input,

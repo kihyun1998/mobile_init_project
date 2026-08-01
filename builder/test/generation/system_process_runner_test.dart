@@ -133,10 +133,29 @@ void main() {
   /// 실패 모양과 정확히 맞는다.
   group('무출력 감시견', () {
     test('출력이 멎은 채 살아 있는 자식을 끊고 이유를 남긴다', () async {
-      final path = script('hangs', '''
+      // **손자를 하나 띄우고 파이프를 물려준다.** `runInShell: true` 라
+      // 우리가 죽이는 것은 셸이고, 손자가 살아 있으면 스트림이 닫히지 않아
+      // "끊었는데도 안 끝나는" 상태가 된다. 이 모양을 만들지 않으면 macOS
+      // 에서는 셸이 exec 로 대체돼 우연히 통과하고, Linux·Windows CI 에서만
+      // 빨개진다 — 실제로 그렇게 됐다. 여기서 재현해 어느 머신에서 돌리든
+      // 같은 것을 재게 한다.
+      final sleeper = script('sleeper', '''
 import 'dart:io';
 
 Future<void> main() async {
+  // 테스트가 끝난 뒤까지 남지 않을 만큼만 산다.
+  await Future<void>.delayed(const Duration(seconds: 20));
+}
+''');
+      final path = script('hangs', '''
+import 'dart:io';
+
+Future<void> main(List<String> args) async {
+  await Process.start(
+    args[0],
+    [args[1]],
+    mode: ProcessStartMode.inheritStdio,
+  );
   stdout.writeln('일은 다 했다');
   await stdout.flush();
   // 상류 CLI 가 미배출 응답 때문에 빠지는 상태와 같은 모양 —
@@ -145,11 +164,19 @@ Future<void> main() async {
 }
 ''');
 
-      final result = await const SystemProcessRunner(
-        idleTimeout: Duration(seconds: 2),
-      ).run(dartPath, [path]).timeout(_generous);
+      final result =
+          await const SystemProcessRunner(idleTimeout: Duration(seconds: 2))
+              .run(dartPath, [path, dartPath, sleeper])
+              .timeout(
+                _generous,
+                onTimeout: () => throw StateError(
+                  '감시견이 끊었는데도 run() 이 끝나지 않았다 — '
+                  '손자가 파이프를 붙들고 있는 동안 drain 을 계속 기다리고 있다',
+                ),
+              );
 
       expect(result.succeeded, isFalse);
+      expect(result.timedOut, isTrue);
       expect(result.stdout, contains('일은 다 했다'));
       expect(
         result.failureOutput,

@@ -104,13 +104,14 @@ class SystemProcessRunner implements ProcessRunner {
     // 살아 있다. 여기서 끊지 않으면 빌더가 "테마 생성 중" 에 붙박이고,
     // 사용자가 할 수 있는 일은 앱을 죽이는 것뿐이다.
     var timedOut = false;
+    final givenUp = Completer<void>();
     Timer? watchdog;
     void resetWatchdog() {
       watchdog?.cancel();
       watchdog = Timer(idleTimeout, () {
         timedOut = true;
-        // 끊으면 스트림이 닫히고 아래 drain 이 정상적으로 끝난다.
         process.kill(ProcessSignal.sigkill);
+        if (!givenUp.isCompleted) givenUp.complete();
       });
     }
 
@@ -125,17 +126,32 @@ class SystemProcessRunner implements ProcessRunner {
           });
     }
 
+    final draining = Future.wait([
+      drain(process.stdout, out),
+      drain(process.stderr, err),
+    ]);
+
     resetWatchdog();
     try {
-      await Future.wait([
-        drain(process.stdout, out),
-        drain(process.stderr, err),
-      ]);
+      // **끊었다고 해서 drain 이 끝난다는 보장이 없다.** `runInShell: true` 라
+      // 우리가 띄우는 것은 셸이고, 죽이는 것도 셸이다. 손자 프로세스가 살아서
+      // 파이프를 붙들고 있으면 스트림이 닫히지 않아 `Future.wait` 가 영원히
+      // 안 끝난다 — 감시견을 달아놓고도 그대로 멈추는 것이다. 실제로 Linux 와
+      // Windows CI 에서만 그렇게 됐고 macOS 에서는 셸이 exec 로 대체돼 우연히
+      // 통과했다. 그래서 끊은 뒤에는 **기다리는 것을 그만둔다.**
+      await Future.any([draining, givenUp.future]);
     } finally {
       watchdog?.cancel();
+      // 그만두더라도 drain 의 실패를 미아로 남기지 않는다.
+      unawaited(draining.then((_) {}, onError: (_) {}));
       // 스트림을 읽다 터져도 프로세스는 반드시 거둬들인다. 안 그러면
-      // exitCode 를 기다리는 사람이 없어 좀비가 남는다.
-      await process.exitCode;
+      // exitCode 를 기다리는 사람이 없어 좀비가 남는다. 끊은 경우에는
+      // 기다리지 않는다 — 붙들려 있는 것이 바로 그 프로세스다.
+      if (timedOut) {
+        unawaited(process.exitCode.then((_) {}, onError: (_) {}));
+      } else {
+        await process.exitCode;
+      }
     }
 
     if (timedOut) {
@@ -149,7 +165,9 @@ class SystemProcessRunner implements ProcessRunner {
     }
 
     return ProcessRunResult(
-      exitCode: await process.exitCode,
+      // 끊은 경우 종료 코드를 기다리지 않으므로 자리만 채운다. 성공 여부는
+      // [ProcessRunResult.timedOut] 이 이미 결정한다.
+      exitCode: timedOut ? -1 : await process.exitCode,
       stdout: out.toString(),
       stderr: err.toString(),
       timedOut: timedOut,
