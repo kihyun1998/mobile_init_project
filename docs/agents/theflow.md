@@ -70,10 +70,11 @@ template 자체 테스트가 아니다. 항상 양쪽을 따로 돌린다.
 - `builder/lib/src/preview/preview_theme.dart` — `colorTokens`, 그리고 클래스
   doc-comment 가 "아직 사본으로 남은 두 곳"을 명시한다.
 - `builder/lib/src/generation/project_generator.dart` — `copyEntries`,
-  `templatePackageName`, `templateDisplayName`, `_preservedPrefixes`,
-  `exampleOnlyDependencies`, `exampleDirSegments`, `homeScreenSegments`,
-  `arbDirSegments`. 각각이 "템플릿이 이렇게 생겼다" 는 가정이고, 템플릿이 움직이면
-  조용히 낡는 자리다.
+  `themeCssEntry`, `templatePackageName`, `templateDisplayName`,
+  `_preservedPrefixes`, `exampleOnlyDependencies`, `exampleDirSegments`,
+  `homeScreenSegments`, `arbDirSegments`. 각각이 "템플릿이 이렇게 생겼다" 는
+  가정이고, 템플릿이 움직이면 조용히 낡는 자리다. `themeCssEntry` 는 템플릿
+  pubspec 의 `flutter_tweakcn_generator: input:` 과 묶여 있고, 테스트가 대조한다.
 
 템플릿에 파일·의존성·언어를 추가했다면 **이 상수들부터** 확인한다. 컴파일러가
 봐주지 않는다.
@@ -185,6 +186,9 @@ template 을 고쳐도 기존 생성물에 대해 할 일은 없다.
 - **이슈 본문** — #1 이 사실상 PRD 다. 구현 결정이 뒤집히면 #1 의 해당 절을 고친다.
   자식 이슈가 닫힐 때 spine 에 접어 넣는 것(확인/반증된 가정, 측정한 숫자, 아직 열린
   것)도 여기다.
+- **`template/tweakcn.css`** — 고치면 `dart run flutter_tweakcn_generator` 로
+  `tweakcn_theme.g.dart` 까지 만들어 **커밋한다**. 이게 미리보기가 import 하는 바로
+  그 파일이라, 낡으면 "붙여넣지 않았을 때의 미리보기" 가 생성 결과와 갈린다.
 - **`template/lib/core/localization/l10n/*.arb`** — 문구가 바뀌면 `intl_utils:generate`
   로 생성물까지 만들어 **커밋한다** (생성물이 커밋되어 있어야 빌더가 복사만으로
   컴파일된다).
@@ -242,15 +246,28 @@ cd <생성된 프로젝트> && flutter analyze && flutter test
 - **`builder` 테스트는 `template/test/` 를 돌리지 않는다.** `path:` 의존이라 template
   코드를 **컴파일** 할 뿐이다. template 만 고쳤어도 양쪽 다 돌린다 — 컴포넌트 변경이
   빌더 미리보기를 깨는 것이 정확히 이 저장소가 막으려는 사고다.
-- **생성물은 커밋되어 있다.** provider·arb·`tweakcn.css` 를 고쳤으면
-  `dart run build_runner build --delete-conflicting-outputs` /
-  `dart run intl_utils:generate` 를 직접 돌려 산출물을 커밋한다. **로컬 게이트는
-  이걸 안 본다** — analyze 도 test 도 낡은 생성물을 초록으로 통과시킨다. CI 의
-  `codegen` 잡이 재생성 후 `git diff --exit-code` 로 잡아주지만, 그건 PR 을 올린
-  뒤에야 알려주므로 로컬에서 먼저 돌리는 편이 빠르다.
+- **생성물은 커밋되어 있다.** 고친 것에 따라 **도구가 다르다** — 셋을 한 덩어리로
+  묶어 기억하면 안 된다.
+  - provider → `dart run build_runner build --delete-conflicting-outputs`
+  - arb → `dart run intl_utils:generate`
+  - `tweakcn.css` → **`dart run flutter_tweakcn_generator`**
+
+  **테마는 `build_runner` 가 만들지 않는다.** 상류의 `build.yaml` 은
+  `.tweakcn.css` → `.tweakcn.dart` 만 걸고, pubspec 의
+  `flutter_tweakcn_generator:` 블록(`input`/`output`)은 `bin/` 의 CLI 만 읽는다.
+  우리 파일 이름은 `tweakcn.css` 라 builder 패턴에 애초에 걸리지 않는다.
+  실측(#9): 템플릿의 `--primary` 를 바꾸고 `build_runner` 를 돌리면
+  `tweakcn_theme.g.dart` 가 **한 글자도** 안 바뀌고, CLI 를 돌리면 바뀐다.
+
+  **로컬 게이트는 이걸 안 본다** — analyze 도 test 도 낡은 생성물을 초록으로
+  통과시킨다. CI 의 `codegen` 잡이 재생성 후 `git diff --exit-code` 로 잡아주지만,
+  그건 PR 을 올린 뒤에야 알려주므로 로컬에서 먼저 돌리는 편이 빠르다.
   - 전례: PR #16 이 `theme_provider.dart` 를 고치고 재생성을 잊어서 riverpod 소스
     해시가 낡은 채로 머지됐다. 그때 4개 잡이 전부 초록이었다 — `codegen` 잡은
     그 사건 때문에 생겼다.
+  - 전례: #9 까지 그 `codegen` 잡이 **테마 CLI 를 안 돌리고 있었다.** 같은 사고를
+    막으려고 만든 잡에 정작 세 도구 중 하나가 빠져 있었던 것이고, "생성물 =
+    build_runner" 라는 이 문서의 문장 자체가 그 구멍의 출처였다.
 - **생성물의 줄바꿈은 `.gitattributes` 가 `eol=lf` 로 못박고 있다.** 생성 도구는
   항상 LF 로 쓰는데 `text=auto` 아래 Windows 체크아웃은 CRLF 라, 못박지 않으면
   도구를 한 번 돌리는 것만으로 **커밋된 생성물이 통째로 수정으로 뜬다** —

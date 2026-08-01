@@ -4,6 +4,7 @@ import 'app_language.dart';
 import 'organization.dart';
 import 'package_name.dart';
 import 'project_platform.dart';
+import 'theme_css.dart';
 
 /// 한 번의 생성에 필요한 입력.
 ///
@@ -14,8 +15,6 @@ import 'project_platform.dart';
 /// 형식 규칙이 없는 자유 문구(설명·표시 이름)는 **빈 값을 여기서 기본값으로
 /// 바꾼다.** 화면과 생성기가 각자 `isEmpty ? ... : ...` 를 들고 있으면 둘이
 /// 어긋나는 날이 온다.
-///
-/// 붙여넣은 테마를 반영하는 것은 아직 없다. 뒤따르는 티켓에서 붙는다.
 class GenerationConfig {
   GenerationConfig({
     required this.projectName,
@@ -24,6 +23,7 @@ class GenerationConfig {
     this.platforms = PlatformSelection.mobile,
     this.languages = LanguageSelection.all,
     this.includeExample = true,
+    this.themeCss,
     String description = '',
     String displayName = '',
   }) : description = _or(description, defaultDescription),
@@ -50,6 +50,13 @@ class GenerationConfig {
   /// 컴포넌트 쇼케이스를 결과물에 남길지. 끄면 홈 화면이 빈 스텁이 되고
   /// 예제에서만 쓰던 의존성도 빠진다. shadcn 컴포넌트는 끄든 켜든 남는다.
   final bool includeExample;
+
+  /// 미리보기에서 확인한 테마의 소스. null 이면 템플릿 기본 테마를 쓴다.
+  ///
+  /// 이 문자열이 결과물의 `tweakcn.css` 가 되고, 후처리의 테마 생성 단계가
+  /// 그것을 읽어 `tweakcn_theme.g.dart` 를 다시 만든다. 복사해온 옛 테마는
+  /// 그 단계에서 덮어써진다.
+  final ThemeCss? themeCss;
 
   /// pubspec 설명. 비워서 넣으면 기본 문구가 들어온다.
   final String description;

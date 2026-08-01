@@ -119,6 +119,96 @@ void main() {
     expect(result.failureOutput, contains('망했다'));
   });
 
+  /// 자식이 **일을 다 끝내고도 끝나지 않는** 경우가 실제로 있다.
+  ///
+  /// 상류 `flutter_tweakcn_generator` 는 Google Fonts API 가 200 이 아니면
+  /// 응답 본문을 비우지 않고 던진다(`font_downloader.dart:289-303`). 그러면
+  /// CLI 는 테마 파일을 쓰고 요약까지 다 출력한 뒤 영원히 살아 있다. 실측:
+  /// `--font-sans: "Segoe UI"` (Google Fonts 에 없어 400) 로 60초 넘게 안 죽었다.
+  /// 정상 실행은 1초 미만이다.
+  ///
+  /// 벽시계 총량이 아니라 **무출력 시간**으로 자르는 이유는, build_runner 가
+  /// 새 프로젝트에서 몇 분씩 도는 것이 정상이기 때문이다. 총량으로 자르면
+  /// 정상적인 긴 작업을 죽이게 된다. 멈춘 자식은 출력까지 멎으므로 이쪽이
+  /// 실패 모양과 정확히 맞는다.
+  group('무출력 감시견', () {
+    test('출력이 멎은 채 살아 있는 자식을 끊고 이유를 남긴다', () async {
+      // **손자를 하나 띄우고 파이프를 물려준다.** `runInShell: true` 라
+      // 우리가 죽이는 것은 셸이고, 손자가 살아 있으면 스트림이 닫히지 않아
+      // "끊었는데도 안 끝나는" 상태가 된다. 이 모양을 만들지 않으면 macOS
+      // 에서는 셸이 exec 로 대체돼 우연히 통과하고, Linux·Windows CI 에서만
+      // 빨개진다 — 실제로 그렇게 됐다. 여기서 재현해 어느 머신에서 돌리든
+      // 같은 것을 재게 한다.
+      final sleeper = script('sleeper', '''
+import 'dart:io';
+
+Future<void> main() async {
+  // 테스트가 끝난 뒤까지 남지 않을 만큼만 산다.
+  await Future<void>.delayed(const Duration(seconds: 20));
+}
+''');
+      final path = script('hangs', '''
+import 'dart:io';
+
+Future<void> main(List<String> args) async {
+  await Process.start(
+    args[0],
+    [args[1]],
+    mode: ProcessStartMode.inheritStdio,
+  );
+  stdout.writeln('일은 다 했다');
+  await stdout.flush();
+  // 상류 CLI 가 미배출 응답 때문에 빠지는 상태와 같은 모양 —
+  // 할 일은 끝났는데 이벤트 루프에 살아 있는 핸들이 남아 끝나지 않는다.
+  await Future<void>.delayed(const Duration(days: 1));
+}
+''');
+
+      final result =
+          await const SystemProcessRunner(idleTimeout: Duration(seconds: 2))
+              .run(dartPath, [path, dartPath, sleeper])
+              .timeout(
+                _generous,
+                onTimeout: () => throw StateError(
+                  '감시견이 끊었는데도 run() 이 끝나지 않았다 — '
+                  '손자가 파이프를 붙들고 있는 동안 drain 을 계속 기다리고 있다',
+                ),
+              );
+
+      expect(result.succeeded, isFalse);
+      expect(result.timedOut, isTrue);
+      expect(result.stdout, contains('일은 다 했다'));
+      expect(
+        result.failureOutput,
+        contains('응답이 없어'),
+        reason: '왜 끊겼는지 화면에 남아야 사용자가 다음 수를 둘 수 있다',
+      );
+    });
+
+    test('출력이 계속 나오는 동안에는 끊지 않는다', () async {
+      // 감시견이 총 실행 시간으로 자르면 여기서 걸린다. 자식은 감시견 간격의
+      // 몇 배를 살지만 그동안 꾸준히 뱉는다 — build_runner 가 하는 일이다.
+      final path = script('chatty', '''
+import 'dart:io';
+
+Future<void> main() async {
+  for (var i = 0; i < 8; i++) {
+    stdout.writeln('진행 \$i');
+    await stdout.flush();
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+  }
+}
+''');
+
+      final result = await const SystemProcessRunner(
+        idleTimeout: Duration(seconds: 2),
+      ).run(dartPath, [path]).timeout(_generous);
+
+      expect(result.succeeded, isTrue);
+      expect(result.stdout, contains('진행 7'));
+    });
+  });
+
   test('실패 문구는 긴 로그를 통째로 쏟지 않는다', () {
     const result = ProcessRunResult(exitCode: 1, stdout: '', stderr: '');
     expect(result.failureOutput, isEmpty);

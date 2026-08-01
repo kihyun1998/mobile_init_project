@@ -1,11 +1,13 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Key, Size;
+import 'package:flutter/material.dart'
+    show Key, Scrollable, ScrollableState, Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
 import 'package:mobile_init_builder/src/generation/app_language.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:mobile_init_builder/src/generation/project_platform.dart';
+import 'package:mobile_init_builder/src/preview/preview_panel.dart';
 import 'package:mobile_init_builder/src/template/template_locator.dart';
 import 'package:mobile_init_builder/src/ui/generate_form_page.dart';
 import 'package:path/path.dart' as p;
@@ -57,7 +59,12 @@ void main() {
     String org = 'io.github.kihyun1998',
     String? description,
     String? displayName,
+    String? themeCss,
   }) async {
+    if (themeCss != null) {
+      await tester.enterText(find.byKey(PreviewPanel.cssFieldKey), themeCss);
+      await tester.pumpAndSettle();
+    }
     await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), name);
     await tester.enterText(
       find.byKey(GenerateFormPage.organizationFieldKey),
@@ -94,7 +101,66 @@ void main() {
     expect(find.text(p.join(outputParent.path, 'my_app')), findsOneWidget);
     // flutter create 하나로 끝나지 않는다 — 후처리까지 돌아야 바로 실행된다.
     expect(runner.invocations.first.arguments.first, 'create');
-    expect(runner.invocations, hasLength(4));
+    // create + pub get + 테마 생성 + l10n + codegen.
+    expect(runner.invocations, hasLength(5));
+  });
+
+  group('미리보기 CSS 가 결과물로 간다', () {
+    /// 템플릿 CSS 에 없는 값이라야 "덮어썼다" 를 구분할 수 있다.
+    const pasted = ':root { --primary: #FF0000; --background: #00FF00; }';
+
+    String themeCssOf(String name) => File(
+      p.join(outputParent.path, name, ProjectGenerator.themeCssEntry),
+    ).readAsStringSync();
+
+    testWidgets('붙여넣은 CSS 가 결과물의 테마 소스가 된다', (tester) async {
+      await pumpForm(tester);
+      await fillAndSubmit(tester, name: 'my_app', themeCss: pasted);
+
+      expect(find.text('만들었습니다'), findsOneWidget);
+      expect(themeCssOf('my_app'), pasted);
+    });
+
+    /// 파일만 갈아끼우면 화면은 여전히 복사해온 옛 테마다. 그것을 되돌리는
+    /// 것은 build_runner 가 아니라 별도 CLI 다.
+    testWidgets('테마를 다시 만드는 명령이 실제로 돈다', (tester) async {
+      await pumpForm(tester);
+      await fillAndSubmit(tester, name: 'my_app', themeCss: pasted);
+
+      expect(
+        runner.invocations.map(
+          (i) => '${i.executable} ${i.arguments.join(' ')}',
+        ),
+        contains('dart run flutter_tweakcn_generator'),
+      );
+    });
+
+    testWidgets('붙여넣지 않으면 템플릿 CSS 가 그대로 간다', (tester) async {
+      await pumpForm(tester);
+      await fillAndSubmit(tester, name: 'my_app');
+
+      expect(
+        themeCssOf('my_app'),
+        File(
+          p.join('..', 'template', ProjectGenerator.themeCssEntry),
+        ).readAsStringSync(),
+      );
+    });
+
+    testWidgets('읽을 수 없는 CSS 는 오류로 보이고 flutter create 가 실행되지 않는다', (
+      tester,
+    ) async {
+      await pumpForm(tester);
+      await fillAndSubmit(tester, name: 'my_app', themeCss: '이건 CSS 가 아니다');
+
+      // 미리보기 쪽 안내와 구분되도록 생성 오류 배너 쪽을 본다.
+      expect(find.textContaining('색 토큰'), findsWidgets);
+      expect(runner.invocations, isEmpty);
+      expect(
+        Directory(p.join(outputParent.path, 'my_app')).existsSync(),
+        isFalse,
+      );
+    });
   });
 
   testWidgets('폼에 적은 설명이 결과물 pubspec 까지 간다', (tester) async {
@@ -243,6 +309,22 @@ void main() {
     // 끝난 뒤에도 로그가 남아 있어야 무엇이 있었는지 볼 수 있다.
     expect(find.byKey(const Key('generate.log')), findsOneWidget);
     expect(find.textContaining('Resolving dependencies...'), findsWidgets);
+
+    // 마지막 단계는 로그 창 높이를 넘어가서 끝까지 내려야 보인다. 진짜 앱에서는
+    // LogView 가 줄이 늘 때마다 자동으로 내려가지만, 가짜 러너로는 생성이
+    // 프레임 하나 없이 끝나 LogView 가 붙기 전에 모든 줄이 쌓인다. 그래서
+    // 여기서는 사용자가 내리는 것을 대신 해준다.
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byKey(const Key('generate.log')),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+
     expect(find.textContaining('코드 생성 중'), findsWidgets);
   });
 
