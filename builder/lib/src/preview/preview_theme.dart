@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tweakcn_generator/flutter_tweakcn_generator.dart';
 import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
+import '../generation/generation_exception.dart';
+import '../generation/theme_css.dart';
+
 /// 붙여넣은 CSS 가 미리보기로 갈 수 없을 때 던진다.
 class PreviewThemeException implements Exception {
   const PreviewThemeException(this.message);
@@ -67,24 +70,23 @@ class PreviewTheme {
   /// 폰트를 내려받지 않는다. 생성된 앱과 글꼴이 다를 수 있다는 뜻이다.
   final String? unsupportedFont;
 
+  /// **읽을 수 있는지 판정하는 것은 [ThemeCss] 다.** 미리보기가 받아들인 CSS 를
+  /// 생성이 거부하거나 그 반대가 되면 이 도구의 약속이 깨지므로, 규칙을 여기
+  /// 한 벌 더 두지 않고 생성이 쓰는 그 타입을 그대로 거친다. 예외만 화면이
+  /// 아는 종류로 갈아 끼운다.
   factory PreviewTheme.fromCss(String css) {
-    if (css.trim().isEmpty) {
-      throw const PreviewThemeException('CSS 가 비어 있습니다.');
-    }
-
-    final TweakcnThemeData parsed;
+    final ThemeCss source;
     try {
-      parsed = CssParser.parse(css);
-    } catch (e) {
-      throw PreviewThemeException('CSS 를 읽지 못했습니다: $e');
+      source = ThemeCss.parse(css);
+    } on GenerationException catch (e) {
+      throw PreviewThemeException(e.message);
     }
 
-    if (parsed.light.colors.isEmpty && parsed.dark.colors.isEmpty) {
-      throw const PreviewThemeException(
-        '색 토큰을 하나도 찾지 못했습니다. '
-        'tweakcn 에서 복사한 :root { --background: ... } 형태가 맞는지 보세요.',
-      );
-    }
+    return PreviewTheme.fromSource(source);
+  }
+
+  factory PreviewTheme.fromSource(ThemeCss source) {
+    final parsed = source.parsed;
 
     // 라이트 우선, 없으면 다크. 둘 다 없으면 팩토리가 8.0 을 쓴다.
     // 두 모드가 하나의 radius 를 공유한다.
@@ -113,10 +115,14 @@ class PreviewTheme {
         shadows: TweakcnShadows.fromShadowMap(parsed.dark.shadowLayers),
       ),
       missingTokens: missing,
-      // 생성기와 같은 추출기를 쓴다. 미리보기는 폰트를 반영하지 못하므로
-      // 이름만 들고 있다가 사용자에게 알린다.
+      // 생성기와 같은 추출기를, 생성기가 고르는 것과 같은 스택에서 쓴다.
+      // **`light.fontSans` 가 아니라 `resolvedFontSans` 다** — 생성기는
+      // `lightFontSans ?? darkFontSans` 를 쓰므로(라이트가 비었으면 다크),
+      // 라이트만 보면 다크에만 폰트를 적은 CSS 에서 미리보기가 아무 말도 하지
+      // 않은 채 생성된 앱만 그 폰트로 나온다. 규칙을 베끼지 않고 상류의 공개
+      // getter 를 그대로 부르는 이유가 이것이다.
       unsupportedFont: DartThemeGenerator.extractGoogleFontNames(
-        parsed.light.fontSans,
+        parsed.resolvedFontSans,
       ).firstOrNull,
     );
   }

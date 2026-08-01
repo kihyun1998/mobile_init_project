@@ -17,8 +17,10 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 
 1. `flutter create <name> --org <org> --platforms=...` 실행 후 대기
 2. `template/` 에서 **allowlist에 있는 것만** 새 프로젝트로 복사
-3. `package:mobile_init_project/` → `package:<name>/` 치환, `pubspec.yaml`의 `name:` 교체
-4. `flutter pub get` → `dart run intl_utils:generate` → `dart run build_runner build`
+3. `package:mobile_init_project/` → `package:<name>/` 치환, `pubspec.yaml`의 `name:` 교체, 붙여넣은 CSS로 `tweakcn.css` 덮어쓰기
+4. `flutter pub get` → `dart run flutter_tweakcn_generator` → `dart run intl_utils:generate` → `dart run build_runner build`
+
+**테마를 다시 만드는 것은 `build_runner` 가 아니다.** 상류 패키지의 `build.yaml` 은 `.tweakcn.css` → `.tweakcn.dart` 만 걸고, `pubspec.yaml` 의 `flutter_tweakcn_generator:` 블록(`input`/`output`)은 CLI 만 읽는다. 우리 파일 이름은 `tweakcn.css` 라 builder 패턴에 애초에 걸리지 않는다. `dart run flutter_tweakcn_generator` 를 빼면 `tweakcn.css` 를 아무리 고쳐도 `tweakcn_theme.g.dart` 는 한 글자도 안 바뀐다 — 컴파일은 되므로 조용하다.
 
 **`template/` 전체를 복사하면 안 된다.** `android/`, `ios/`, `macos/`, `web/`, `windows/`, `linux/`, `build/`, `.dart_tool/`, `.metadata` 는 `flutter create` 가 새로 만드는 것들이라 덮어쓰면 오히려 망가진다. 복사 대상은 `lib/`, `pubspec.yaml`, `tweakcn.css`, `analysis_options.yaml`, `assets/`, `test/` 다.
 
@@ -38,7 +40,7 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 - **크기는 항상 `.w` `.h` `.sp` `.r`.** 생짜 픽셀을 쓰지 말 것. 기준 디자인은 375×812.
-- **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 재생성한다.
+- **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
 - **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
@@ -50,6 +52,7 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 cd template && flutter run                                  # 템플릿 앱 실행
 cd template && dart run build_runner build --delete-conflicting-outputs
 cd template && dart run intl_utils:generate
+cd template && dart run flutter_tweakcn_generator     # tweakcn.css → tweakcn_theme.g.dart
 cd builder  && flutter run -d macos                         # 빌더 실행
 ```
 

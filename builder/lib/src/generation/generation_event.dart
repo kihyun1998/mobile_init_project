@@ -7,7 +7,8 @@ enum GenerationStep {
   applyTemplate('템플릿 얹는 중'),
   dependencies('의존성 받는 중'),
   localization('번역 파일 생성 중'),
-  codegen('코드 생성 중 (처음이라 몇 분 걸립니다)');
+  codegen('코드 생성 중 (처음이라 몇 분 걸립니다)'),
+  theme('테마 생성 중');
 
   const GenerationStep(this.label);
 

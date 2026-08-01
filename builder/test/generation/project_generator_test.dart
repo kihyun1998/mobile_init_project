@@ -9,6 +9,7 @@ import 'package:mobile_init_builder/src/generation/organization.dart';
 import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:mobile_init_builder/src/generation/project_platform.dart';
+import 'package:mobile_init_builder/src/generation/theme_css.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/fake_process_runner.dart';
@@ -56,6 +57,7 @@ void main() {
       ProjectPlatform.android,
       ProjectPlatform.ios,
     ],
+    String themeCss = '',
   }) {
     return generator
         .generate(
@@ -68,6 +70,7 @@ void main() {
             includeExample: includeExample,
             languages: LanguageSelection.of(languages),
             platforms: PlatformSelection.of(platforms),
+            themeCss: ThemeCss.parseOrNull(themeCss),
           ),
         )
         .then((r) => r.projectRoot);
@@ -695,6 +698,65 @@ flutter_tweakcn_generator:
               .toSet();
 
       expect(onDisk, AppLanguage.values.map((l) => l.code).toSet());
+    });
+  });
+
+  group('테마 CSS', () {
+    /// 템플릿 CSS 에는 없는 값이라야 "덮어썼다" 를 구분할 수 있다.
+    const pasted = ':root { --primary: #FF0000; --background: #00FF00; }';
+
+    test('붙여넣은 CSS 가 결과물의 테마 소스가 된다', () async {
+      final root = await generate(themeCss: pasted);
+
+      expect(read(root, ProjectGenerator.themeCssEntry), pasted);
+    });
+
+    test('붙여넣지 않으면 템플릿의 CSS 가 그대로 남는다', () async {
+      final root = await generate();
+
+      expect(
+        read(root, ProjectGenerator.themeCssEntry),
+        File(
+          p.join(templateDir.path, ProjectGenerator.themeCssEntry),
+        ).readAsStringSync(),
+      );
+    });
+
+    test('복사해온 옛 테마 CSS 가 남지 않는다', () async {
+      final root = await generate(themeCss: pasted);
+      final onDisk = read(root, ProjectGenerator.themeCssEntry);
+
+      // 템플릿 CSS 의 지문. 덮어쓰기가 아니라 이어붙이기를 했다면 살아남는다.
+      expect(onDisk, isNot(contains('oklch')));
+      expect(onDisk, isNot(contains('--sidebar-ring')));
+    });
+
+    /// 상수가 템플릿 pubspec 의 `input:` 과 갈리면, 생성기는 아무도 읽지 않는
+    /// 파일에 CSS 를 쓰고 결과물은 옛 테마로 나온다. 증상이 조용해서 여기서
+    /// 시끄럽게 깬다.
+    test('CSS 파일 이름이 템플릿 pubspec 의 input 과 같다', () {
+      final pubspec = File(
+        p.join(templateDir.path, 'pubspec.yaml'),
+      ).readAsStringSync();
+
+      final input = RegExp(
+        r'^flutter_tweakcn_generator:\n(?:.*\n)*?\s+input:\s*(\S+)',
+        multiLine: true,
+      ).firstMatch(pubspec)?.group(1);
+
+      expect(
+        input,
+        ProjectGenerator.themeCssEntry,
+        reason: '템플릿이 읽는 CSS 경로가 바뀌었는데 생성기 상수가 따라가지 않았다',
+      );
+    });
+
+    test('CSS 파일이 복사 목록에도 들어 있다', () {
+      // 붙여넣지 않았을 때 템플릿 것이 넘어가는 경로가 여기다.
+      expect(
+        ProjectGenerator.copyEntries,
+        contains(ProjectGenerator.themeCssEntry),
+      );
     });
   });
 

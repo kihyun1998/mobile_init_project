@@ -108,6 +108,9 @@ class _BuilderHomePageState extends State<BuilderHomePage> {
           child: GenerateFormPage(
             generator: widget.generator,
             processRunner: widget.processRunner,
+            // 미리보기가 보고 있는 그 CSS 를 그대로 넘긴다. 이 화면이 CSS 를
+            // 들고 있는 이유가 여기다 — 두 칸이 같은 문자열을 본다.
+            themeCss: _css.text,
           ),
         ),
         VerticalDivider(width: 1, color: colors.border),

@@ -14,19 +14,19 @@ import '../generation/package_name.dart';
 import '../generation/process_runner.dart';
 import '../generation/project_generator.dart';
 import '../generation/project_platform.dart';
+import '../generation/theme_css.dart';
 import 'generation_log.dart';
 import 'log_view.dart';
 
 /// 이름·표시 이름·설명·org·플랫폼·언어·예제 여부·출력 폴더를 받아 새
 /// 프로젝트를 만들고,
 /// 진행 상황과 명령 출력을 보여주는 화면.
-///
-/// 붙여넣은 테마를 결과물에 반영하는 것은 뒤따르는 티켓에서 붙는다.
 class GenerateFormPage extends StatefulWidget {
   const GenerateFormPage({
     super.key,
     required this.generator,
     required this.processRunner,
+    this.themeCss = '',
   });
 
   static const nameFieldKey = Key('generate.field.name');
@@ -48,6 +48,14 @@ class GenerateFormPage extends StatefulWidget {
   /// 결과 폴더를 파일 관리자로 여는 데 쓴다. 생성기 것을 빌려 쓰지 않고
   /// 따로 받는다 — 이 화면이 생성기 내부를 알 이유가 없다.
   final ProcessRunner processRunner;
+
+  /// 미리보기 칸에 지금 들어 있는 CSS **원문**. 비어 있으면 템플릿 기본 테마다.
+  ///
+  /// 파싱된 결과가 아니라 원문을 받는다. 미리보기는 파싱에 성공했을 때만
+  /// 갱신되므로, 이 문자열이 파싱되면 그것이 곧 화면에 보이는 그 테마다.
+  /// 파싱되지 않으면 값 타입이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된
+  /// 이름과 같은 길이다. **막는 자리를 화면에 따로 만들지 않는다.**
+  final String themeCss;
 
   @override
   State<GenerateFormPage> createState() => _GenerateFormPageState();
@@ -130,6 +138,9 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
           platforms: PlatformSelection.of(_platforms),
           languages: LanguageSelection.of(_languages),
           includeExample: _includeExample,
+          // 미리보기가 쓴 그 CSS 가 결과물의 테마 소스가 된다. 읽을 수 없으면
+          // 여기서 던진다 — 잘못된 이름과 같은 길을 탄다.
+          themeCss: ThemeCss.parseOrNull(widget.themeCss),
           outputParent: Directory(_outputParent.text.trim()),
           // 빈 값을 무엇으로 채울지는 설정 객체가 안다. 여기서 한 번 더
           // 정하면 둘이 어긋나는 날이 온다.

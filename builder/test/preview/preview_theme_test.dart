@@ -128,6 +128,29 @@ void main() {
     expect(themes.unsupportedFont, 'Inter');
   });
 
+  /// 생성기는 `resolvedFontSans` = `lightFontSans ?? darkFontSans` 를 쓴다.
+  /// 미리보기가 라이트만 보면, 다크에만 폰트를 적은 CSS 에서 **아무 말도 하지
+  /// 않은 채** 생성된 앱만 그 폰트로 나온다. 안내가 없는 것이 곧 거짓말이다.
+  test('다크에만 적은 폰트도 알려준다 — 생성기가 그것을 쓰기 때문이다', () {
+    final themes = PreviewTheme.fromCss(
+      ":root { --primary: #FF0000; } "
+      ".dark { --primary: #0000FF; --font-sans: 'Inter', sans-serif; }",
+    );
+
+    expect(themes.unsupportedFont, 'Inter');
+  });
+
+  /// 라이트가 값 없이 선언했으면(`--font-sans: ;`) 생성기는 그것을 "선언하지
+  /// 않았다" 로 보고 다크로 넘어간다.
+  test('라이트가 빈 값이면 다크 것을 쓴다', () {
+    final themes = PreviewTheme.fromCss(
+      ':root { --primary: #FF0000; --font-sans: ; } '
+      ".dark { --font-sans: 'Roboto', sans-serif; }",
+    );
+
+    expect(themes.unsupportedFont, 'Roboto');
+  });
+
   test('ColorScheme 에도 같은 색이 실려서 Material 위젯이 따라온다', () {
     final theme = PreviewTheme.fromCss(_css).light;
 

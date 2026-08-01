@@ -8,6 +8,7 @@ import 'generation_event.dart';
 import 'generation_exception.dart';
 import 'generation_result.dart';
 import 'process_runner.dart';
+import 'theme_css.dart';
 
 export 'generation_result.dart';
 
@@ -27,14 +28,31 @@ class ProjectGenerator {
   /// **blocklist 가 아니라 allowlist 여야 한다.** 빠뜨리면 결과물이 컴파일되지
   /// 않아 즉시 드러나지만, blocklist 에서 빠뜨린 항목은 조용히 통과해서
   /// 플랫폼 스캐폴드를 낡은 것으로 덮어써버린다.
+  ///
+  /// **`fonts/` 가 여기 없는 것은 알고 있는 구멍이다** — 그리고 위의 "빠뜨리면
+  /// 즉시 드러난다" 가 유일하게 통하지 않는 자리다. 템플릿 CSS 가 시스템
+  /// 스택이라 지금은 `fonts/` 가 존재하지 않아 아무 일도 없다. 누군가 템플릿에
+  /// 진짜 Google 폰트를 넣으면 테마 CLI 가 `fonts/*.ttf` 와 pubspec 의
+  /// `flutter: fonts:` 블록을 만드는데(실측: Inter → .ttf 9개 + 21줄), pubspec 은
+  /// 복사되고 `fonts/` 는 안 된다. 사용자가 **다른** 폰트를 붙여넣으면
+  /// `font_exclusive: false` 라 옛 선언이 남아, 컴파일이 아니라 **에셋 번들에서**
+  /// 죽는다. 템플릿에 폰트를 넣는 날 이 목록부터 고칠 것.
   static const copyEntries = <String>[
     'lib',
     'test',
     'assets',
     'pubspec.yaml',
-    'tweakcn.css',
+    themeCssEntry,
     'analysis_options.yaml',
   ];
+
+  /// 테마의 소스가 되는 CSS 파일. 붙여넣은 CSS 가 여기로 들어간다.
+  ///
+  /// **템플릿 `pubspec.yaml` 의 `flutter_tweakcn_generator: input:` 과 같은
+  /// 값이어야 한다.** 갈리면 생성기는 아무도 읽지 않는 파일에 CSS 를 쓰고
+  /// 결과물은 옛 테마로 나온다 — 컴파일은 되므로 조용하다. 그래서
+  /// `project_generator_test.dart` 가 템플릿 pubspec 을 읽어 대조한다.
+  static const themeCssEntry = 'tweakcn.css';
 
   /// 템플릿 패키지 이름. 결과물에서 이 참조가 남으면 컴파일되지 않는다.
   static const templatePackageName = 'mobile_init_project';
@@ -81,6 +99,7 @@ class ProjectGenerator {
     // 예제를 먼저 걷어낸다. 그래야 pubspec 에서 의존성이 빠진 뒤에
     // 이름·설명이 다시 쓰이고, 치환이 어차피 지울 파일을 훑지 않는다.
     if (!config.includeExample) _dropExample(projectRoot);
+    _applyThemeCss(projectRoot, config.themeCss);
     _applyLanguages(projectRoot, config.languages);
     _rewriteReferences(projectRoot, config, preserved);
     _applyDisplayName(projectRoot, config.displayName);
@@ -90,8 +109,23 @@ class ProjectGenerator {
 
   /// 복사가 끝난 프로젝트를 `flutter run` 가능한 상태로 만든다.
   ///
-  /// 순서가 중요하다. 의존성이 없으면 나머지가 아예 돌지 않고, 코드 생성은
-  /// l10n 생성물을 입력으로 삼으므로 그 뒤여야 한다.
+  /// 순서가 중요하다. 의존성이 없으면 나머지가 아예 `dart run` 되지 않고, 코드
+  /// 생성은 l10n 생성물을 입력으로 삼으므로 그 뒤여야 한다.
+  ///
+  /// **테마 생성은 `build_runner` 가 아니라 별도 CLI 다.** 상류 패키지의
+  /// `build.yaml` 은 `.tweakcn.css` → `.tweakcn.dart` 만 걸고, pubspec 의
+  /// `flutter_tweakcn_generator:` 블록(`input`/`output`)은 CLI 만 읽는다.
+  /// 템플릿의 파일 이름은 `tweakcn.css` 라 builder 패턴에 애초에 걸리지 않는다.
+  /// 이 단계를 빼면 `build_runner` 가 아무리 돌아도 **복사해온 옛 테마가 그대로
+  /// 남는다** — 붙여넣은 CSS 는 파일로만 들어가고 화면에는 반영되지 않는다.
+  /// 붙여넣지 않았을 때도 돌린다. 그래야 복사해온 생성물을 믿을 수 있다.
+  ///
+  /// **그리고 마지막이다.** 이 단계만 네트워크를 타고(Google Fonts), 폰트 하나만
+  /// 못 받아도 상류 CLI 가 `exitCode = 1` 을 세운다. 앞에 두면 그 한 번으로
+  /// 뒤가 통째로 건너뛰어지는데, [_applyLanguages] 가 고아 `messages_*.dart` 를
+  /// `intl_utils` 에게 맡기고 있어서 결과물이 **컴파일은 되면서** 고르지도 않은
+  /// 언어를 이고 있게 된다. 뒤로 미뤄도 잃는 것은 없다 — `build_runner` 는 테마
+  /// 파일을 입력으로 삼지 않는다(위의 `build.yaml` 이야기가 그대로 근거다).
   static const _postProcessing = <(GenerationStep, String, List<String>)>[
     (GenerationStep.dependencies, 'flutter', ['pub', 'get']),
     (GenerationStep.localization, 'dart', ['run', 'intl_utils:generate']),
@@ -100,6 +134,7 @@ class ProjectGenerator {
       'dart',
       ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
     ),
+    (GenerationStep.theme, 'dart', ['run', 'flutter_tweakcn_generator']),
   ];
 
   Future<GenerationResult> _runPostProcessing(
@@ -377,6 +412,19 @@ class HomeScreen extends StatelessWidget {
     }
 
     return kept.join('\n');
+  }
+
+  /// 붙여넣은 CSS 를 결과물의 테마 소스로 앉힌다.
+  ///
+  /// 복사해온 템플릿 CSS 를 **덮어쓴다.** 이어붙이면 두 `:root` 블록이 남아
+  /// 뒤엣것이 이기는데, 그건 사용자가 붙여넣은 것과 다를 수 있다.
+  ///
+  /// 붙여넣지 않았으면(null) 아무것도 하지 않는다 — 템플릿 CSS 가 그대로
+  /// 남고, 후처리의 테마 생성이 그것으로 같은 테마를 다시 만든다.
+  void _applyThemeCss(Directory projectRoot, ThemeCss? css) {
+    if (css == null) return;
+
+    File(p.join(projectRoot.path, themeCssEntry)).writeAsStringSync(css.value);
   }
 
   /// 번역 원본이 있는 자리.

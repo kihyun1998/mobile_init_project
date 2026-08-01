@@ -22,13 +22,21 @@ class ProcessRunResult {
     required this.exitCode,
     required this.stdout,
     required this.stderr,
+    this.timedOut = false,
   });
 
   final int exitCode;
   final String stdout;
   final String stderr;
 
-  bool get succeeded => exitCode == 0;
+  /// 무출력 감시견이 끊었는지.
+  ///
+  /// 종료 코드만으로는 구분할 수 없다 — 끊긴 프로세스가 돌려주는 값은 신호에
+  /// 따라 OS 마다 다르고, 하필 0 이 나오는 경우를 배제할 근거도 없다. 그래서
+  /// 끊었다는 사실을 따로 들고 다닌다.
+  final bool timedOut;
+
+  bool get succeeded => exitCode == 0 && !timedOut;
 
   /// 실패 원인으로 보여줄 만한 문구.
   ///
@@ -49,7 +57,23 @@ class ProcessRunResult {
 
 /// 실제로 프로세스를 띄우는 구현.
 class SystemProcessRunner implements ProcessRunner {
-  const SystemProcessRunner();
+  const SystemProcessRunner({this.idleTimeout = defaultIdleTimeout});
+
+  /// 이만큼 **아무 출력도 없으면** 자식을 끊는다.
+  ///
+  /// 총 실행 시간이 아니라 무출력 시간인 것이 요점이다. `build_runner` 는 새
+  /// 프로젝트에서 몇 분씩 도는 것이 정상이라 총량으로 자르면 멀쩡한 작업을
+  /// 죽인다. 반면 멈춘 자식은 출력까지 멎으므로, 무출력으로 재면 실패 모양과
+  /// 정확히 맞고 정상적인 긴 작업을 오인하지 않는다.
+  final Duration idleTimeout;
+
+  /// 실측에 맞춘 값.
+  ///
+  /// 이 파이프라인에서 가장 오래 조용한 구간은 `build_runner` 의 분석 단계이고,
+  /// 관측된 최대 무출력 간격은 10초 남짓이었다. 폰트 내려받기도 파일마다
+  /// 한 줄씩 뱉는다. 5분은 그 어느 쪽도 오인하지 않으면서, "영원히" 를
+  /// "5분 뒤 이유가 적힌 실패" 로 바꾼다.
+  static const defaultIdleTimeout = Duration(minutes: 5);
 
   @override
   Future<ProcessRunResult> run(
@@ -75,31 +99,60 @@ class SystemProcessRunner implements ProcessRunner {
     final out = StringBuffer();
     final err = StringBuffer();
 
+    // 자식이 일을 다 끝내고도 끝나지 않는 경우가 실제로 있다 — 상류 CLI 가
+    // Google Fonts 응답을 비우지 않고 던지면 요약까지 다 출력한 뒤 영원히
+    // 살아 있다. 여기서 끊지 않으면 빌더가 "테마 생성 중" 에 붙박이고,
+    // 사용자가 할 수 있는 일은 앱을 죽이는 것뿐이다.
+    var timedOut = false;
+    Timer? watchdog;
+    void resetWatchdog() {
+      watchdog?.cancel();
+      watchdog = Timer(idleTimeout, () {
+        timedOut = true;
+        // 끊으면 스트림이 닫히고 아래 drain 이 정상적으로 끝난다.
+        process.kill(ProcessSignal.sigkill);
+      });
+    }
+
     Future<void> drain(Stream<List<int>> stream, StringBuffer into) {
       return stream
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .forEach((line) {
+            resetWatchdog();
             into.writeln(line);
             onOutput?.call(line);
           });
     }
 
+    resetWatchdog();
     try {
       await Future.wait([
         drain(process.stdout, out),
         drain(process.stderr, err),
       ]);
     } finally {
+      watchdog?.cancel();
       // 스트림을 읽다 터져도 프로세스는 반드시 거둬들인다. 안 그러면
       // exitCode 를 기다리는 사람이 없어 좀비가 남는다.
       await process.exitCode;
+    }
+
+    if (timedOut) {
+      // 끊긴 프로세스의 종료 코드는 신호값이라 사용자에게 아무것도 말해주지
+      // 않는다. 무엇이 왜 끊겼는지를 실패 문구로 남긴다.
+      err.writeln(
+        '$executable ${arguments.join(' ')} 이(가) '
+        '${idleTimeout.inMinutes}분 동안 응답이 없어 중단했습니다. '
+        '명령이 끝나고도 종료하지 않았을 수 있습니다.',
+      );
     }
 
     return ProcessRunResult(
       exitCode: await process.exitCode,
       stdout: out.toString(),
       stderr: err.toString(),
+      timedOut: timedOut,
     );
   }
 }
