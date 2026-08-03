@@ -99,10 +99,17 @@ class SystemProcessRunner implements ProcessRunner {
     final out = StringBuffer();
     final err = StringBuffer();
 
-    // 자식이 일을 다 끝내고도 끝나지 않는 경우가 실제로 있다 — 상류 CLI 가
-    // Google Fonts 응답을 비우지 않고 던지면 요약까지 다 출력한 뒤 영원히
-    // 살아 있다. 여기서 끊지 않으면 빌더가 "테마 생성 중" 에 붙박이고,
-    // 사용자가 할 수 있는 일은 앱을 죽이는 것뿐이다.
+    // 자식이 일을 다 끝내고도 끝나지 않는 경우가 실제로 있다. 여기서 끊지
+    // 않으면 빌더가 그 단계에 붙박이고, 사용자가 할 수 있는 일은 앱을 죽이는
+    // 것뿐이다.
+    //
+    // 이걸 만들게 한 실물은 상류 테마 CLI 였다 — Google Fonts 가 200 이 아닐
+    // 때 응답 본문을 읽지 않아 소켓이 이벤트 루프를 붙들었고, 요약까지 다
+    // 출력한 뒤 영원히 살아 있었다. **그 결함은 0.5.0 에서 고쳐졌다**
+    // (kihyun1998/flutter_tweakcn_generator#23). 그래도 감시견은 남긴다:
+    // 여기서 돌리는 것은 그 CLI 하나가 아니라 `flutter`·`dart`·`build_runner`
+    // 전부이고, "자식이 안 끝난다" 는 어느 것에서든 날 수 있는 모양이다.
+    // 특정 결함의 우회가 아니라 프로세스 실행의 일반 방어다.
     var timedOut = false;
     final givenUp = Completer<void>();
     Timer? watchdog;

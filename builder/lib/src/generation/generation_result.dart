@@ -13,6 +13,7 @@ class GenerationResult {
     required this.projectRoot,
     this.failedStep,
     this.failureMessage,
+    this.warnings = const [],
   });
 
   final Directory projectRoot;
@@ -22,6 +23,15 @@ class GenerationResult {
 
   /// 사용자에게 그대로 보여줄 실패 원인.
   final String? failureMessage;
+
+  /// **덜 됐지만 실패는 아닌 것.** 성공과 실패 사이가 실제로 존재한다.
+  ///
+  /// 테마 CLI 는 0.5.0 부터 "테마는 정상적으로 썼는데 그것이 필요로 하는
+  /// 무언가를 못 놓았다" 를 `2` 로 답한다 (대개 내려받지 못한 폰트). 결과물은
+  /// `flutter run` 이 되므로 실패로 띄우면 거짓말이지만, Flutter 가 런타임에
+  /// 조용히 기본 폰트로 떨어지므로 삼켜도 거짓말이다. 그래서 성공으로 두고
+  /// 무엇이 빠졌는지를 여기에 담아 화면에 남긴다.
+  final List<String> warnings;
 
   bool get succeeded => failedStep == null;
 }

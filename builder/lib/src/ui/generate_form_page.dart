@@ -530,6 +530,11 @@ class _ResultBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
     final ok = result.succeeded;
+    // 성공했지만 덜 된 것이 있는 상태. 실패와 같은 칸에 두면 안 된다 —
+    // 결과물은 그대로 `flutter run` 되므로 빨간 배너는 거짓말이다. 그렇다고
+    // 삼키면 빠진 폰트를 사용자가 영영 모른다(런타임에 조용히 기본 폰트로
+    // 떨어진다). 그래서 성공 배너 안에서 따로 말한다.
+    final hasWarnings = ok && result.warnings.isNotEmpty;
 
     return _Banner(
       background: ok
@@ -540,7 +545,9 @@ class _ResultBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            ok ? '만들었습니다' : '${result.failedStep!.label} 에서 실패했습니다',
+            ok
+                ? (hasWarnings ? '만들었습니다 — 다만 덜 된 것이 있습니다' : '만들었습니다')
+                : '${result.failedStep!.label} 에서 실패했습니다',
             style: TextStyle(
               color: ok ? colors.foreground : colors.destructive,
               fontWeight: FontWeight.w600,
@@ -563,6 +570,16 @@ class _ResultBanner extends StatelessWidget {
             SelectableText(
               result.failureMessage ?? '',
               style: TextStyle(color: colors.destructive, fontSize: 12),
+            ),
+          ],
+          if (hasWarnings) ...[
+            const SizedBox(height: 8),
+            // `destructive` 를 쓰지 않는다 — 그 색은 "실패했다" 를 뜻하는데
+            // 여기서는 프로젝트가 멀쩡하다. tweakcn 에 경고용 토큰이 없으므로
+            // 본문색을 쓰고, 무슨 상태인지는 위 제목이 말한다.
+            SelectableText(
+              result.warnings.join('\n\n'),
+              style: TextStyle(color: colors.foreground, fontSize: 12),
             ),
           ],
           const SizedBox(height: 10),
