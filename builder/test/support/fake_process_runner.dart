@@ -12,10 +12,18 @@ class FakeProcessRunner implements ProcessRunner {
     this.failingCommand,
     this.stderr = '',
     this.outputLines = const [],
+    this.failureExitCode = 1,
   });
 
   /// 명령줄에 이 문자열이 들어 있으면 실패시킨다. 예: `'build_runner'`.
   final String? failingCommand;
+
+  /// [failingCommand] 가 돌려줄 종료 코드.
+  ///
+  /// 기본 1 이지만 **값을 고를 수 있어야 한다** — 테마 CLI 는 0.5.0 부터
+  /// `1`(아무것도 생성 안 됨)과 `2`(테마는 썼고 필요한 것이 빠짐)를 다른
+  /// 뜻으로 쓰고, 빌더는 그 둘을 다르게 다룬다.
+  final int failureExitCode;
 
   final String stderr;
 
@@ -46,7 +54,7 @@ class FakeProcessRunner implements ProcessRunner {
     }
 
     return ProcessRunResult(
-      exitCode: fails ? 1 : 0,
+      exitCode: fails ? failureExitCode : 0,
       stdout: outputLines.join('\n'),
       stderr: fails ? stderr : '',
     );

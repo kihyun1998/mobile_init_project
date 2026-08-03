@@ -120,51 +120,89 @@ class ProjectGenerator {
   /// 남는다** — 붙여넣은 CSS 는 파일로만 들어가고 화면에는 반영되지 않는다.
   /// 붙여넣지 않았을 때도 돌린다. 그래야 복사해온 생성물을 믿을 수 있다.
   ///
-  /// **그리고 마지막이다.** 이 단계만 네트워크를 타고(Google Fonts), 폰트 하나만
-  /// 못 받아도 상류 CLI 가 `exitCode = 1` 을 세운다. 앞에 두면 그 한 번으로
-  /// 뒤가 통째로 건너뛰어지는데, [_applyLanguages] 가 고아 `messages_*.dart` 를
-  /// `intl_utils` 에게 맡기고 있어서 결과물이 **컴파일은 되면서** 고르지도 않은
-  /// 언어를 이고 있게 된다. 뒤로 미뤄도 잃는 것은 없다 — `build_runner` 는 테마
-  /// 파일을 입력으로 삼지 않는다(위의 `build.yaml` 이야기가 그대로 근거다).
-  static const _postProcessing = <(GenerationStep, String, List<String>)>[
-    (GenerationStep.dependencies, 'flutter', ['pub', 'get']),
-    (GenerationStep.localization, 'dart', ['run', 'intl_utils:generate']),
-    (
-      GenerationStep.codegen,
+  /// **그리고 마지막이다.** 이 단계만 네트워크를 타고(Google Fonts), 폰트
+  /// 조회 하나가 어긋나도 뒤가 통째로 건너뛰어지면 곤란하다. [_applyLanguages]
+  /// 가 고아 `messages_*.dart` 를 `intl_utils` 에게 맡기고 있어서, 그렇게 되면
+  /// 결과물이 **컴파일은 되면서** 고르지도 않은 언어를 이고 있게 된다. 뒤로
+  /// 미뤄도 잃는 것은 없다 — `build_runner` 는 테마 파일을 입력으로 삼지 않는다
+  /// (위의 `build.yaml` 이야기가 그대로 근거다).
+  ///
+  /// 순서를 이렇게 잡은 원래 이유는 **0.4.0 이 폰트 하나만 못 받아도 `1` 을
+  /// 세워서 전면 실패와 구분되지 않았기** 때문이다. 0.5.0 이 그 둘을 갈라
+  /// 놓았으므로(아래 [_PostProcessingStep.partialExitCode]) 그 이유는 이제
+  /// 없다. 그래도 순서는 그대로 둔다 — 위 문단의 이유는 종료 코드와 무관하게
+  /// 여전히 성립하고, 앞으로 옮겨서 얻는 것이 없다.
+  static const _postProcessing = <_PostProcessingStep>[
+    _PostProcessingStep(GenerationStep.dependencies, 'flutter', ['pub', 'get']),
+    _PostProcessingStep(GenerationStep.localization, 'dart', [
+      'run',
+      'intl_utils:generate',
+    ]),
+    _PostProcessingStep(GenerationStep.codegen, 'dart', [
+      'run',
+      'build_runner',
+      'build',
+      '--delete-conflicting-outputs',
+    ]),
+    _PostProcessingStep(
+      GenerationStep.theme,
       'dart',
-      ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+      ['run', 'flutter_tweakcn_generator'],
+      // 상류 0.5.0 의 계약: 0 = 그대로 쓸 수 있음, 1 = 아무것도 생성 안 됨,
+      // 2 = 테마는 썼지만 필요한 것이 빠짐. 2 는 1 보다 나쁜 것이 아니라 다른
+      // 범주이고, 결과물은 `flutter run` 이 된다.
+      partialExitCode: 2,
     ),
-    (GenerationStep.theme, 'dart', ['run', 'flutter_tweakcn_generator']),
   ];
 
   Future<GenerationResult> _runPostProcessing(
     Directory projectRoot,
     void Function(GenerationEvent) emit,
   ) async {
-    for (final (step, executable, arguments) in _postProcessing) {
-      emit(GenerationStepStarted(step));
+    final warnings = <String>[];
+
+    for (final step in _postProcessing) {
+      emit(GenerationStepStarted(step.step));
 
       final result = await processRunner.run(
-        executable,
-        arguments,
+        step.executable,
+        step.arguments,
         workingDirectory: projectRoot.path,
         onOutput: (line) => emit(GenerationOutput(line)),
       );
+
+      // **끊긴 것은 절대 부분 성공이 아니다.** 감시견이 끊은 프로세스의 종료
+      // 코드는 신호값이라 우연히 [_PostProcessingStep.partialExitCode] 와
+      // 같아질 수 있고, 그 경우 "덜 됐다" 가 아니라 "무슨 일이 일어났는지
+      // 모른다" 가 맞다. 그래서 timedOut 을 먼저 배제한다.
+      final partial =
+          !result.timedOut && result.exitCode == step.partialExitCode;
+
+      if (partial) {
+        // 계속 진행한다 — 이 단계는 자기 몫을 했고, 뒤 단계가 그것에 기대지도
+        // 않는다. 다만 조용히 넘기지 않는다.
+        warnings.add(
+          '${step.executable} ${step.arguments.join(' ')} 이(가) 덜 '
+          '끝났습니다 (exit ${result.exitCode}). 프로젝트는 그대로 쓸 수 '
+          '있습니다.\n${result.failureOutput}',
+        );
+        continue;
+      }
 
       if (!result.succeeded) {
         // 한 단계가 실패하면 뒤는 어차피 실패한다. 여기서 멈추되 만들어진
         // 프로젝트는 남긴다 — 사용자가 남은 명령을 직접 이어 돌릴 수 있다.
         return GenerationResult(
           projectRoot: projectRoot,
-          failedStep: step,
+          failedStep: step.step,
           failureMessage:
-              '$executable ${arguments.join(' ')} 이(가) 실패했습니다 '
-              '(exit ${result.exitCode}).\n${result.failureOutput}',
+              '${step.executable} ${step.arguments.join(' ')} 이(가) '
+              '실패했습니다 (exit ${result.exitCode}).\n${result.failureOutput}',
         );
       }
     }
 
-    return GenerationResult(projectRoot: projectRoot);
+    return GenerationResult(projectRoot: projectRoot, warnings: warnings);
   }
 
   /// 파일시스템에 의존하는 검증만 남는다. 이름과 org 의 형식은 값 타입이
@@ -603,4 +641,29 @@ class HomeScreen extends StatelessWidget {
         .trim();
     return '"$escaped"';
   }
+}
+
+/// 후처리 한 단계. 무엇을 돌리고, 그 명령의 **어떤 종료 코드를 "덜 됐지만
+/// 실패는 아님" 으로 읽을지**를 함께 들고 다닌다.
+///
+/// 종료 코드의 뜻은 명령마다 다르므로 파이프라인이 일률적으로 정할 수 없다.
+/// `flutter pub get` 의 `2` 는 그냥 실패지만, 테마 CLI 의 `2` 는 상류가
+/// 문서로 못박은 "테마는 썼고 그것이 필요로 하는 것이 빠졌다" 다. 그래서
+/// 값을 단계에 붙인다 — 전역 규칙으로 두면 다른 명령의 `2` 까지 조용히
+/// 통과시키게 된다.
+class _PostProcessingStep {
+  const _PostProcessingStep(
+    this.step,
+    this.executable,
+    this.arguments, {
+    this.partialExitCode,
+  });
+
+  final GenerationStep step;
+  final String executable;
+  final List<String> arguments;
+
+  /// 이 값과 같은 종료 코드는 실패가 아니라 경고다. 그런 계약이 없는 명령은
+  /// null — `int == null` 은 언제나 false 라 어떤 종료 코드도 걸리지 않는다.
+  final int? partialExitCode;
 }

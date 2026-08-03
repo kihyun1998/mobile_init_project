@@ -343,6 +343,33 @@ void main() {
     expect(Directory(p.join(outputParent.path, 'my_app')).existsSync(), isTrue);
   });
 
+  /// **덜 된 것은 실패와 다른 칸에 뜬다.**
+  ///
+  /// 테마 CLI 의 `2` 는 "테마는 썼는데 그것이 필요로 하는 것이 빠졌다" 다.
+  /// 결과물은 `flutter run` 이 되므로 실패 배너는 거짓말이고, 그렇다고 삼키면
+  /// 사용자는 폰트가 빠진 것을 영영 모른다 — Flutter 는 런타임에 아무 말 없이
+  /// 기본 폰트로 떨어진다. 그래서 성공 배너 안에서 따로 말해야 한다.
+  testWidgets('테마가 덜 만들어지면 성공 배너에 경고가 함께 뜬다', (tester) async {
+    runner = FakeProcessRunner(
+      failingCommand: 'flutter_tweakcn_generator',
+      failureExitCode: 2,
+      stderr:
+          'Error: the generated theme names 1 font family(ies) that '
+          'pubspec.yaml does not declare',
+    );
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    expect(find.textContaining('에서 실패했습니다'), findsNothing);
+    expect(find.textContaining('덜 된 것이 있습니다'), findsOneWidget);
+    expect(
+      find.textContaining('pubspec.yaml does not declare'),
+      findsOneWidget,
+    );
+    // 쓸 수 있다고 말했으면 경로도 그대로 보여야 한다.
+    expect(find.text(p.join(outputParent.path, 'my_app')), findsOneWidget);
+  });
+
   testWidgets('폴더 열기 버튼이 파일 관리자를 호출한다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'my_app');
