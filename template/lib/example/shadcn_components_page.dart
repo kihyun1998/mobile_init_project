@@ -18,6 +18,7 @@ import '../ui/components/shadcn_button.dart';
 import '../ui/components/shadcn_calendar.dart';
 import '../ui/components/shadcn_card.dart';
 import '../ui/components/shadcn_chat_bubble.dart';
+import '../ui/components/shadcn_checkbox.dart';
 import '../ui/components/shadcn_date_picker.dart';
 import '../ui/components/shadcn_data_table.dart';
 import '../ui/components/shadcn_input.dart';
@@ -35,6 +36,10 @@ class ShadcnComponentsPage extends ConsumerStatefulWidget {
 }
 
 class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
+  // Checkbox
+  bool _acceptTerms = false;
+  bool _acceptTermsWithNote = true;
+
   // Login form
   final _loginEmailController = TextEditingController();
   final _loginPasswordController = TextEditingController();
@@ -176,6 +181,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             _buildCalendarCard(colors, s),
             SizedBox(height: 12.h),
             _buildDatePickerCard(colors, s),
+            SizedBox(height: 12.h),
+            _buildCheckboxCard(colors, s),
             SizedBox(height: 12.h),
             _buildLoginCard(colors, s),
             SizedBox(height: 12.h),
@@ -717,6 +724,51 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             placeholder: s.pickADateRange,
             value: _pickedRange,
             onChanged: (range) => setState(() => _pickedRange = range),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // Checkbox Card
+  // ─────────────────────────────────────────
+  //
+  // shadcn 의 checkbox-demo 가 보여주는 세 상태를 그대로 옮긴다
+  // (registry/new-york-v4/examples/checkbox-demo.tsx): 기본 / 체크됨 + 설명 /
+  // 비활성. 이 블록이 생기기 전에는 `ShadcnCheckbox` 가 앱 어디에도 쓰이지
+  // 않아서 빌더 미리보기로 확인할 방법이 없었다.
+  Widget _buildCheckboxCard(TweakcnColors colors, S s) {
+    return ShadcnCard(
+      title: s.checkboxTitle,
+      description: s.checkboxDescription,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ShadcnCheckbox(
+            value: _acceptTerms,
+            onChanged: (v) => setState(() => _acceptTerms = v),
+            label: s.acceptTerms,
+          ),
+          SizedBox(height: 16.h),
+          ShadcnCheckbox(
+            value: _acceptTermsWithNote,
+            onChanged: (v) => setState(() => _acceptTermsWithNote = v),
+            label: s.acceptTerms,
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 24.w, top: 4.h),
+            child: Text(
+              s.acceptTermsDescription,
+              style: TextStyle(fontSize: 12.sp, color: colors.mutedForeground),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          ShadcnCheckbox(
+            value: false,
+            onChanged: (_) {},
+            label: s.enableNotifications,
+            disabled: true,
           ),
         ],
       ),

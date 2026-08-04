@@ -24,6 +24,10 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "acceptTerms": MessageLookupByLibrary.simpleMessage("이용약관에 동의합니다"),
+    "acceptTermsDescription": MessageLookupByLibrary.simpleMessage(
+      "이 체크박스를 누르면 이용약관에 동의하는 것입니다.",
+    ),
     "amountHeader": MessageLookupByLibrary.simpleMessage("금액"),
     "appTitle": MessageLookupByLibrary.simpleMessage("tweakcn"),
     "apple": MessageLookupByLibrary.simpleMessage("Apple"),
@@ -38,6 +42,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "canEdit": MessageLookupByLibrary.simpleMessage("편집 가능"),
     "canView": MessageLookupByLibrary.simpleMessage("보기 가능"),
     "cancel": MessageLookupByLibrary.simpleMessage("취소"),
+    "checkboxDescription": MessageLookupByLibrary.simpleMessage(
+      "켜짐과 꺼짐을 오가는 컨트롤입니다.",
+    ),
+    "checkboxTitle": MessageLookupByLibrary.simpleMessage("체크박스"),
     "cookieSettings": MessageLookupByLibrary.simpleMessage("쿠키 설정"),
     "cookieSettingsDescription": MessageLookupByLibrary.simpleMessage(
       "쿠키 설정을 관리하세요.",
@@ -62,6 +70,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "emailPlaceholder": MessageLookupByLibrary.simpleMessage(
       "name@example.com",
     ),
+    "enableNotifications": MessageLookupByLibrary.simpleMessage("알림 켜기"),
     "english": MessageLookupByLibrary.simpleMessage("영어"),
     "exerciseMinutes": MessageLookupByLibrary.simpleMessage("운동 시간"),
     "exerciseMinutesDescription": MessageLookupByLibrary.simpleMessage(
