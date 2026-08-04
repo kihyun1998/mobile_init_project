@@ -44,6 +44,7 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 - **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
+- **예제 페이지를 import 하는 테스트는 `test/example/` 안에 둔다.** 빌더가 예제를 끌 때 `lib/example` 과 함께 이 폴더를 지운다. 밖에 두면 지워진 파일을 import 하는 테스트가 결과물에 남아 `flutter test` 에서만 터진다 — `flutter analyze` 는 통과시키므로 조용하다.
 - shadcn 컴포넌트 15개는 `lib/ui/components/` 에 있고 `material` + `screenutil` + 생성된 테마 외엔 아무것도 import하지 않는다(컴포넌트끼리 서로 import 하는 것은 된다 — `shadcn_date_picker` 가 `shadcn_calendar` 를 쓴다). **이 격리를 깨지 말 것** — provider나 l10n을 끌어들이는 순간 빌더 미리보기가 깨진다. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다.
 - **날짜·요일 계산은 손으로 만들지 말고 `MaterialLocalizations` 를 거친다.** `narrowWeekdays` 는 일요일 시작 고정 배열이라 `firstDayOfWeekIndex` 로 회전시켜야 하고(`shadcn_calendar.dart` 의 `shadcnWeekdayOrder`), 날짜 산술은 `add(Duration(days: 1))` 이 아니라 `DateTime` 생성자로 한다 — 서머타임 경계에서 하루를 건너뛴다. 참고로 ko·en 은 둘 다 일요일 시작이라 회전 경로가 두 언어만으로는 검증되지 않는다.
 

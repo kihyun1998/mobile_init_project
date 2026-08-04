@@ -35,6 +35,10 @@ class ShadcnComponentsPage extends ConsumerStatefulWidget {
 }
 
 class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
+  // Login form
+  final _loginEmailController = TextEditingController();
+  final _loginPasswordController = TextEditingController();
+
   // Create Account form
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -92,6 +96,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
 
   @override
   void dispose() {
+    _loginEmailController.dispose();
+    _loginPasswordController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -170,6 +176,8 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             _buildCalendarCard(colors, s),
             SizedBox(height: 12.h),
             _buildDatePickerCard(colors, s),
+            SizedBox(height: 12.h),
+            _buildLoginCard(colors, s),
             SizedBox(height: 12.h),
             _buildCreateAccountCard(colors, s),
             SizedBox(height: 12.h),
@@ -709,6 +717,115 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             placeholder: s.pickADateRange,
             value: _pickedRange,
             onChanged: (range) => setState(() => _pickedRange = range),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // Login Card
+  // ─────────────────────────────────────────
+  //
+  // shadcn 의 login-01 블록 구성을 따른다
+  // (registry/new-york-v4/blocks/login-01/components/login-form.tsx).
+  // **체크박스가 없는 것이 원본이다** — login-01~05 어디에도 "로그인 유지" 가
+  // 없다. 링크는 예제라 실제로 이동하지 않는다. 라우팅을 끌어들이면 예제
+  // 페이지가 앱 구조에 묶여서 빌더 미리보기가 그만큼 무거워진다.
+  Widget _buildLoginCard(TweakcnColors colors, S s) {
+    return ShadcnCard(
+      title: s.loginTitle,
+      description: s.loginDescription,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ShadcnInput(
+            controller: _loginEmailController,
+            label: s.email,
+            placeholder: s.emailPlaceholder,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          SizedBox(height: 12.h),
+          // 라벨과 "잊으셨나요?" 가 한 줄에 놓이는 것이 원본이다. ShadcnInput 의
+          // label 을 쓰면 그 줄을 컴포넌트가 독점하므로 label 을 비우고 직접 짠다.
+          Row(
+            children: [
+              Text(
+                s.password,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: colors.foreground,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              // Flexible + ellipsis 가 없으면 이 줄이 넘친다. 긴 번역이나 큰 글자
+              // 배율에서 라벨과 링크가 같은 줄을 다투기 때문이다 — 캘린더 제목
+              // 줄에서 이미 같은 것으로 한 번 터졌다 (#23).
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Text(
+                    s.forgotPassword,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: colors.mutedForeground,
+                      decoration: TextDecoration.underline,
+                      decorationColor: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          ShadcnInput(
+            controller: _loginPasswordController,
+            placeholder: s.loginPasswordPlaceholder,
+            obscureText: true,
+          ),
+          SizedBox(height: 16.h),
+          ShadcnButton(
+            onPressed: () {},
+            width: double.infinity,
+            child: Text(s.loginButton),
+          ),
+          SizedBox(height: 8.h),
+          ShadcnButton(
+            onPressed: () {},
+            width: double.infinity,
+            variant: ShadcnButtonVariant.outline,
+            child: Text(s.loginWithGoogle),
+          ),
+          SizedBox(height: 12.h),
+          // Row 가 아니라 Wrap 이다. 두 조각이 한 줄에 안 들어가면 넘치는 대신
+          // 줄을 바꾼다 — 번역 길이가 언어마다 다르고 글자 배율도 사용자가 정한다.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4.w,
+            children: [
+              Text(
+                s.noAccount,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: colors.mutedForeground,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  s.signUp,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: colors.foreground,
+                    decoration: TextDecoration.underline,
+                    decorationColor: colors.foreground,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
