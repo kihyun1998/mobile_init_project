@@ -39,13 +39,14 @@ class ShadcnButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
+    final radius = context.tweakcnRadius;
 
     return SizedBox(
       width: width,
       height: height ?? _getButtonHeight(),
       child: ElevatedButton(
         onPressed: disabled || isLoading ? null : onPressed,
-        style: _getButtonStyle(colors),
+        style: _getButtonStyle(colors, radius),
         child: isLoading
             ? SizedBox(
                 width: 16.r,
@@ -101,7 +102,7 @@ class ShadcnButton extends StatelessWidget {
     }
   }
 
-  ButtonStyle _getButtonStyle(dynamic colors) {
+  ButtonStyle _getButtonStyle(TweakcnColors colors, TweakcnRadius radius) {
     Color backgroundColor;
     Color foregroundColor;
     Color? borderColor;
@@ -143,7 +144,7 @@ class ShadcnButton extends StatelessWidget {
       padding: WidgetStateProperty.all(_getPadding()),
       shape: WidgetStateProperty.all(
         RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6.r),
+          borderRadius: BorderRadius.circular(radius.md.r),
           side: borderColor != null
               ? BorderSide(color: borderColor, width: 1.r)
               : BorderSide.none,

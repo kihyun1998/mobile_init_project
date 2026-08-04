@@ -55,6 +55,7 @@ class ShadcnInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
+    final radius = context.tweakcnRadius;
     final hasError = errorText != null;
 
     return Column(
@@ -73,7 +74,7 @@ class ShadcnInput extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6.r),
+            borderRadius: BorderRadius.circular(radius.md.r),
             border: Border.all(
               color: hasError
                   ? colors.destructive

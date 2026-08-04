@@ -24,11 +24,12 @@ class ShadcnCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
+    final radius = context.tweakcnRadius;
 
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(radius.lg.r),
         border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(

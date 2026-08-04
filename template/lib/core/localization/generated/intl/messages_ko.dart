@@ -32,6 +32,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "areaBilling": MessageLookupByLibrary.simpleMessage("결제"),
     "areaDeployments": MessageLookupByLibrary.simpleMessage("배포"),
     "areaTeam": MessageLookupByLibrary.simpleMessage("팀"),
+    "calendar": MessageLookupByLibrary.simpleMessage("달력"),
+    "calendarDescription": MessageLookupByLibrary.simpleMessage("날짜를 선택하세요."),
     "caloriesPerDay": MessageLookupByLibrary.simpleMessage("칼로리/일"),
     "canEdit": MessageLookupByLibrary.simpleMessage("편집 가능"),
     "canView": MessageLookupByLibrary.simpleMessage("보기 가능"),
@@ -46,10 +48,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "아래 정보를 입력하여 계정을 만드세요.",
     ),
     "darkTheme": MessageLookupByLibrary.simpleMessage("다크"),
+    "datePicker": MessageLookupByLibrary.simpleMessage("날짜 선택기"),
+    "datePickerDescription": MessageLookupByLibrary.simpleMessage(
+      "하나의 날짜나 기간을 고릅니다.",
+    ),
     "descriptionLabel": MessageLookupByLibrary.simpleMessage("설명"),
     "descriptionPlaceholder": MessageLookupByLibrary.simpleMessage(
       "이슈와 관련된 모든 정보를 포함해주세요.",
     ),
+    "dueDate": MessageLookupByLibrary.simpleMessage("마감일"),
     "email": MessageLookupByLibrary.simpleMessage("이메일"),
     "emailHeader": MessageLookupByLibrary.simpleMessage("이메일"),
     "emailPlaceholder": MessageLookupByLibrary.simpleMessage(
@@ -94,6 +101,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "performanceCookiesDesc": MessageLookupByLibrary.simpleMessage(
       "성능 개선에 도움이 되는 쿠키입니다.",
     ),
+    "pickADate": MessageLookupByLibrary.simpleMessage("날짜 선택"),
+    "pickADateRange": MessageLookupByLibrary.simpleMessage("기간 선택"),
     "planEnterprise": MessageLookupByLibrary.simpleMessage("엔터프라이즈"),
     "planEnterpriseDesc": MessageLookupByLibrary.simpleMessage(
       "무제한 사용자, 500GB 저장공간",
@@ -124,6 +133,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "링크가 있는 모든 사람이 이 문서를 볼 수 있습니다.",
     ),
     "statusHeader": MessageLookupByLibrary.simpleMessage("상태"),
+    "stayPeriod": MessageLookupByLibrary.simpleMessage("기간"),
     "strictlyNecessary": MessageLookupByLibrary.simpleMessage("필수 쿠키"),
     "strictlyNecessaryDesc": MessageLookupByLibrary.simpleMessage(
       "웹사이트 작동에 필수적인 쿠키입니다.",

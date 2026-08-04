@@ -58,6 +58,7 @@ class _RadioTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
+    final radius = context.tweakcnRadius;
 
     return GestureDetector(
       onTap: onTap,
@@ -65,7 +66,7 @@ class _RadioTile<T> extends StatelessWidget {
         padding: EdgeInsets.all(12.r),
         margin: EdgeInsets.only(bottom: 8.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(radius.md.r),
           border: Border.all(
             color: selected ? colors.ring : colors.border,
             width: 1,
