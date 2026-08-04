@@ -24,6 +24,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "acceptTerms": MessageLookupByLibrary.simpleMessage(
+      "Accept terms and conditions",
+    ),
+    "acceptTermsDescription": MessageLookupByLibrary.simpleMessage(
+      "By clicking this checkbox, you agree to the terms and conditions.",
+    ),
     "amountHeader": MessageLookupByLibrary.simpleMessage("Amount"),
     "appTitle": MessageLookupByLibrary.simpleMessage("tweakcn"),
     "apple": MessageLookupByLibrary.simpleMessage("Apple"),
@@ -38,6 +44,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "canEdit": MessageLookupByLibrary.simpleMessage("Can edit"),
     "canView": MessageLookupByLibrary.simpleMessage("Can view"),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "checkboxDescription": MessageLookupByLibrary.simpleMessage(
+      "A control that toggles between checked and unchecked.",
+    ),
+    "checkboxTitle": MessageLookupByLibrary.simpleMessage("Checkbox"),
     "cookieSettings": MessageLookupByLibrary.simpleMessage("Cookie Settings"),
     "cookieSettingsDescription": MessageLookupByLibrary.simpleMessage(
       "Manage your cookie settings here.",
@@ -63,6 +73,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "emailHeader": MessageLookupByLibrary.simpleMessage("Email"),
     "emailPlaceholder": MessageLookupByLibrary.simpleMessage(
       "name@example.com",
+    ),
+    "enableNotifications": MessageLookupByLibrary.simpleMessage(
+      "Enable notifications",
     ),
     "english": MessageLookupByLibrary.simpleMessage("English"),
     "exerciseMinutes": MessageLookupByLibrary.simpleMessage("Exercise Minutes"),

@@ -119,5 +119,10 @@
   "loginButton": "로그인",
   "loginWithGoogle": "Google로 로그인",
   "noAccount": "계정이 없나요?",
-  "signUp": "가입"
+  "signUp": "가입",
+  "checkboxTitle": "체크박스",
+  "checkboxDescription": "켜짐과 꺼짐을 오가는 컨트롤입니다.",
+  "acceptTerms": "이용약관에 동의합니다",
+  "acceptTermsDescription": "이 체크박스를 누르면 이용약관에 동의하는 것입니다.",
+  "enableNotifications": "알림 켜기"
 }

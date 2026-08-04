@@ -119,5 +119,10 @@
   "loginButton": "Login",
   "loginWithGoogle": "Login with Google",
   "noAccount": "Don't have an account?",
-  "signUp": "Sign up"
+  "signUp": "Sign up",
+  "checkboxTitle": "Checkbox",
+  "checkboxDescription": "A control that toggles between checked and unchecked.",
+  "acceptTerms": "Accept terms and conditions",
+  "acceptTermsDescription": "By clicking this checkbox, you agree to the terms and conditions.",
+  "enableNotifications": "Enable notifications"
 }

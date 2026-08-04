@@ -898,6 +898,51 @@ class S {
   String get signUp {
     return Intl.message('Sign up', name: 'signUp', desc: '', args: []);
   }
+
+  /// `Checkbox`
+  String get checkboxTitle {
+    return Intl.message('Checkbox', name: 'checkboxTitle', desc: '', args: []);
+  }
+
+  /// `A control that toggles between checked and unchecked.`
+  String get checkboxDescription {
+    return Intl.message(
+      'A control that toggles between checked and unchecked.',
+      name: 'checkboxDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accept terms and conditions`
+  String get acceptTerms {
+    return Intl.message(
+      'Accept terms and conditions',
+      name: 'acceptTerms',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `By clicking this checkbox, you agree to the terms and conditions.`
+  String get acceptTermsDescription {
+    return Intl.message(
+      'By clicking this checkbox, you agree to the terms and conditions.',
+      name: 'acceptTermsDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable notifications`
+  String get enableNotifications {
+    return Intl.message(
+      'Enable notifications',
+      name: 'enableNotifications',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

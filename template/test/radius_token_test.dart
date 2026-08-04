@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_checkbox/flutter_checkbox.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,14 +84,21 @@ void main() {
     // 그 판단이다.
 
     testWidgets('체크박스는 --radius 가 커져도 그대로다', (tester) async {
+      // 다른 컴포넌트와 달리 렌더된 BoxDecoration 을 못 읽는다 — 상자를
+      // `CustomPaint` 로 그리고 `CheckboxPainter` 는 export 되지 않아 테스트에서
+      // 타입으로 꺼낼 수 없다. 대신 패키지에 넘어가는 값을 본다.
+      //
+      // **그 값이 그려지는 값과 같다는 근거:** `CheckboxStyle.resolve()` 는
+      // null 인 색만 테마에서 파생하고 `borderRadius` 는 non-nullable 이라
+      // 그대로 복사한다 (checkbox_style.dart 의 `borderRadius: borderRadius`).
+      // 이 조건이 깨지면 이 테스트도 같이 다시 봐야 한다.
       await _pump(tester, ShadcnCheckbox(value: true, onChanged: (_) {}));
-      final box = tester.widget<AnimatedContainer>(
-        find.byType(AnimatedContainer),
-      );
-      final corner =
-          ((box.decoration! as BoxDecoration).borderRadius! as BorderRadius)
-              .topLeft
-              .x;
+
+      final corner = tester
+          .widget<FlutterCheckboxTile>(find.byType(FlutterCheckboxTile))
+          .checkboxStyle
+          .borderRadius;
+
       expect(corner, 3.r);
       expect(corner, isNot(_wide.sm.r));
     });
