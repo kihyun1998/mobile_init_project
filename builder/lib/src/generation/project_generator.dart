@@ -351,6 +351,18 @@ class ProjectGenerator {
   /// 경로는 조각으로 들고 있다가 [p.joinAll] 로 잇는다. Windows 에서도
   /// 돌아야 해서 `/` 를 박은 문자열을 쓰지 않는다.
   static const exampleDirSegments = ['lib', 'example'];
+
+  /// 예제 페이지를 물고 있는 테스트가 사는 자리.
+  ///
+  /// `copyEntries` 가 `test` 를 통째로 복사하므로, 예제를 끄면 이쪽도 같이
+  /// 지워야 한다. 안 지우면 **지워진 파일을 import 하는 테스트가 남아 결과물이
+  /// 컴파일되지 않는다** — `flutter analyze` 는 통과시키고 `flutter test` 에서만
+  /// 터지므로 조용하다.
+  ///
+  /// `lib/example` 과 대칭이라는 것이 규칙이다. 예제에 의존하는 테스트는 이
+  /// 폴더 안에 둔다. 밖에 두면 여기서 못 잡고, `project_generator_test.dart` 의
+  /// "예제를 가리키는 참조가 남지 않는다" 가 뒤늦게 잡아준다.
+  static const exampleTestDirSegments = ['test', 'example'];
   static const homeScreenSegments = [
     'lib',
     'ui',
@@ -398,6 +410,13 @@ class HomeScreen extends StatelessWidget {
       p.joinAll([projectRoot.path, ...exampleDirSegments]),
     );
     if (exampleDir.existsSync()) exampleDir.deleteSync(recursive: true);
+
+    final exampleTestDir = Directory(
+      p.joinAll([projectRoot.path, ...exampleTestDirSegments]),
+    );
+    if (exampleTestDir.existsSync()) {
+      exampleTestDir.deleteSync(recursive: true);
+    }
 
     File(
       p.joinAll([projectRoot.path, ...homeScreenSegments]),

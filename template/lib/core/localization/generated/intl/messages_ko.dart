@@ -67,6 +67,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "exerciseMinutesDescription": MessageLookupByLibrary.simpleMessage(
       "운동 시간이 평소보다 앞서 있습니다.",
     ),
+    "forgotPassword": MessageLookupByLibrary.simpleMessage("비밀번호를 잊으셨나요?"),
     "functionalCookies": MessageLookupByLibrary.simpleMessage("기능 쿠키"),
     "functionalCookiesDesc": MessageLookupByLibrary.simpleMessage(
       "맞춤형 기능을 활성화하는 쿠키입니다.",
@@ -77,6 +78,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "lastYear": MessageLookupByLibrary.simpleMessage("작년"),
     "lightTheme": MessageLookupByLibrary.simpleMessage("라이트"),
     "linkCopied": MessageLookupByLibrary.simpleMessage("링크가 복사되었습니다!"),
+    "loginButton": MessageLookupByLibrary.simpleMessage("로그인"),
+    "loginDescription": MessageLookupByLibrary.simpleMessage(
+      "이메일을 입력해 계정에 로그인하세요",
+    ),
+    "loginPasswordPlaceholder": MessageLookupByLibrary.simpleMessage(
+      "비밀번호를 입력하세요",
+    ),
+    "loginTitle": MessageLookupByLibrary.simpleMessage("계정에 로그인"),
+    "loginWithGoogle": MessageLookupByLibrary.simpleMessage("Google로 로그인"),
     "monthApr": MessageLookupByLibrary.simpleMessage("4월"),
     "monthFeb": MessageLookupByLibrary.simpleMessage("2월"),
     "monthJan": MessageLookupByLibrary.simpleMessage("1월"),
@@ -89,6 +99,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "namePlaceholder": MessageLookupByLibrary.simpleMessage("이름을 입력하세요"),
+    "noAccount": MessageLookupByLibrary.simpleMessage("계정이 없나요?"),
     "orContinueWith": MessageLookupByLibrary.simpleMessage("또는 다음으로 계속"),
     "password": MessageLookupByLibrary.simpleMessage("비밀번호"),
     "passwordPlaceholder": MessageLookupByLibrary.simpleMessage("비밀번호를 만드세요"),
@@ -132,6 +143,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shareDocumentDescription": MessageLookupByLibrary.simpleMessage(
       "링크가 있는 모든 사람이 이 문서를 볼 수 있습니다.",
     ),
+    "signUp": MessageLookupByLibrary.simpleMessage("가입"),
     "statusHeader": MessageLookupByLibrary.simpleMessage("상태"),
     "stayPeriod": MessageLookupByLibrary.simpleMessage("기간"),
     "strictlyNecessary": MessageLookupByLibrary.simpleMessage("필수 쿠키"),

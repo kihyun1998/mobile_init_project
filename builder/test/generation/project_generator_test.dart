@@ -349,6 +349,30 @@ void main() {
       );
     });
 
+    test('끄면 예제를 물고 있는 테스트 폴더도 같이 사라진다', () async {
+      // test/ 는 통째로 복사되므로 lib/example 만 지우면 그것을 import 하는
+      // 테스트가 남는다. analyze 는 통과시키고 flutter test 에서만 터진다.
+      final root = await generate(includeExample: false);
+
+      expect(
+        Directory(p.join(root.path, 'test', 'example')).existsSync(),
+        isFalse,
+      );
+    });
+
+    test('켜면 예제 테스트 폴더가 남는다', () async {
+      // 반대 방향도 본다. 과잉 삭제하면 예제를 켠 사람이 테스트를 조용히 잃는다.
+      final root = await generate();
+      final exampleTests = Directory(p.join(root.path, 'test', 'example'));
+
+      expect(exampleTests.existsSync(), isTrue);
+      expect(
+        exampleTests.listSync().whereType<File>(),
+        isNotEmpty,
+        reason: '폴더만 남고 내용이 비면 복사가 깨진 것이다',
+      );
+    });
+
     test('끄면 홈 화면이 예제를 참조하지 않는 빈 스텁이 된다', () async {
       final root = await generate(includeExample: false);
       final home = read(

@@ -69,6 +69,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "exerciseMinutesDescription": MessageLookupByLibrary.simpleMessage(
       "Your exercise minutes are ahead of where you normally are.",
     ),
+    "forgotPassword": MessageLookupByLibrary.simpleMessage(
+      "Forgot your password?",
+    ),
     "functionalCookies": MessageLookupByLibrary.simpleMessage(
       "Functional Cookies",
     ),
@@ -81,6 +84,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "lastYear": MessageLookupByLibrary.simpleMessage("Last Year"),
     "lightTheme": MessageLookupByLibrary.simpleMessage("Light"),
     "linkCopied": MessageLookupByLibrary.simpleMessage("Link copied!"),
+    "loginButton": MessageLookupByLibrary.simpleMessage("Login"),
+    "loginDescription": MessageLookupByLibrary.simpleMessage(
+      "Enter your email below to login to your account",
+    ),
+    "loginPasswordPlaceholder": MessageLookupByLibrary.simpleMessage(
+      "Enter your password",
+    ),
+    "loginTitle": MessageLookupByLibrary.simpleMessage("Login to your account"),
+    "loginWithGoogle": MessageLookupByLibrary.simpleMessage(
+      "Login with Google",
+    ),
     "monthApr": MessageLookupByLibrary.simpleMessage("Apr"),
     "monthFeb": MessageLookupByLibrary.simpleMessage("Feb"),
     "monthJan": MessageLookupByLibrary.simpleMessage("Jan"),
@@ -93,6 +107,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "namePlaceholder": MessageLookupByLibrary.simpleMessage("Enter your name"),
+    "noAccount": MessageLookupByLibrary.simpleMessage(
+      "Don\'t have an account?",
+    ),
     "orContinueWith": MessageLookupByLibrary.simpleMessage("OR CONTINUE WITH"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "passwordPlaceholder": MessageLookupByLibrary.simpleMessage(
@@ -148,6 +165,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shareDocumentDescription": MessageLookupByLibrary.simpleMessage(
       "Anyone with the link can view this document.",
     ),
+    "signUp": MessageLookupByLibrary.simpleMessage("Sign up"),
     "statusHeader": MessageLookupByLibrary.simpleMessage("Status"),
     "stayPeriod": MessageLookupByLibrary.simpleMessage("Period"),
     "strictlyNecessary": MessageLookupByLibrary.simpleMessage(

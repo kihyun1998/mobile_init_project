@@ -72,9 +72,16 @@ template 자체 테스트가 아니다. 항상 양쪽을 따로 돌린다.
 - `builder/lib/src/generation/project_generator.dart` — `copyEntries`,
   `themeCssEntry`, `templatePackageName`, `templateDisplayName`,
   `_preservedPrefixes`, `exampleOnlyDependencies`, `exampleDirSegments`,
-  `homeScreenSegments`, `arbDirSegments`. 각각이 "템플릿이 이렇게 생겼다" 는
-  가정이고, 템플릿이 움직이면 조용히 낡는 자리다. `themeCssEntry` 는 템플릿
-  pubspec 의 `flutter_tweakcn_generator: input:` 과 묶여 있고, 테스트가 대조한다.
+  `exampleTestDirSegments`, `homeScreenSegments`, `arbDirSegments`. 각각이
+  "템플릿이 이렇게 생겼다" 는 가정이고, 템플릿이 움직이면 조용히 낡는 자리다.
+  `themeCssEntry` 는 템플릿 pubspec 의 `flutter_tweakcn_generator: input:` 과
+  묶여 있고, 테스트가 대조한다.
+  `exampleTestDirSegments` 는 `exampleDirSegments` 와 **한 쌍이다** —
+  `copyEntries` 가 `test` 를 통째로 복사하므로 `lib/example` 만 지우면 그것을
+  import 하는 테스트가 남아 결과물이 컴파일되지 않는다. **예제에 의존하는
+  테스트는 `test/example/` 안에 둔다는 것이 규칙이다.** 밖에 두면 이 상수가
+  못 잡고, `project_generator_test.dart` 의 "예제를 가리키는 참조가 남지 않는다"
+  가 뒤늦게 잡는다 (#24 에서 실제로 그렇게 걸렸다).
 
 템플릿에 파일·의존성·언어를 추가했다면 **이 상수들부터** 확인한다. 컴파일러가
 봐주지 않는다.

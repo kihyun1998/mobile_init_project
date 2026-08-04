@@ -111,5 +111,13 @@
   "dueDate": "마감일",
   "stayPeriod": "기간",
   "pickADate": "날짜 선택",
-  "pickADateRange": "기간 선택"
+  "pickADateRange": "기간 선택",
+  "loginTitle": "계정에 로그인",
+  "loginDescription": "이메일을 입력해 계정에 로그인하세요",
+  "loginPasswordPlaceholder": "비밀번호를 입력하세요",
+  "forgotPassword": "비밀번호를 잊으셨나요?",
+  "loginButton": "로그인",
+  "loginWithGoogle": "Google로 로그인",
+  "noAccount": "계정이 없나요?",
+  "signUp": "가입"
 }
