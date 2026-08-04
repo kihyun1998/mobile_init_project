@@ -348,10 +348,10 @@ packages:
     dependency: "direct dev"
     description:
       name: flutter_tweakcn_generator
-      sha256: "8df41d367e17e4352a06bbe842c0159d64e0bfb76c43b693edf8512ef91a50f1"
+      sha256: "3a644a3faf070d28c7d9e748c622884ca70d99adf57793010ebea23fac7e774b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.0"
+    version: "0.5.1"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
