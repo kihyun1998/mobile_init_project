@@ -28,7 +28,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
 
   # 붙여넣은 CSS를 런타임에 파싱하는 데 쓴다 (CssParser.parse).
-  flutter_tweakcn_generator: ^0.5.0
+  flutter_tweakcn_generator: ^0.5.1
 
   # 미리보기 캔버스에 쓰는 진짜 컴포넌트의 출처.
   # 사본이 아니라 template/ 의 소스를 그대로 컴파일한다.
