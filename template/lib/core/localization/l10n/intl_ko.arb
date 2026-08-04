@@ -103,5 +103,13 @@
   "korean": "한국어",
   "tabHome": "홈",
   "tabSearch": "검색",
-  "tabProfile": "프로필"
+  "tabProfile": "프로필",
+  "calendar": "달력",
+  "calendarDescription": "날짜를 선택하세요.",
+  "datePicker": "날짜 선택기",
+  "datePickerDescription": "하나의 날짜나 기간을 고릅니다.",
+  "dueDate": "마감일",
+  "stayPeriod": "기간",
+  "pickADate": "날짜 선택",
+  "pickADateRange": "기간 선택"
 }

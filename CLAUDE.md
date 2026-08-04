@@ -40,11 +40,12 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 - **크기는 항상 `.w` `.h` `.sp` `.r`.** 생짜 픽셀을 쓰지 말 것. 기준 디자인은 375×812.
-- **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
+- **색은 `context.tweakcnColors`.** 하드코딩 금지. (**모서리·그림자는 이 규칙이 코드와 어긋나 있다** — `tweakcnRadius`/`tweakcnShadows` 를 읽는 컴포넌트가 하나도 없고 전부 `.r` 하드코딩이다. 규칙과 코드 중 어느 쪽을 움직일지는 #25 가 들고 있다. 그때까지 새 컴포넌트는 형제 관례대로 하드코딩한다.) 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
 - **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
-- shadcn 컴포넌트 13개는 `lib/ui/components/` 에 있고 `material` + `screenutil` + 생성된 테마 외엔 아무것도 import하지 않는다. **이 격리를 깨지 말 것** — provider나 l10n을 끌어들이는 순간 빌더 미리보기가 깨진다.
+- shadcn 컴포넌트 15개는 `lib/ui/components/` 에 있고 `material` + `screenutil` + 생성된 테마 외엔 아무것도 import하지 않는다(컴포넌트끼리 서로 import 하는 것은 된다 — `shadcn_date_picker` 가 `shadcn_calendar` 를 쓴다). **이 격리를 깨지 말 것** — provider나 l10n을 끌어들이는 순간 빌더 미리보기가 깨진다. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다.
+- **날짜·요일 계산은 손으로 만들지 말고 `MaterialLocalizations` 를 거친다.** `narrowWeekdays` 는 일요일 시작 고정 배열이라 `firstDayOfWeekIndex` 로 회전시켜야 하고(`shadcn_calendar.dart` 의 `shadcnWeekdayOrder`), 날짜 산술은 `add(Duration(days: 1))` 이 아니라 `DateTime` 생성자로 한다 — 서머타임 경계에서 하루를 건너뛴다. 참고로 ko·en 은 둘 다 일요일 시작이라 회전 경로가 두 언어만으로는 검증되지 않는다.
 
 ## 명령어
 

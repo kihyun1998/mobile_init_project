@@ -773,6 +773,61 @@ class S {
   String get tabProfile {
     return Intl.message('Profile', name: 'tabProfile', desc: '', args: []);
   }
+
+  /// `Calendar`
+  String get calendar {
+    return Intl.message('Calendar', name: 'calendar', desc: '', args: []);
+  }
+
+  /// `Pick a date.`
+  String get calendarDescription {
+    return Intl.message(
+      'Pick a date.',
+      name: 'calendarDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Date Picker`
+  String get datePicker {
+    return Intl.message('Date Picker', name: 'datePicker', desc: '', args: []);
+  }
+
+  /// `Choose a single date or a range.`
+  String get datePickerDescription {
+    return Intl.message(
+      'Choose a single date or a range.',
+      name: 'datePickerDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Due date`
+  String get dueDate {
+    return Intl.message('Due date', name: 'dueDate', desc: '', args: []);
+  }
+
+  /// `Period`
+  String get stayPeriod {
+    return Intl.message('Period', name: 'stayPeriod', desc: '', args: []);
+  }
+
+  /// `Pick a date`
+  String get pickADate {
+    return Intl.message('Pick a date', name: 'pickADate', desc: '', args: []);
+  }
+
+  /// `Pick a date range`
+  String get pickADateRange {
+    return Intl.message(
+      'Pick a date range',
+      name: 'pickADateRange',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

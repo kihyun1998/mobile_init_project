@@ -15,8 +15,10 @@ import '../core/theme/tweakcn_theme.g.dart';
 import '../ui/components/shadcn_avatar.dart';
 import '../ui/components/shadcn_badge.dart';
 import '../ui/components/shadcn_button.dart';
+import '../ui/components/shadcn_calendar.dart';
 import '../ui/components/shadcn_card.dart';
 import '../ui/components/shadcn_chat_bubble.dart';
+import '../ui/components/shadcn_date_picker.dart';
 import '../ui/components/shadcn_data_table.dart';
 import '../ui/components/shadcn_input.dart';
 import '../ui/components/shadcn_radio_group.dart';
@@ -80,6 +82,13 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
 
   // Share document
   final _shareEmailController = TextEditingController();
+
+  // Calendar / Date Picker
+  final _today = DateTime.now();
+  late DateTime _calendarMonth = DateTime(_today.year, _today.month);
+  late DateTime? _calendarSelected = _today;
+  DateTime? _pickedDate;
+  DateTimeRange? _pickedRange;
 
   @override
   void dispose() {
@@ -157,6 +166,10 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
             _buildTeamMembersCard(colors, s),
             SizedBox(height: 12.h),
             _buildCookieSettingsCard(colors, s),
+            SizedBox(height: 12.h),
+            _buildCalendarCard(colors, s),
+            SizedBox(height: 12.h),
+            _buildDatePickerCard(colors, s),
             SizedBox(height: 12.h),
             _buildCreateAccountCard(colors, s),
             SizedBox(height: 12.h),
@@ -650,6 +663,54 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
         width: double.infinity,
         variant: ShadcnButtonVariant.outline,
         child: Text(s.savePreferences),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // Calendar Card
+  // ─────────────────────────────────────────
+  Widget _buildCalendarCard(TweakcnColors colors, S s) {
+    return ShadcnCard(
+      title: s.calendar,
+      description: s.calendarDescription,
+      content: ShadcnCalendar(
+        month: _calendarMonth,
+        selected: _calendarSelected,
+        onDaySelected: (day) => setState(() {
+          _calendarSelected = day;
+          // 이웃 달 칸을 눌렀으면 그 달로 따라간다. 고른 날이 화면 밖으로
+          // 나가버리면 무엇을 골랐는지 보이지 않는다.
+          _calendarMonth = DateTime(day.year, day.month);
+        }),
+        onMonthChanged: (month) => setState(() => _calendarMonth = month),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // Date Picker Card
+  // ─────────────────────────────────────────
+  Widget _buildDatePickerCard(TweakcnColors colors, S s) {
+    return ShadcnCard(
+      title: s.datePicker,
+      description: s.datePickerDescription,
+      content: Column(
+        children: [
+          ShadcnDatePicker.single(
+            label: s.dueDate,
+            placeholder: s.pickADate,
+            value: _pickedDate,
+            onChanged: (date) => setState(() => _pickedDate = date),
+          ),
+          SizedBox(height: 12.h),
+          ShadcnDatePicker.range(
+            label: s.stayPeriod,
+            placeholder: s.pickADateRange,
+            value: _pickedRange,
+            onChanged: (range) => setState(() => _pickedRange = range),
+          ),
+        ],
       ),
     );
   }

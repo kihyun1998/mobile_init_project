@@ -22,6 +22,7 @@ class ShadcnSelect<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
+    final radius = context.tweakcnRadius;
     final selectedItem = items.cast<ShadcnSelectItem<T>?>().firstWhere(
       (item) => item?.value == value,
       orElse: () => null,
@@ -47,7 +48,7 @@ class ShadcnSelect<T> extends StatelessWidget {
           color: colors.popover,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(radius.md.r),
             side: BorderSide(color: colors.border),
           ),
           offset: Offset(0, 4.h),
@@ -69,7 +70,7 @@ class ShadcnSelect<T> extends StatelessWidget {
             height: 36.h,
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6.r),
+              borderRadius: BorderRadius.circular(radius.md.r),
               border: Border.all(color: colors.border),
               color: Colors.transparent,
             ),

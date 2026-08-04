@@ -32,6 +32,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "areaBilling": MessageLookupByLibrary.simpleMessage("Billing"),
     "areaDeployments": MessageLookupByLibrary.simpleMessage("Deployments"),
     "areaTeam": MessageLookupByLibrary.simpleMessage("Team"),
+    "calendar": MessageLookupByLibrary.simpleMessage("Calendar"),
+    "calendarDescription": MessageLookupByLibrary.simpleMessage("Pick a date."),
     "caloriesPerDay": MessageLookupByLibrary.simpleMessage("CALORIES/DAY"),
     "canEdit": MessageLookupByLibrary.simpleMessage("Can edit"),
     "canView": MessageLookupByLibrary.simpleMessage("Can view"),
@@ -48,10 +50,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Enter your information below to create your account.",
     ),
     "darkTheme": MessageLookupByLibrary.simpleMessage("Dark"),
+    "datePicker": MessageLookupByLibrary.simpleMessage("Date Picker"),
+    "datePickerDescription": MessageLookupByLibrary.simpleMessage(
+      "Choose a single date or a range.",
+    ),
     "descriptionLabel": MessageLookupByLibrary.simpleMessage("Description"),
     "descriptionPlaceholder": MessageLookupByLibrary.simpleMessage(
       "Please include all information relevant to your issue.",
     ),
+    "dueDate": MessageLookupByLibrary.simpleMessage("Due date"),
     "email": MessageLookupByLibrary.simpleMessage("Email"),
     "emailHeader": MessageLookupByLibrary.simpleMessage("Email"),
     "emailPlaceholder": MessageLookupByLibrary.simpleMessage(
@@ -104,6 +111,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "performanceCookiesDesc": MessageLookupByLibrary.simpleMessage(
       "These cookies help improve performance.",
     ),
+    "pickADate": MessageLookupByLibrary.simpleMessage("Pick a date"),
+    "pickADateRange": MessageLookupByLibrary.simpleMessage("Pick a date range"),
     "planEnterprise": MessageLookupByLibrary.simpleMessage("Enterprise"),
     "planEnterpriseDesc": MessageLookupByLibrary.simpleMessage(
       "Unlimited users, 500GB storage",
@@ -140,6 +149,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Anyone with the link can view this document.",
     ),
     "statusHeader": MessageLookupByLibrary.simpleMessage("Status"),
+    "stayPeriod": MessageLookupByLibrary.simpleMessage("Period"),
     "strictlyNecessary": MessageLookupByLibrary.simpleMessage(
       "Strictly Necessary",
     ),

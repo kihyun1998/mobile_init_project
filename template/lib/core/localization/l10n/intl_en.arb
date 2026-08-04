@@ -103,5 +103,13 @@
   "korean": "Korean",
   "tabHome": "Home",
   "tabSearch": "Search",
-  "tabProfile": "Profile"
+  "tabProfile": "Profile",
+  "calendar": "Calendar",
+  "calendarDescription": "Pick a date.",
+  "datePicker": "Date Picker",
+  "datePickerDescription": "Choose a single date or a range.",
+  "dueDate": "Due date",
+  "stayPeriod": "Period",
+  "pickADate": "Pick a date",
+  "pickADateRange": "Pick a date range"
 }
