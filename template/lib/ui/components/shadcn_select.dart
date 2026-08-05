@@ -40,6 +40,15 @@ import '../../core/theme/tweakcn_theme.g.dart';
 ///   `TooltipMode.onlyWhenOverflow` 가 기본이라 긴 라벨에서 Flutter 기본
 ///   회색 툴팁(`Colors.grey.shade700`)이 떴을 것이다.
 ///
+/// ## 이 방어가 안 닿는 곳 하나
+///
+/// `shadcn_select_test.dart` 의 "빈 슬롯이 없다" 는 **여기 적힌 16개만** 본다.
+/// 패키지가 `^4.1.0` 범위 안에서 ambient 를 읽는 슬롯을 새로 만들면 그 테스트는
+/// 초록인 채로 Material 기본색이 들어온다 (4.0.0 이 실제로 테마를 통째로
+/// 재구성했으니 가정만은 아니다). **버전을 올릴 때는 위 목록을 다시 센다** —
+/// `lib/src/theme/` 에서 `ambient.` 를 grep 해서 우리가 선점하지 않은 것이
+/// 생겼는지 본다. 절차는 `docs/adr/0001-external-ui-package-adoption.md` 3번.
+///
 /// ## 왜 텍스트 모드가 아니라 커스텀 모드인가
 ///
 /// 텍스트 모드는 글자색을 `TextDropdownConfig` 하나로 받는데, `config.textStyle`

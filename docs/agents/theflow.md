@@ -224,9 +224,13 @@ template 을 고쳐도 기존 생성물에 대해 할 일은 없다.
 - 작업 방식까지 바꾸는 규칙이면 `CLAUDE.md` 에는 **한 줄 포인터만** 남긴다. 전문을 두
   곳에 두면 갈라진다.
 
-**현재 record 를 가진 영역: 없다 (accepted 0, proposed 0).** 그러므로 지금은 어떤
-sibling 을 만나도 conformance item 으로 붙을 곳이 없고, 첫 클러스터는 spine 이슈로
-연다.
+**현재 record 를 가진 영역 (accepted 1, proposed 0):**
+
+| 영역 | record |
+|---|---|
+| 외부 UI 패키지를 `template/lib/ui/components/` 에 들이는 것 | `docs/adr/0001-external-ui-package-adoption.md` (accepted, 2026-08-05) — #27·#31 에서 승격. `flutter_table_plus`·`flutter_otp_widget` 은 이 record 아래 **conformance item** 으로 붙는다 (spine 을 새로 열지 않는다) |
+
+그 외 영역은 아직 record 가 없으므로, 첫 클러스터를 만나면 spine 이슈로 연다.
 
 ### 트래커
 
