@@ -202,6 +202,7 @@ class ShadcnCalendar extends StatelessWidget {
                   child: _cell(
                     colors,
                     radius,
+                    l10n,
                     grid[week * DateTime.daysPerWeek + slot],
                     now,
                   ),
@@ -265,6 +266,7 @@ class ShadcnCalendar extends StatelessWidget {
   Widget _cell(
     TweakcnColors colors,
     TweakcnRadius radius,
+    MaterialLocalizations l10n,
     ShadcnCalendarDay day,
     DateTime now,
   ) {
@@ -309,29 +311,75 @@ class ShadcnCalendar extends StatelessWidget {
           ? null
           : () => onDaySelected!(day.date),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 34.h,
-        margin: EdgeInsets.all(1.r),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(radius.md.r),
-          border: isToday && !isSelected && enabled
-              ? Border.all(color: colors.primary)
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            '${day.date.day}',
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: isSelected || (isToday && enabled)
-                  ? FontWeight.w600
-                  : FontWeight.w400,
-              color: foreground,
+      // **Material 의 날짜 셀과 같은 것을 싣는다**
+      // (`material/calendar_date_picker.dart:1288-1302`). 교체 전에는
+      // `label="20"` 뿐이고 역할도 선택 상태도 없었다(#26 실측) — 어느 날을
+      // 골랐는지 알 방법이 없었다.
+      //
+      // 라벨은 **날짜 숫자를 전체 날짜 앞에 붙인다.** 상류 주석이 이유를
+      // 적어둔다: 보조기술 사용자는 몇 일인지를 먼저 찾는다. 문구는 전부
+      // `MaterialLocalizations` 에서 오므로 언어를 따라간다 — 우리 arb 에
+      // 만들 것이 없다.
+      //
+      // `excludeSemantics` 는 안쪽 `Text('20')` 이 제 노드를 만들어
+      // `"20, 20, Friday…"` 로 읽히는 것을 막는다.
+      child: Semantics(
+        label: _daySemanticLabel(day.date, l10n, isToday: isToday),
+        button: true,
+        // 기간 선택에는 상류 선례가 없다(Material 달력에 기간이 없다).
+        // 범위 **전체**를 selected 로 알린다 — 시작/끝/가운데를 구분하려면
+        // 우리 문구가 필요한데, shadcn 컴포넌트는 l10n 을 물지 않는다.
+        selected: isSelected || isMiddle,
+        enabled: enabled,
+        excludeSemantics: true,
+        child: Container(
+          height: 34.h,
+          margin: EdgeInsets.all(1.r),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(radius.md.r),
+            border: isToday && !isSelected && enabled
+                ? Border.all(color: colors.primary)
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              '${day.date.day}',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: isSelected || (isToday && enabled)
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+                color: foreground,
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// 날짜 셀이 스크린 리더에 읽힐 문구.
+///
+/// Material 의 날짜 셀과 **같은 형태**다
+/// (`material/calendar_date_picker.dart:1295-1296`):
+///
+/// ```
+/// "20, Friday, June 20, 2025"        평범한 날
+/// "17, Tuesday, June 17, 2025, Today" 오늘
+/// ```
+///
+/// 숫자를 앞에 한 번 더 붙이는 것은 상류가 주석으로 이유를 적어둔 결정이다 —
+/// 보조기술 사용자는 로케일 순서와 무관하게 **몇 일인지를 먼저** 찾는다.
+///
+/// 문구가 전부 [MaterialLocalizations] 에서 오므로 언어를 그대로 따라간다.
+/// 우리 arb 에 만들 것이 없고, 만들면 오히려 상류와 갈린다.
+String _daySemanticLabel(
+  DateTime date,
+  MaterialLocalizations l10n, {
+  required bool isToday,
+}) {
+  final suffix = isToday ? ', ${l10n.currentDateLabel}' : '';
+  return '${l10n.formatDecimal(date.day)}, ${l10n.formatFullDate(date)}$suffix';
 }
