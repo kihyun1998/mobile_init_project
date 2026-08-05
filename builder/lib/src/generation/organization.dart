@@ -8,9 +8,16 @@ import 'generation_exception.dart';
 /// **"앞부분이 된다" 가 두 자리에서 같은 뜻은 아니다.** 안드로이드 쪽은 이
 /// 값이 글자 그대로 앞에 붙고([ApplicationId] 가 그 규칙을 들고 있다),
 /// 애플 쪽은 상류가 `[^a-zA-Z0-9\-\.]` 를 지운 뒤에 붙인다. 이 타입이
-/// 밑줄을 허용하므로 org 에 밑줄이 있으면 둘이 갈린다 — 실측(2026-08-05,
-/// Flutter 3.44.8): org `com.exampl.mib_gen_test` 는 applicationId 에서는
-/// 그대로지만 `PRODUCT_BUNDLE_IDENTIFIER` 에서는 `com.exampl.mibgentest` 다.
+/// 밑줄을 허용하므로 org 에 밑줄이 있으면 앞부분부터 갈린다 —
+/// 실측(2026-08-05, Flutter 3.44.8): org `com.exampl.mib_gen_test` 는
+/// applicationId 에서는 그대로지만 `PRODUCT_BUNDLE_IDENTIFIER` 에서는
+/// `com.exampl.mibgentest` 다.
+///
+/// **org 에 밑줄이 없어도 두 식별자 전체는 갈린다.** 상류가 애플 쪽에서만
+/// 이름을 camelCase 로 바꾸기 때문이고, 그쪽이 훨씬 흔하다 — 실측: 같은 날
+/// 같은 버전에서 org `com.example` + 이름 `my_app` 이 applicationId
+/// `com.example.my_app` 과 번들 ID `com.example.myApp` 으로 갈린다. 둘이
+/// 같은 경우는 **org 와 이름 양쪽에 밑줄이 없을 때뿐**이다.
 class Organization {
   const Organization._(this.value);
 

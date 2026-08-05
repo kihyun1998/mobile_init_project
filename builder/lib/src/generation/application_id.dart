@@ -35,12 +35,20 @@ import 'package_name.dart';
 /// ## iOS 번들 ID 는 이 값이 아니다
 ///
 /// 상류는 애플 쪽에 `createUTIIdentifier` 라는 **다른 규칙**을 쓴다 —
-/// 이름을 camelCase 로 바꾸고 `[^a-zA-Z0-9\-\.]` 를 지운다. 실측
-/// (2026-08-05, Flutter 3.44.8): org `com.exampl.mib_gen_test` + 이름
-/// `mib_gen_test` 는 applicationId 로 `com.exampl.mib_gen_test.mib_gen_test`
-/// 가 되지만 `PRODUCT_BUNDLE_IDENTIFIER` 로는
-/// `com.exampl.mibgentest.mibGenTest` 가 된다. 이 타입을 iOS 자리에 갖다
-/// 쓰지 말 것.
+/// 이름을 camelCase 로 바꾸고 `[^a-zA-Z0-9\-\.]` 를 지운다. 이 타입을 iOS
+/// 자리에 갖다 쓰지 말 것.
+///
+/// **그리고 이건 변두리 경우가 아니다.** 밑줄은 Dart 패키지 이름에 흔하고,
+/// 애플 쪽 camelCase 는 그것을 전부 먹는다. 실측(2026-08-05, Flutter
+/// 3.44.8, 임시 폴더에 진짜 생성):
+///
+/// | org | 이름 | applicationId | `PRODUCT_BUNDLE_IDENTIFIER` |
+/// |---|---|---|---|
+/// | `com.example` | `my_app` | `com.example.my_app` | `com.example.myApp` |
+/// | `com.exampl.mib_gen_test` | `mib_gen_test` | `com.exampl.mib_gen_test.mib_gen_test` | `com.exampl.mibgentest.mibGenTest` |
+///
+/// 둘이 같은 경우는 **org 와 이름 양쪽에 밑줄이 없을 때뿐**이다. 한 쌍만
+/// 재고 일반화하면 여기서 틀린다 — 실제로 그렇게 틀렸다.
 class ApplicationId {
   const ApplicationId._(this.value);
 
