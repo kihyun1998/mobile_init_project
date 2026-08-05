@@ -304,4 +304,169 @@ void main() {
       expect(picked?.end, DateTime(2025, 6, 20));
     });
   });
+
+  group('날짜 셀이 스크린 리더에 역할과 상태를 싣는다', () {
+    // 교체 전 실측(#26): 선택된 20일이 label="20" button=false selected=false
+    // enabled=false 로 나갔다. 어느 날을 골랐는지 알 방법이 없었다.
+    //
+    // Material 의 `CalendarDatePicker` 가 같은 자리에 무엇을 싣는지를 목표로
+    // 잡는다 (`material/calendar_date_picker.dart:1288-1302`). 라벨 형태까지
+    // 그대로 따라간다 — **날짜 숫자를 전체 날짜 앞에 붙인다.** 상류 주석이
+    // 이유를 적어둔다: 보조기술 사용자는 몇 일인지를 먼저 찾는다.
+    testWidgets('고른 날이 button·selected 와 전체 날짜를 싣는다', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 3),
+          selected: DateTime(2025, 6, 20),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('20')),
+        matchesSemantics(
+          label: '20, Friday, June 20, 2025',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('안 고른 날은 selected 가 내려간 채로 나간다', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 3),
+          selected: DateTime(2025, 6, 20),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('21')),
+        matchesSemantics(
+          label: '21, Saturday, June 21, 2025',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: false,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('오늘은 라벨 끝에 currentDateLabel 이 붙는다', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 17),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('17')).label,
+        '17, Tuesday, June 17, 2025, Today',
+      );
+      handle.dispose();
+    });
+
+    testWidgets('숫자가 두 번 읽히지 않는다', (tester) async {
+      // 안쪽 `Text('20')` 이 제 노드를 만들면 "20, 20, Friday…" 가 된다.
+      // `excludeSemantics: true` 가 그것을 막는다.
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 3),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      final node = tester.getSemantics(find.text('20'));
+      expect(node.label, '20, Friday, June 20, 2025');
+      expect(node.childrenCount, 0);
+      handle.dispose();
+    });
+
+    testWidgets('고를 수 없는 날은 enabled 가 내려가고 탭이 사라진다', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 3),
+          firstDate: DateTime(2025, 6, 18),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('15')),
+        matchesSemantics(
+          label: '15, Sunday, June 15, 2025',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: false,
+          hasEnabledState: true,
+          isEnabled: false,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('기간 가운데 날도 selected 로 나간다', (tester) async {
+      // 상류에 선례가 없다(Material 달력에는 기간이 없다). 범위 **전체**를
+      // selected 로 알린다 — 시작/끝/가운데를 구분하려면 우리 문구가 필요한데,
+      // shadcn 컴포넌트는 l10n 을 물지 않는다는 규칙과 어긋난다.
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        ShadcnCalendar(
+          month: _june,
+          today: DateTime(2025, 6, 3),
+          rangeStart: DateTime(2025, 6, 15),
+          rangeEnd: DateTime(2025, 6, 20),
+          onDaySelected: (_) {},
+        ),
+      );
+
+      const inRange = {
+        '15': '15, Sunday, June 15, 2025',
+        '17': '17, Tuesday, June 17, 2025',
+        '20': '20, Friday, June 20, 2025',
+      };
+      inRange.forEach((day, label) {
+        expect(
+          tester.getSemantics(find.text(day)),
+          matchesSemantics(
+            label: label,
+            isButton: true,
+            hasSelectedState: true,
+            isSelected: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+          ),
+          reason: '$day 일이 범위 안인데 selected 가 아니다',
+        );
+      });
+      handle.dispose();
+    });
+  });
 }
