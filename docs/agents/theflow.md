@@ -154,6 +154,13 @@ template 을 고쳐도 기존 생성물에 대해 할 일은 없다.
 - **템플릿 CSS 는 여러 토큰 쌍이 같은 값이다.** `border`/`input`, `background`/`card`
   가 그렇다. 매핑을 틀려도 기본 CSS 로는 티가 나지 않는다 — **자기 자신을 오독할 수
   있는 측정**이다. 매핑을 건드렸으면 쌍이 서로 다른 값인 CSS 로 확인한다.
+- **밝은 테마만 재는 것도 같은 함정이다.** 토큰 충돌은 light 에서만 일어나는 것이
+  아니라 **light 에서 유독 심하다.** 실측(#31): `ThemeData.cardColor` 는 light 에서
+  `card`·`background`·`popover` 와 전부 같아 어느 것에 매핑해도 맞아 보이지만
+  dark 에서는 `background` 뿐이고, `ThemeData.primaryColor` 는 light 에서
+  `colorScheme.primary` 인데 **dark 에서는 `colorScheme.surface`** 다. 매핑을
+  건드렸으면 **dark 로도 잰다** — 실제로 변이 테스트에서 light 는 통과시키고
+  dark 만 잡아낸 매핑 오류가 나왔다.
 - **위젯 테스트가 초록인 것은 "그 위젯이 소비한 것" 까지만 증명한다.** 색을 assert
   하지 않는 렌더 테스트는 테마 회귀를 못 잡는다.
 
@@ -217,9 +224,13 @@ template 을 고쳐도 기존 생성물에 대해 할 일은 없다.
 - 작업 방식까지 바꾸는 규칙이면 `CLAUDE.md` 에는 **한 줄 포인터만** 남긴다. 전문을 두
   곳에 두면 갈라진다.
 
-**현재 record 를 가진 영역: 없다 (accepted 0, proposed 0).** 그러므로 지금은 어떤
-sibling 을 만나도 conformance item 으로 붙을 곳이 없고, 첫 클러스터는 spine 이슈로
-연다.
+**현재 record 를 가진 영역 (accepted 1, proposed 0):**
+
+| 영역 | record |
+|---|---|
+| 외부 UI 패키지를 `template/lib/ui/components/` 에 들이는 것 | `docs/adr/0001-external-ui-package-adoption.md` (accepted, 2026-08-05) — #27·#31 에서 승격. `flutter_table_plus`·`flutter_otp_widget` 은 이 record 아래 **conformance item** 으로 붙는다 (spine 을 새로 열지 않는다) |
+
+그 외 영역은 아직 record 가 없으므로, 첫 클러스터를 만나면 spine 이슈로 연다.
 
 ### 트래커
 
@@ -358,6 +369,14 @@ out-of-scope 다. 생성된 프로젝트는 포크라 마이그레이션 대상�
   → "external fact 는 검증 대상" + "하한은 상류에서 하류로 그대로 내려간다".
 - **커밋 `aec8583`** — 프로세스 러너 검증이 macOS 에서만 돌고 있었다.
   → "게이트가 안 닿는 곳" 은 다른 머신에서 처음 발견된다.
+- **#31 (`shadcn_select` → `flutter_dropdown_button`)** — 티켓 본문이 들고 있던 실측표가
+  **두 줄 틀렸다.** light 에서만 쟀기 때문이다: `cardColor` 를 CSS `card` 로,
+  `primaryColor` 를 CSS `primary` 로 적었는데 실제 출처는 `colorScheme.surface` 와
+  `colorScheme.primary` 이고, dark 에서 각각 `background` 와 **`surface`** 로 갈린다.
+  즉 "액센트가 배경색이 되는" 경로가 표에는 통과로 적혀 있었다.
+  → **Step 1 의 "external fact 는 검증 대상" 은 자기 저장소의 이슈 본문에도 걸린다.**
+  티켓의 숫자를 물려받지 말고 다시 잰다. 덤으로 변이 테스트에서 같은 구조가 재현됐다
+  — `popover`→`card` 로 바꾸는 변이를 **light 테스트는 통과시키고 dark 만 잡았다.**
 - **`_withoutDependencies` 의 섹션 판정** — pubspec 에는 `flutter:`, `flutter_intl:`,
   `flutter_tweakcn_generator:` 처럼 같은 들여쓰기를 쓰는 설정 블록이 여럿이라, 섹션을
   안 보고 이름만 맞추면 엉뚱한 설정이 통째로 사라진다.
