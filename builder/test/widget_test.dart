@@ -163,6 +163,91 @@ void main() {
     });
   });
 
+  /// **화면에 그려진 글자만 본다.** 같은 규칙으로 값을 다시 계산해서 비교하면
+  /// 구현을 두 번 적은 것이 되고, 화면이 그것을 실제로 보여주는지는 아무도
+  /// 확인하지 않게 된다 (#36 의 수용 기준).
+  group('만들어질 applicationId 가 폼에 보인다', () {
+    Future<void> type(WidgetTester tester, {String? name, String? org}) async {
+      if (name != null) {
+        await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), name);
+      }
+      if (org != null) {
+        await tester.enterText(
+          find.byKey(GenerateFormPage.organizationFieldKey),
+          org,
+        );
+      }
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('이름과 org 를 넣으면 만들어질 applicationId 가 뜬다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+
+      expect(find.text('com.example.my_app'), findsOneWidget);
+    });
+
+    testWidgets('org 를 고치면 즉시 따라 바뀐다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+      await type(tester, org: 'io.github.kihyun1998');
+
+      expect(find.text('io.github.kihyun1998.my_app'), findsOneWidget);
+      expect(find.text('com.example.my_app'), findsNothing);
+    });
+
+    testWidgets('프로젝트 이름을 고치면 즉시 따라 바뀐다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+      await type(tester, name: 'my_ledger');
+
+      expect(find.text('com.example.my_ledger'), findsOneWidget);
+      expect(find.text('com.example.my_app'), findsNothing);
+    });
+
+    /// #36 이 실제로 잡으려던 화면이다. org 칸에 프로젝트 이름을 한 번 더
+    /// 넣었고 `com.example` 의 `e` 가 빠졌다 — 둘 다 형식으로는 올바라서
+    /// 검증으로는 영영 안 걸린다. 문자열은 실측값이다 (2026-08-05,
+    /// Flutter 3.44.8 로 진짜 생성해서 `build.gradle.kts` 를 읽었다).
+    testWidgets('이름이 두 번 들어간 것과 org 오타가 그 자리에서 보인다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'mib_gen_test', org: 'com.exampl.mib_gen_test');
+
+      expect(find.text('com.exampl.mib_gen_test.mib_gen_test'), findsOneWidget);
+    });
+
+    /// 빈 값을 이어붙여 `com.example.` 을 보여주면 그건 만들어질 값이
+    /// 아니다 — 없는 것을 있는 것처럼 말하는 셈이다.
+    testWidgets('이름이 비어 있으면 이어붙인 것을 보여주지 않는다', (tester) async {
+      await pumpForm(tester);
+
+      expect(find.text('com.example.'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(GenerateFormPage.applicationIdKey),
+          matching: find.textContaining('여기'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('형식이 틀린 동안에는 보여주지 않는다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+      await type(tester, name: 'My-App');
+
+      expect(find.text('com.example.My-App'), findsNothing);
+      expect(find.text('com.example.my_app'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(GenerateFormPage.applicationIdKey),
+          matching: find.textContaining('여기'),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
+
   testWidgets('폼에 적은 설명이 결과물 pubspec 까지 간다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'my_app', description: '내 앱 설명');

@@ -51,7 +51,7 @@ template 자체 테스트가 아니다. 항상 양쪽을 따로 돌린다.
 | 변경 종류 | 읽을 진짜 소스 |
 |---|---|
 | 테마 / CSS 파싱 / 색 파생 | **1차** 핀 박힌 버전의 실제 소스: `~/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_tweakcn_generator-<ver>/lib/src/` (macOS: `~/.pub-cache/hosted/pub.dev/…`). 특히 `generator/color_scheme_resolver.dart`, `generator/dart_theme_generator.dart`, `parser/css_parser.dart`. **2차** `gh api repos/kihyun1998/flutter_tweakcn_generator/contents/<path> --jq .content \| base64 -d` 로 upstream main 과 교차 — 이미 고쳐졌는지 확인한다. |
-| 생성 파이프라인 (`flutter create`, 복사, 치환) | 실제 `flutter create` 출력물. 기억이나 문서가 아니라 임시 폴더에 진짜 만들어 놓고 `ls`/`grep` 한다. Flutter 버전이 올라가면 스캐폴드가 바뀌므로 옛 관찰을 재사용하지 않는다. |
+| 생성 파이프라인 (`flutter create`, 복사, 치환) | **1차** 실제 `flutter create` 출력물. 기억이나 문서가 아니라 임시 폴더에 진짜 만들어 놓고 `ls`/`grep` 한다. Flutter 버전이 올라가면 스캐폴드가 바뀌므로 옛 관찰을 재사용하지 않는다. **2차** 그 값을 *만드는 규칙*이 필요하면 설치된 SDK 의 소스: `$(dirname $(which flutter))/../packages/flutter_tools/lib/src/commands/create_base.dart`. 출력물은 "무엇이 나왔나" 만 말하고 "어떤 입력에서 무엇이 나오나" 는 말해주지 않는다 — 규칙을 미러링할 거면 둘 다 읽는다 (#36). |
 | 템플릿 앱 코드 (컴포넌트, provider, l10n) | `template/lib/` 의 형제 구현. shadcn 13종은 서로가 서로의 prior art 다 — 새 컴포넌트는 기존 것의 토큰 사용법·`.w/.h/.sp` 관례를 그대로 따른다. |
 | 빌더 UI | `builder/lib/src/ui/` 의 형제 페이지. **`.w/.h/.sp/.r` 금지** (ScreenUtil 싱글톤이 프로세스 전역이라 폰 배율이 딸려온다). |
 
@@ -69,6 +69,12 @@ template 자체 테스트가 아니다. 항상 양쪽을 따로 돌린다.
 
 - `builder/lib/src/preview/preview_theme.dart` — `colorTokens`, 그리고 클래스
   doc-comment 가 "아직 사본으로 남은 두 곳"을 명시한다.
+- `builder/lib/src/generation/application_id.dart` — **상류 `flutter_tools` 의
+  `createAndroidIdentifier` 를 미러링한 것**이지 우리가 정한 규칙이 아니다.
+  `preview_theme.dart` 와 같은 종류의 사본이고, 낡는 방식도 같다 — 컴파일은
+  되고 화면에 적힌 applicationId 만 실제와 달라진다. doc-comment 가 "왜 그냥
+  이어붙이기여도 되는가" 의 **조건**(값 타입 패턴이 상류 정규화보다 좁다)을
+  들고 있고, `Organization`·`PackageName` 의 패턴을 넓히면 그 조건이 깨진다.
 - `builder/lib/src/generation/project_generator.dart` — `copyEntries`,
   `themeCssEntry`, `templatePackageName`, `templateDisplayName`,
   `_preservedPrefixes`, `exampleOnlyDependencies`, `exampleDirSegments`,
