@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
 import '../generation/app_language.dart';
+import '../generation/application_id.dart';
 import '../generation/file_manager.dart';
 import '../generation/generation_config.dart';
 import '../generation/generation_event.dart';
@@ -34,6 +35,10 @@ class GenerateFormPage extends StatefulWidget {
   static const descriptionFieldKey = Key('generate.field.description');
   static const organizationFieldKey = Key('generate.field.organization');
   static const outputParentFieldKey = Key('generate.field.outputParent');
+
+  /// org 칸 아래에서 "이 값으로 만들면 applicationId 가 이것이 된다" 를
+  /// 말하는 자리.
+  static const applicationIdKey = Key('generate.preview.applicationId');
 
   static const includeExampleKey = Key('generate.field.includeExample');
 
@@ -243,6 +248,19 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   controller: _organization,
                   enabled: !_running,
                 ),
+                const SizedBox(height: 6),
+                // 두 칸 중 어느 쪽을 고쳐도 따라가야 하므로 둘을 함께 듣는다.
+                // 폼 전체를 다시 그리지 않는 이유는 이 줄이 타이핑 한 글자마다
+                // 갱신되기 때문이다.
+                ListenableBuilder(
+                  listenable: Listenable.merge([_name, _organization]),
+                  builder: (context, _) => _ApplicationIdLine(
+                    applicationId: ApplicationId.tryParse(
+                      organization: _organization.text,
+                      projectName: _name.text,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _CheckboxGroup<ProjectPlatform>(
                   label: '플랫폼',
@@ -371,6 +389,57 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// org 칸 아래에서 **만들어질 applicationId 를 그대로 보여주는** 한 줄.
+///
+/// 여기 있는 이유는 `Organization.parse` 가 형식만 보기 때문이다. org 칸에
+/// 프로젝트 이름을 한 번 더 넣는 것도(`com.example.my_app` + `my_app` →
+/// `com.example.my_app.my_app`), `com.example` 의 `e` 를 빠뜨리는 것도
+/// **형식으로는 올바라서** 검증으로는 영영 안 걸린다. 그리고 applicationId 는
+/// 스토어에 올라간 뒤에는 못 바꾼다 — 폴더를 지우고 다시 만들면 되는 다른
+/// 오타와 다르다. 그래서 막는 대신 **보여준다.**
+///
+/// **채워주거나 고쳐주지 않는다.** org 를 프로젝트 이름에서 파생시키면 그
+/// 파생이 만들어내는 것이 정확히 위의 `com.<name>.<name>` 이다.
+class _ApplicationIdLine extends StatelessWidget {
+  const _ApplicationIdLine({required this.applicationId});
+
+  /// null 이면 둘 중 하나가 아직 값 타입이 못 된 것이다. 무엇이 잘못됐는지는
+  /// 여기서 말하지 않는다 — 생성 버튼을 누를 때 값 타입이 말한다.
+  final ApplicationId? applicationId;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.tweakcnColors;
+    final id = applicationId;
+
+    return Row(
+      key: GenerateFormPage.applicationIdKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          id == null ? '' : '→ applicationId: ',
+          style: TextStyle(color: colors.mutedForeground, fontSize: 12),
+        ),
+        Expanded(
+          child: id == null
+              ? Text(
+                  '프로젝트 이름과 org 를 형식에 맞게 넣으면 만들어질 applicationId 가 여기 보입니다.',
+                  style: TextStyle(color: colors.mutedForeground, fontSize: 12),
+                )
+              : SelectableText(
+                  id.value,
+                  style: TextStyle(
+                    color: colors.foreground,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

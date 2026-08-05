@@ -4,6 +4,13 @@ import 'generation_exception.dart';
 ///
 /// [PackageName] 과 같은 이유로 값 타입이다 — 통과하지 못한 문자열은
 /// 이 타입으로 존재할 수 없다.
+///
+/// **"앞부분이 된다" 가 두 자리에서 같은 뜻은 아니다.** 안드로이드 쪽은 이
+/// 값이 글자 그대로 앞에 붙고([ApplicationId] 가 그 규칙을 들고 있다),
+/// 애플 쪽은 상류가 `[^a-zA-Z0-9\-\.]` 를 지운 뒤에 붙인다. 이 타입이
+/// 밑줄을 허용하므로 org 에 밑줄이 있으면 둘이 갈린다 — 실측(2026-08-05,
+/// Flutter 3.44.8): org `com.exampl.mib_gen_test` 는 applicationId 에서는
+/// 그대로지만 `PRODUCT_BUNDLE_IDENTIFIER` 에서는 `com.exampl.mibgentest` 다.
 class Organization {
   const Organization._(this.value);
 
