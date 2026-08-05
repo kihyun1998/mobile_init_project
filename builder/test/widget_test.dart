@@ -385,6 +385,38 @@ void main() {
     expect(opened.arguments.single, p.join(outputParent.path, 'my_app'));
   });
 
+  testWidgets('종료 코드 1 을 실패로 볼지가 OS 마다 갈린다', (tester) async {
+    // **Windows 의 explorer 는 성공해도 1 을 돌려준다** (실측 2026-08-05,
+    // Windows 11 — #32 의 릴리스 왕복에서 나왔다). 그래서 같은 종료 코드가
+    // Windows 에서는 실패가 아니고 macOS·linux 에서는 실패다.
+    //
+    // 판정 자체는 `file_manager_test.dart` 가 세 OS 분을 전부 본다. 여기서
+    // 보는 것은 **호출부가 그 판정을 거치는가** 다 — `result.succeeded` 로
+    // 되돌리면 저쪽은 초록인 채로 이 테스트만 Windows 에서 빨개진다.
+    //
+    // 여는 명령만 실패시킨다. 프로젝트 경로가 인자로 들어가는 명령은 이것
+    // 하나뿐이라(`flutter create` 는 이름만 받고 폴더는 workingDirectory 다)
+    // 다른 단계를 건드리지 않는다.
+    final projectPath = p.join(outputParent.path, 'my_app');
+    runner = FakeProcessRunner(failingCommand: projectPath);
+
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    await tester.ensureVisible(find.text('폴더 열기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('폴더 열기'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('폴더를 열지 못했습니다'),
+      Platform.isWindows ? findsNothing : findsOneWidget,
+      reason: Platform.isWindows
+          ? 'explorer 의 1 은 성공이다 — 실패 배너가 뜨면 안 된다'
+          : 'open/xdg-open 의 1 은 진짜 실패다 — 배너가 떠야 한다',
+    );
+  });
+
   testWidgets('flutter create 가 실패하면 그 사실이 화면에 남는다', (tester) async {
     runner = FakeProcessRunner(
       failingCommand: 'create',

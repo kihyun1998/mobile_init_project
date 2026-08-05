@@ -369,6 +369,18 @@ out-of-scope 다. 생성된 프로젝트는 포크라 마이그레이션 대상�
   → "external fact 는 검증 대상" + "하한은 상류에서 하류로 그대로 내려간다".
 - **커밋 `aec8583`** — 프로세스 러너 검증이 macOS 에서만 돌고 있었다.
   → "게이트가 안 닿는 곳" 은 다른 머신에서 처음 발견된다.
+- **#32 의 릴리스 왕복이 찾은 explorer 종료 코드** — 위 항목의 **재발**이고, 이번엔
+  게이트가 3-OS 로 늘어난 뒤에도 새어나갔다. `revealInFileManager` 는 OS 별로 다른
+  실행 파일을 부르는데(`open`/`explorer`/`xdg-open`) 테스트는 **어느 것을 부르는지만**
+  보고 종료 코드 해석은 안 봤다. 실측: `explorer <경로>` 는 **창이 정상적으로 열려도
+  `1`** 을 돌려준다. `succeeded => exitCode == 0` 이므로 Windows 에서 "폴더 열기" 는
+  **항상** 실패 배너를 띄우고 있었다 — 간헐적이 아니라 100%, 그런데 폴더는 열리므로
+  아무도 버그로 보지 않는다.
+  → 교훈 둘. (1) **OS 분기가 있는 함수는 분기의 *결과 해석*까지 테스트해야 한다.**
+  `Platform.operatingSystem` 을 함수 안에서 읽으면 나머지 두 OS 의 CI 는 그 자리를
+  비워둔다 — 그래서 `revealFailed` 가 OS 를 **인자로** 받는다. (2) **AC 를 다 통과해도
+  못 잡는 결함이 있다.** #32 의 수용 기준에 이 버튼은 없었고, 왕복을 실제로 돌린
+  것만이 이걸 드러냈다.
 - **#31 (`shadcn_select` → `flutter_dropdown_button`)** — 티켓 본문이 들고 있던 실측표가
   **두 줄 틀렸다.** light 에서만 쟀기 때문이다: `cardColor` 를 CSS `card` 로,
   `primaryColor` 를 CSS `primary` 로 적었는데 실제 출처는 `colorScheme.surface` 와

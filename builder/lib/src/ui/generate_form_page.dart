@@ -169,7 +169,10 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
       _result!.projectRoot.path,
       widget.processRunner,
     );
-    if (!result.succeeded && mounted) {
+    // `result.succeeded` 를 직접 보면 안 된다 — Windows 의 explorer 는 성공해도
+    // 1 을 돌려준다. 근거는 revealFailed 의 doc-comment.
+    if (revealFailed(result, operatingSystem: Platform.operatingSystem) &&
+        mounted) {
       setState(() => _error = '폴더를 열지 못했습니다.\n${result.failureOutput}');
     }
   }
