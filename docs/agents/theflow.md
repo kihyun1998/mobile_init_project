@@ -389,6 +389,24 @@ out-of-scope 다. 생성된 프로젝트는 포크라 마이그레이션 대상�
   → **Step 1 의 "external fact 는 검증 대상" 은 자기 저장소의 이슈 본문에도 걸린다.**
   티켓의 숫자를 물려받지 말고 다시 잰다. 덤으로 변이 테스트에서 같은 구조가 재현됐다
   — `popover`→`card` 로 바꾸는 변이를 **light 테스트는 통과시키고 dark 만 잡았다.**
+- **#26 의 radio — "손으로 만들지 말고 프레임워크 기본형 위에 앉는다"** 가 접근성에도
+  걸린다는 전례. 손으로 `Semantics(checked:, selected:, inMutuallyExclusiveGroup:)` 를
+  붙이는 것이 자명해 보였는데, 상류 실제 소스(`widgets/raw_radio.dart:200-229`)를 읽으니
+  **`selected` 와 `hint` 가 플랫폼마다 다르다** — iOS 는 `selected` 로 이미 알리므로
+  안드로이드에서 그것까지 세우면 중복 안내가 된다. 그 `hint` 는
+  `flutter_localizations` 가 언어별로 들고 있다(ko = `"선택되지 않음"`). 손으로
+  붙였다면 **두 분기를 다 놓치고 문구를 우리 arb 에 새로 만들었을 것**이고, 테스트는
+  초록이었을 것이다. `RawRadio` 는 `builder` 를 받으므로 그림은 그대로 우리가 그린다.
+  → Step 1 의 "concept ≠ mechanism" 이 접근성 층에서 나타난 모양. **"이 정도는
+  자명하다" 싶을 때가 상류 소스를 읽어야 할 때다.**
+- **같은 건에서 나온 측정 함정 둘** — 둘 다 "테스트가 초록인데 아무것도 검증하지 않는"
+  모양이다.
+  - `RawRadio` 는 `Theme.of(context).platform` 이 아니라 전역
+    `defaultTargetPlatform` 을 본다. 테마만 바꾸면 **iOS 분기가 아예 안 돌면서
+    통과한다.** `testWidgets(..., variant: TargetPlatformVariant.only(...))` 를 쓴다.
+  - `debugDefaultTargetPlatformOverride` 를 손으로 세우고 `addTearDown` 으로
+    되돌리면 안 된다 — 프레임워크의 불변식 검사가 `addTearDown` 보다 **먼저** 돌아
+    "debug 변수를 안 되돌렸다" 로 터진다.
 - **`_withoutDependencies` 의 섹션 판정** — pubspec 에는 `flutter:`, `flutter_intl:`,
   `flutter_tweakcn_generator:` 처럼 같은 들여쓰기를 쓰는 설정 블록이 여럿이라, 섹션을
   안 보고 이름만 맞추면 엉뚱한 설정이 통째로 사라진다.

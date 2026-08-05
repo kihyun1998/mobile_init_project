@@ -48,6 +48,8 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 - shadcn 컴포넌트 15개는 `lib/ui/components/` 에 있고 **provider·l10n·navigation 을 물지 않는다.** 끌어들이는 순간 빌더 미리보기가 깨진다 — 이게 격리의 이유다. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다.
   - 컴포넌트끼리 서로 import 하는 것은 된다 (`shadcn_date_picker` → `shadcn_calendar`).
   - **순수 UI 패키지를 무는 것도 된다** (`shadcn_checkbox` → `flutter_checkbox`, `shadcn_select` → `flutter_dropdown_button`). 절차와 근거는 **`docs/adr/0001-external-ui-package-adoption.md`** 에 있다 — 새 패키지를 들이기 전에 읽는다. 요지만: 판정의 축은 "패키지가 좋은가" 가 아니라 **"안 넘긴 색이 어디서 오는가"** 이고, 그 답이 `colorScheme` 파생이면 안 넘겨도 되지만 `ThemeData` 레거시 필드면 **도달 가능한 슬롯을 전부 명시적으로 채워야 한다.** 빠뜨린 색은 컴파일도 테스트도 통과하고 화면만 다르다.
+  - **`package:flutter/widgets.dart` 의 기본형 위에 앉는 것도 된다** (`shadcn_radio_group` → `RawRadio` + `RadioGroup`). `RawRadio` 는 `builder` 를 받아 **그림은 우리가 그리게** 두면서 시맨틱·포커스·키보드를 맡는다. 색과 치수를 한 글자도 안 바꾸고 옮길 수 있다.
+- **접근성은 손으로 `Semantics` 를 붙이기 전에 상류 기본형부터 찾는다.** 자명해 보이는 자리가 아니다 — `RawRadio` 는 `selected` 와 `hint` 를 **플랫폼마다 다르게** 싣고(iOS 는 `selected` 로 이미 알리므로 둘 다 세우면 중복 안내), 그 `hint` 는 `flutter_localizations` 가 언어별로 들고 있다(ko = `"선택되지 않음"`). 손으로 붙이면 두 분기를 다 놓치고 문구를 우리 arb 에 새로 만들게 되는데 **테스트는 초록이다.** 시맨틱을 테스트할 땐 `testWidgets(..., variant: TargetPlatformVariant.only(...))` 로 플랫폼을 바꾼다 — `ThemeData.platform` 을 바꾸는 것으로는 분기가 안 돈다.
 - **날짜·요일 계산은 손으로 만들지 말고 `MaterialLocalizations` 를 거친다.** `narrowWeekdays` 는 일요일 시작 고정 배열이라 `firstDayOfWeekIndex` 로 회전시켜야 하고(`shadcn_calendar.dart` 의 `shadcnWeekdayOrder`), 날짜 산술은 `add(Duration(days: 1))` 이 아니라 `DateTime` 생성자로 한다 — 서머타임 경계에서 하루를 건너뛴다. 참고로 ko·en 은 둘 다 일요일 시작이라 회전 경로가 두 언어만으로는 검증되지 않는다.
 
 ## 명령어
