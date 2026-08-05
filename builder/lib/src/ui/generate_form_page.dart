@@ -244,7 +244,13 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   fieldKey: GenerateFormPage.organizationFieldKey,
                   label: 'Organization',
                   hint: 'com.example',
-                  helper: '안드로이드 applicationId 와 iOS 번들 ID 의 앞부분이 됩니다.',
+                  // "iOS 번들 ID 의 앞부분" 까지 한 문장으로 묶으면 거짓이
+                  // 된다. 상류가 애플 쪽에서만 이름을 camelCase 로 바꾸고
+                  // 밑줄을 지우기 때문이고, 밑줄은 Dart 패키지 이름에
+                  // 흔하다 — 근거와 실측표는 Organization 의 doc-comment.
+                  helper:
+                      '안드로이드 applicationId 의 앞부분이 됩니다. '
+                      'iOS 번들 ID 는 규칙이 달라서, 밑줄이 들어 있으면 아래와 다릅니다.',
                   controller: _organization,
                   enabled: !_running,
                 ),
