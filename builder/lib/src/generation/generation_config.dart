@@ -65,8 +65,14 @@ class GenerationConfig {
   /// 비워서 넣으면 프로젝트 이름이 들어온다.
   final String displayName;
 
-  static String _or(String raw, String fallback) {
-    final trimmed = raw.trim();
-    return trimmed.isEmpty ? fallback : trimmed;
-  }
+  /// 이 자유 문구를 그대로 넣으면 **기본값이 대신 들어가는가.**
+  ///
+  /// 화면이 "지금 이 칸을 비워두면 무엇이 들어가는가" 를 말하려면 같은 질문에
+  /// 답해야 하는데, 거기서 `isEmpty` 를 한 벌 더 적으면 공백만 남긴 칸에서
+  /// 둘이 갈린다 — 여기서는 trim 하고 저기서는 안 하기 때문이다. 그래서
+  /// 규칙을 한 곳에 두고 화면이 이것을 부른다.
+  static bool fallsBack(String raw) => raw.trim().isEmpty;
+
+  static String _or(String raw, String fallback) =>
+      fallsBack(raw) ? fallback : raw.trim();
 }

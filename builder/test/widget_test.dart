@@ -248,6 +248,115 @@ void main() {
     });
   });
 
+  /// #37. **동작은 전부터 맞았다** — `GenerationConfig` 가 빈 표시 이름을
+  /// 프로젝트 이름으로 바꿔 왔다. 안 보였을 뿐이다. 그래서 여기서 보는 것은
+  /// 제출되는 값이 아니라 **칸에 실제로 글자가 있는지**다. 컨트롤러를 읽으면
+  /// 화면이 그것을 보여주는지는 아무도 확인하지 않게 된다 (#36 이 세운 규칙).
+  group('앱 표시 이름이 프로젝트 이름을 따라간다', () {
+    /// 칸의 hint 도 `Text` 라 `find.text` 에 함께 잡힌다. 그래서 여기서
+    /// 쓰는 문자열은 hint(`내 가계부`) 와 겹치지 않는 것이라야 한다 —
+    /// 겹치면 "칸에 글자가 있다" 가 아니라 "hint 가 있다" 를 재게 된다.
+    Finder displayNameShows(String text) => find.descendant(
+      of: find.byKey(GenerateFormPage.displayNameFieldKey),
+      matching: find.text(text),
+    );
+
+    /// 사용자가 직접 적은 표시 이름. hint 와 겹치지 않는 값이다.
+    const typed = '내 지갑';
+
+    Future<void> typeName(WidgetTester tester, String name) async {
+      await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), name);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> typeDisplayName(WidgetTester tester, String value) async {
+      await tester.enterText(
+        find.byKey(GenerateFormPage.displayNameFieldKey),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('프로젝트 이름을 타이핑하면 표시 이름 칸에 같은 글자가 나타난다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+
+      expect(displayNameShows('my_app'), findsOneWidget);
+    });
+
+    testWidgets('프로젝트 이름을 다시 고치면 표시 이름도 따라 바뀐다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+      await typeName(tester, 'my_ledger');
+
+      expect(displayNameShows('my_ledger'), findsOneWidget);
+      expect(displayNameShows('my_app'), findsNothing);
+    });
+
+    testWidgets('표시 이름을 직접 고치면 추적이 끊긴다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+      await typeDisplayName(tester, typed);
+      await typeName(tester, 'my_ledger');
+
+      expect(displayNameShows(typed), findsOneWidget);
+      expect(displayNameShows('my_ledger'), findsNothing);
+    });
+
+    testWidgets('표시 이름을 완전히 비우면 다시 따라간다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+      await typeDisplayName(tester, typed);
+      await typeDisplayName(tester, '');
+      await typeName(tester, 'my_ledger');
+
+      expect(displayNameShows('my_ledger'), findsOneWidget);
+    });
+
+    /// 비우는 **그 순간에는 도로 채우지 않는다.** 채우면 칸을 비운 채로 둘
+    /// 수가 없어지고, 백스페이스로 한 글자씩 지우다 끝까지 가면 프로젝트
+    /// 이름이 다시 들어찬 뒤 그것이 반쯤 지워진 채 남는다. 비어 있는 것은
+    /// `GenerationConfig` 가 이미 계약으로 들고 있는 상태다.
+    /// (2026-08-06, 저장소 주인이 두 안을 보고 고른 것 — 뒤집는 것도 그쪽 몫.)
+    testWidgets('비운 직후에는 칸이 비어 있다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+      await typeDisplayName(tester, '');
+
+      expect(displayNameShows('my_app'), findsNothing);
+    });
+
+    /// 공백만 남긴 것도 `GenerationConfig` 는 빈 값으로 친다(`_or` 가
+    /// trim 한다). 화면만 "아직 직접 고친 상태" 라고 여기면 그 순간 둘이
+    /// 다른 말을 하기 시작한다.
+    testWidgets('공백만 남겨도 비운 것으로 친다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'my_app');
+      await typeDisplayName(tester, '   ');
+      await typeName(tester, 'my_ledger');
+
+      expect(displayNameShows('my_ledger'), findsOneWidget);
+    });
+
+    /// 표시 이름을 먼저 적어둔 사람의 글자를 이름 칸이 덮어쓰면 안 된다.
+    testWidgets('표시 이름을 먼저 적었으면 이름을 넣어도 덮어쓰지 않는다', (tester) async {
+      await pumpForm(tester);
+      await typeDisplayName(tester, typed);
+      await typeName(tester, 'my_app');
+
+      expect(displayNameShows(typed), findsOneWidget);
+      expect(displayNameShows('my_app'), findsNothing);
+    });
+
+    /// AC. 칸이 채워진 뒤에도 "비워두면 프로젝트 이름을 씁니다" 라고 적혀
+    /// 있으면 화면이 자기 자신에 대해 거짓말을 하는 것이다.
+    testWidgets('낡은 helper 문구가 남아 있지 않다', (tester) async {
+      await pumpForm(tester);
+
+      expect(find.textContaining('비워두면 프로젝트 이름을'), findsNothing);
+    });
+  });
+
   testWidgets('폼에 적은 설명이 결과물 pubspec 까지 간다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'my_app', description: '내 앱 설명');
@@ -277,6 +386,34 @@ void main() {
       File(p.join(root, 'ios', 'Runner', 'Info.plist')).readAsStringSync(),
       contains('<string>내 가계부</string>'),
     );
+  });
+
+  /// #37 은 **제출되는 값을 바꾼다** — 전에는 빈 문자열이 가서 `GenerationConfig`
+  /// 가 프로젝트 이름으로 바꿔줬고, 이제는 화면이 채운 글자가 그대로 간다.
+  /// 두 경로가 같은 곳에 도착하는지를 결과물에서 확인한다. (같을 수밖에 없는
+  /// 이유는 `PackageName.parse` 가 trim 한 값이 곧 `projectName.value` 이고,
+  /// `_or` 도 같은 trim 을 하기 때문이다 — 그래도 재본다.)
+  testWidgets('표시 이름을 건드리지 않으면 프로젝트 이름이 그대로 앱 이름이 된다', (tester) async {
+    await pumpForm(tester);
+    await fillAndSubmit(tester, name: 'my_app');
+
+    final root = p.join(outputParent.path, 'my_app');
+    expect(
+      File(p.join(root, 'lib', 'main.dart')).readAsStringSync(),
+      contains("'my_app'"),
+    );
+    // **안드로이드 라벨은 여기서 아무것도 증명하지 못한다** — flutter create
+    // 가 이미 `android:label="my_app"` 을 써두므로 치환이 돌든 안 돌든
+    // 통과한다. 표시 이름이 프로젝트 이름과 같은 이 경우에는 진짜 생성으로도
+    // 못 가른다. 가르는 것은 plist 뿐이다: 상류가 거기에만
+    // `my_app` → `My App` 을 넣어두기 때문에, 우리가 덮어썼을 때만
+    // `my_app` 이 된다 (fake_process_runner 의 `_humanize` 가 같은 이유로
+    // 그 모양을 흉내낸다).
+    final plist = File(
+      p.join(root, 'ios', 'Runner', 'Info.plist'),
+    ).readAsStringSync();
+    expect(plist, contains('<string>my_app</string>'));
+    expect(plist, isNot(contains('<string>My App</string>')));
   });
 
   testWidgets('체크를 푼 플랫폼은 만들어지지 않는다', (tester) async {

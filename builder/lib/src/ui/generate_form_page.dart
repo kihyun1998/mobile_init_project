@@ -81,6 +81,42 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
 
   bool _includeExample = true;
 
+  /// 표시 이름 칸이 프로젝트 이름을 따라가는 중인가.
+  ///
+  /// `GenerationConfig` 는 처음부터 "표시 이름이 비면 프로젝트 이름" 이었다.
+  /// 맞는 동작이었는데 화면 밖에서 일어나서, 칸이 비어 있는 것을 보고
+  /// "안 채워지는데?" 라고 읽혔다 (#37). 그래서 새 규칙을 만드는 것이 아니라
+  /// **그 계약을 칸 안에서 눈에 보이게** 한다.
+  ///
+  /// 사람이 표시 이름을 직접 고치면 멈추고, 그 칸을 다시 비우면 재개한다.
+  /// "비었다" 의 판정은 `GenerationConfig.fallsBack` 을 부른다 — 여기서
+  /// `isEmpty` 를 새로 적으면 공백만 남긴 칸에서 화면과 생성기가 다른 말을
+  /// 하게 된다.
+  ///
+  /// **재개하는 그 순간에 칸을 도로 채우지는 않는다.** 채우면 칸을 비운 채로
+  /// 둘 수가 없어지고(비우는 즉시 글자가 들어차므로), 백스페이스로 한 글자씩
+  /// 지우다 끝까지 간 사람에게는 반쯤 지워진 프로젝트 이름이 남는다.
+  /// 2026-08-06 에 저장소 주인이 두 안을 보고 고른 것이고, 뒤집는 것도
+  /// 그쪽 몫이다.
+  ///
+  /// ## 이 칸에 넣는 것이 왜 생짜 `_name.text` 여도 되는가 — 조건부다
+  ///
+  /// `GenerationConfig` 의 fallback 은 `projectName.value`, 즉 **값 타입을
+  /// 거친 것**이다. 여기서 미러링하는 것은 값 타입을 거치지 않은 칸의 글자다.
+  /// 둘이 같은 이유는 하나뿐이다 — `PackageName.parse` 가 `trim` 말고는
+  /// 아무것도 하지 않고(`package_name.dart`), `_or` 도 같은 `trim` 을 하기
+  /// 때문이다.
+  ///
+  /// **`PackageName` 의 패턴을 넓히면 그날부터 갈린다** (대문자를 소문자로
+  /// 접는다든가, 하이픈을 밑줄로 바꾼다든가). 증상은 컴파일 오류가 아니라
+  /// **칸에 적힌 이름과 실제로 만들어진 앱 이름이 다른 것**이고, 그건 정확히
+  /// #37 이 없애려던 종류의 사고다. 형제인 [ApplicationId] 는 값 타입을
+  /// 거치는 쪽을 골랐지만(그쪽은 타이핑 도중 null 을 보여주면 그만이다),
+  /// 여기서는 그 길이 **타이핑 도중 칸이 비었다 찼다** 하는 것을 뜻해서
+  /// 쓸 수 없다. 그래서 전제를 적어두는 쪽으로 간다 — `application_id.dart`
+  /// 가 같은 이유로 같은 것을 하고 있다.
+  bool _displayNameFollowsName = true;
+
   bool _running = false;
 
   /// 시작조차 못 한 경우의 오류. 프로젝트가 만들어지지 않았다는 뜻이다.
@@ -215,6 +251,11 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   helper: '소문자로 시작하고 소문자·숫자·밑줄만 쓸 수 있습니다.',
                   controller: _name,
                   enabled: !_running,
+                  // 표시 이름 칸의 컨트롤러만 바꾼다. 그 칸은 자기 컨트롤러를
+                  // 듣고 다시 그리므로 폼 전체를 setState 할 일이 없다.
+                  onChanged: (name) {
+                    if (_displayNameFollowsName) _displayName.text = name;
+                  },
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -226,9 +267,22 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   // "홈 화면 어디서나" 라고 하면 거짓말이 된다.
                   helper:
                       '앱 타이틀과 안드로이드·iOS 홈 화면 아이콘 밑에 보입니다. '
-                      '비워두면 프로젝트 이름을 씁니다.',
+                      '프로젝트 이름을 따라가고, 직접 고치면 멈춥니다. '
+                      '비우면 다음에 이름을 고칠 때부터 다시 따라갑니다.',
                   controller: _displayName,
                   enabled: !_running,
+                  // 사람이 고쳤을 때만 불린다 — 바로 위 이름 칸이 여기에 써
+                  // 넣는 것으로는 불리지 않는다. 근거는 _Field.onChanged 의
+                  // doc-comment.
+                  //
+                  // 쓰는 쪽이 **이름 칸의 onChanged** 라는 것이 이 설계의
+                  // 안전조건이다. 그때 입력을 쥐고 있는 것은 이름 칸이므로
+                  // 이 칸은 절대 포커스된 채로 덮어써지지 않는다 — 그래서
+                  // 조합 중인 한글이 날아가거나 커서가 튀는 경우가 없다.
+                  // 어떤 필드에도 autofillHints 를 달지 않는 것이 나머지
+                  // 반쪽이다(autofill 만 클라이언트 id 검사를 건너뛴다).
+                  onChanged: (value) => _displayNameFollowsName =
+                      GenerationConfig.fallsBack(value),
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -459,6 +513,7 @@ class _Field extends StatelessWidget {
     this.hint,
     this.helper,
     this.trailing,
+    this.onChanged,
   });
 
   /// 입력칸을 집어내는 키. 필드는 뒤따르는 티켓에서 계속 늘어나므로
@@ -470,6 +525,27 @@ class _Field extends StatelessWidget {
   final String? hint;
   final String? helper;
   final Widget? trailing;
+
+  /// **사람이 이 칸을 고쳤을 때만** 불린다. 컨트롤러에 코드가 값을 써 넣는
+  /// 것으로는 불리지 않는다.
+  ///
+  /// `EditableText` 에서 `onChanged` 를 부르는 곳은
+  /// `_formatAndSetValue` **한 군데**이고(`widgets/editable_text.dart:4665`),
+  /// 거기로 들어오는 길은 둘 다 사람에게서 온다 — 플랫폼이 올려보내는
+  /// `updateEditingValue`(`:3638`)와, 붙여넣기·잘라내기·삭제·**되돌리기**가
+  /// 타는 `userUpdateTextEditingValue`(`:5066`, `_replaceText:5462`,
+  /// `UndoHistory.onTriggered:5761`). 반면 `controller.text = …` 는
+  /// `_didChangeTextEditingValue`(`:4817`) 로 빠져 이 콜백을 건너뛴다.
+  /// (Flutter 3.44.8 소스에서 확인.)
+  ///
+  /// 그래서 컨트롤러 리스너가 아니라 이것을 쓴다. 리스너로 들으면 우리가 쓴
+  /// 값과 사람이 친 값이 구분되지 않아서, "직접 고쳤으니 따라가기를 멈춘다"
+  /// 같은 규칙이 자기 자신이 쓴 값에 걸려 넘어진다.
+  ///
+  /// 되돌리기가 같은 길을 탄다는 것이 특히 중요하다 — Ctrl+Z 로 칸을 도로
+  /// 비워도 [_GenerateFormPageState._displayNameFollowsName] 가 함께
+  /// 되돌아오므로, 플래그만 옛 상태로 남는 경우가 생기지 않는다.
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -493,6 +569,7 @@ class _Field extends StatelessWidget {
                 key: fieldKey,
                 controller: controller,
                 enabled: enabled,
+                onChanged: onChanged,
                 decoration: InputDecoration(
                   hintText: hint,
                   isDense: true,

@@ -75,6 +75,13 @@ template 자체 테스트가 아니다. 항상 양쪽을 따로 돌린다.
   되고 화면에 적힌 applicationId 만 실제와 달라진다. doc-comment 가 "왜 그냥
   이어붙이기여도 되는가" 의 **조건**(값 타입 패턴이 상류 정규화보다 좁다)을
   들고 있고, `Organization`·`PackageName` 의 패턴을 넓히면 그 조건이 깨진다.
+- `builder/lib/src/ui/generate_form_page.dart` — `_displayNameFollowsName`.
+  **`PackageName` 의 패턴을 넓히면 깨지는 두 번째 자리다** (위 항목과 한
+  트리거를 공유하므로 둘을 같이 본다). 표시 이름 칸에 미러링하는 것은 값
+  타입을 거치지 않은 생짜 입력인데 `GenerationConfig` 의 fallback 은
+  `projectName.value` 라, 둘이 같은 것은 `PackageName.parse` 가 `trim` 밖에
+  하지 않기 때문뿐이다. 낡는 방식도 같다 — 컴파일도 테스트도 통과하고
+  **칸에 적힌 앱 이름과 실제로 만들어진 앱 이름만 달라진다** (#37).
 - `builder/lib/src/generation/project_generator.dart` — `copyEntries`,
   `themeCssEntry`, `templatePackageName`, `templateDisplayName`,
   `_preservedPrefixes`, `exampleOnlyDependencies`, `exampleDirSegments`,
