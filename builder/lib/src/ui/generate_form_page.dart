@@ -6,6 +6,7 @@ import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 
 import '../generation/app_language.dart';
 import '../generation/application_id.dart';
+import '../generation/bundle_identifier.dart';
 import '../generation/file_manager.dart';
 import '../generation/generation_config.dart';
 import '../generation/generation_event.dart';
@@ -36,9 +37,12 @@ class GenerateFormPage extends StatefulWidget {
   static const organizationFieldKey = Key('generate.field.organization');
   static const outputParentFieldKey = Key('generate.field.outputParent');
 
-  /// org 칸 아래에서 "이 값으로 만들면 applicationId 가 이것이 된다" 를
-  /// 말하는 자리.
+  /// org 칸 아래에서 "이 값으로 만들면 식별자가 이것이 된다" 를 말하는 두
+  /// 자리. **읽기 전용이다** — 우리가 정하는 값이 아니라 `flutter create` 가
+  /// 정하는 값을 되비추는 칸이라, 고칠 수 있게 열어두면 고친 글자가 조용히
+  /// 무시된다.
   static const applicationIdKey = Key('generate.preview.applicationId');
+  static const bundleIdKey = Key('generate.preview.bundleId');
 
   static const includeExampleKey = Key('generate.field.includeExample');
 
@@ -73,6 +77,11 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   final _organization = TextEditingController(text: 'com.example');
   final _outputParent = TextEditingController();
 
+  /// 되비추는 두 칸. 사람이 치는 칸이 아니라 [_recomputeIdentifiers] 가
+  /// 채우는 칸이다.
+  final _applicationId = TextEditingController();
+  final _bundleId = TextEditingController();
+
   /// 기본값은 설정 객체가 정한 것을 그대로 쓴다. 여기에 목록을 한 벌 더
   /// 적어두면 플랫폼이 늘어날 때 둘 중 하나만 고치게 된다.
   final _platforms = PlatformSelection.mobile.platforms.toSet();
@@ -80,6 +89,11 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   final _languages = LanguageSelection.all.languages.toSet();
 
   bool _includeExample = true;
+
+  /// 표시 이름 칸이 프로젝트 이름을 따라가는 중인지.
+  ///
+  /// 사람이 표시 이름을 직접 고치면 끊기고, 완전히 비우면 다시 이어진다.
+  bool _displayNameFollowsName = true;
 
   bool _running = false;
 
@@ -93,12 +107,95 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   final _log = GenerationLog();
 
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(_mirrorNameIntoDisplayName);
+    // 두 식별자는 이름과 org 를 **둘 다** 먹으므로 양쪽을 듣는다.
+    _name.addListener(_recomputeIdentifiers);
+    _organization.addListener(_recomputeIdentifiers);
+  }
+
+  /// 되비추는 두 칸을 다시 채운다.
+  ///
+  /// **이 칸들이 있는 이유**는 `Organization.parse` 가 형식만 보기 때문이다.
+  /// org 칸에 프로젝트 이름을 한 번 더 넣는 것도(`com.example.my_app` +
+  /// `my_app` → `com.example.my_app.my_app`), `com.example` 의 `e` 를
+  /// 빠뜨리는 것도 **형식으로는 올바라서** 검증으로는 영영 안 걸린다. 그리고
+  /// 두 식별자는 스토어에 올라간 뒤에는 못 바꾼다 — 폴더를 지우고 다시
+  /// 만들면 되는 다른 오타와 다르다. 그래서 막는 대신 **보여준다.**
+  ///
+  /// **채워주거나 고쳐주지 않는다.** org 를 프로젝트 이름에서 파생시키면 그
+  /// 파생이 만들어내는 것이 정확히 위의 `com.<name>.<name>` 이다. 같은
+  /// 이유로 두 칸을 편집할 수 있게 열지도 않는다 — 고친 글자를 되먹이려면
+  /// `com.foo.bar.my_app` 에서 어디까지가 org 인지 우리가 찍어야 한다.
+  ///
+  /// 하나라도 형식이 아니면 **비운다.** 무엇이 잘못됐는지는 여기서 말하지
+  /// 않는다 — 생성 버튼을 누를 때 값 타입이 말한다. 빈 칸에는 hint 가
+  /// 드러나므로 화면은 여전히 무엇이 들어올 자리인지 말한다.
+  ///
+  /// `setState` 를 부르지 않는다. 이 함수는 타이핑 한 글자마다 불리는데,
+  /// 컨트롤러에 써넣는 것만으로 두 칸이 갱신되므로 폼 전체를 다시 그릴
+  /// 이유가 없다.
+  void _recomputeIdentifiers() {
+    final organization = _organization.text;
+    final projectName = _name.text;
+
+    _applicationId.text =
+        ApplicationId.tryParse(
+          organization: organization,
+          projectName: projectName,
+        )?.value ??
+        '';
+    _bundleId.text =
+        BundleIdentifier.tryParse(
+          organization: organization,
+          projectName: projectName,
+        )?.value ??
+        '';
+  }
+
+  /// 프로젝트 이름을 표시 이름 칸에 그대로 써넣는다.
+  ///
+  /// `GenerationConfig` 가 빈 표시 이름을 프로젝트 이름으로 바꾸므로, 빈 칸은
+  /// "표시 이름이 없다" 가 아니라 **"프로젝트 이름이 들어갈 것이다"** 를 뜻한다.
+  /// 그것을 빈 칸으로 그려두면 화면이 제출될 값과 다른 말을 한다.
+  void _mirrorNameIntoDisplayName() {
+    if (!_displayNameFollowsName) return;
+    final next = _name.text;
+    if (_displayName.text == next) return;
+    _displayName.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
+  /// 표시 이름 칸을 **사람이** 고쳤을 때.
+  ///
+  /// 컨트롤러 리스너로 들으면 안 된다 — [_mirrorNameIntoDisplayName] 이 써넣은
+  /// 것까지 여기로 되돌아와서, 미러링 첫 글자에 추적이 스스로 끊긴다.
+  /// `onChanged` 는 사람이 친 것에만 불린다.
+  void _onDisplayNameEdited(String value) {
+    // 공백뿐인 것도 비운 것으로 본다. `GenerationConfig` 가 trim 한 뒤에
+    // 비었는지를 보므로, 그렇게 제출하면 어차피 프로젝트 이름이 들어간다.
+    if (value.trim().isNotEmpty) {
+      _displayNameFollowsName = false;
+      return;
+    }
+    // 다음 타이핑을 기다리지 않고 그 자리에서 되채운다. 빈 칸으로 남겨두면
+    // 이 화면이 고치려던 그 거짓말로 되돌아간다.
+    _displayNameFollowsName = true;
+    _mirrorNameIntoDisplayName();
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _displayName.dispose();
     _description.dispose();
     _organization.dispose();
     _outputParent.dispose();
+    _applicationId.dispose();
+    _bundleId.dispose();
     _log.dispose();
     super.dispose();
   }
@@ -224,11 +321,15 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   // 데스크톱·웹의 표시 이름까지는 아직 손대지 않는다.
                   // 그 자리엔 프로젝트 이름이 그대로 남으므로 여기서
                   // "홈 화면 어디서나" 라고 하면 거짓말이 된다.
+                  // "비워두면 프로젝트 이름을 씁니다" 라고 하면 이제 어긋난다 —
+                  // 비워둘 수가 없다. 지우는 순간 다시 채워지기 때문이고, 그
+                  // 이유는 _mirrorNameIntoDisplayName 의 doc-comment 에 있다.
                   helper:
                       '앱 타이틀과 안드로이드·iOS 홈 화면 아이콘 밑에 보입니다. '
-                      '비워두면 프로젝트 이름을 씁니다.',
+                      '프로젝트 이름을 따라갑니다 — 직접 고치면 멈추고, 비우면 다시 따라갑니다.',
                   controller: _displayName,
                   enabled: !_running,
+                  onChanged: _onDisplayNameEdited,
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -244,28 +345,37 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   fieldKey: GenerateFormPage.organizationFieldKey,
                   label: 'Organization',
                   hint: 'com.example',
-                  // "iOS 번들 ID 의 앞부분" 까지 한 문장으로 묶으면 거짓이
-                  // 된다. 상류가 애플 쪽에서만 이름을 camelCase 로 바꾸고
-                  // 밑줄을 지우기 때문이고, 밑줄은 Dart 패키지 이름에
-                  // 흔하다 — 근거와 실측표는 Organization 의 doc-comment.
-                  helper:
-                      '안드로이드 applicationId 의 앞부분이 됩니다. '
-                      'iOS 번들 ID 는 규칙이 달라서, 밑줄이 들어 있으면 아래와 다릅니다.',
+                  // 두 식별자가 어떻게 다른지를 여기서 문장으로 설명하지
+                  // 않는다. 아래 두 칸이 실제 값을 나란히 보여주므로, 글로
+                  // 적으면 화면이 같은 말을 두 번 하게 된다.
+                  helper: '안드로이드 applicationId 와 iOS 번들 ID 의 앞부분이 됩니다.',
                   controller: _organization,
                   enabled: !_running,
                 ),
-                const SizedBox(height: 6),
-                // 두 칸 중 어느 쪽을 고쳐도 따라가야 하므로 둘을 함께 듣는다.
-                // 폼 전체를 다시 그리지 않는 이유는 이 줄이 타이핑 한 글자마다
-                // 갱신되기 때문이다.
-                ListenableBuilder(
-                  listenable: Listenable.merge([_name, _organization]),
-                  builder: (context, _) => _ApplicationIdLine(
-                    applicationId: ApplicationId.tryParse(
-                      organization: _organization.text,
-                      projectName: _name.text,
-                    ),
-                  ),
+                const SizedBox(height: 16),
+                _Field(
+                  fieldKey: GenerateFormPage.applicationIdKey,
+                  label: '안드로이드 applicationId',
+                  hint: 'com.example.my_app',
+                  // 잠긴 이유를 두 칸 중 첫 칸에서 한 번만 말한다.
+                  helper:
+                      'flutter create 가 정하는 값이라 고칠 수 없습니다. 이름과 org 를 그대로 이어붙입니다.',
+                  controller: _applicationId,
+                  enabled: !_running,
+                  readOnly: true,
+                ),
+                const SizedBox(height: 16),
+                _Field(
+                  fieldKey: GenerateFormPage.bundleIdKey,
+                  label: 'iOS 번들 ID',
+                  hint: 'com.example.myApp',
+                  // 왜 다른지를 여기서 한 줄로 말한다. 값 자체는 위아래 칸을
+                  // 나란히 보면 보이므로, 문장은 "왜" 만 맡는다.
+                  helper:
+                      '같은 두 칸에서 나오지만 규칙이 다릅니다 — 이름이 camelCase 가 되고 밑줄이 사라집니다.',
+                  controller: _bundleId,
+                  enabled: !_running,
+                  readOnly: true,
                 ),
                 const SizedBox(height: 16),
                 _CheckboxGroup<ProjectPlatform>(
@@ -399,57 +509,6 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   }
 }
 
-/// org 칸 아래에서 **만들어질 applicationId 를 그대로 보여주는** 한 줄.
-///
-/// 여기 있는 이유는 `Organization.parse` 가 형식만 보기 때문이다. org 칸에
-/// 프로젝트 이름을 한 번 더 넣는 것도(`com.example.my_app` + `my_app` →
-/// `com.example.my_app.my_app`), `com.example` 의 `e` 를 빠뜨리는 것도
-/// **형식으로는 올바라서** 검증으로는 영영 안 걸린다. 그리고 applicationId 는
-/// 스토어에 올라간 뒤에는 못 바꾼다 — 폴더를 지우고 다시 만들면 되는 다른
-/// 오타와 다르다. 그래서 막는 대신 **보여준다.**
-///
-/// **채워주거나 고쳐주지 않는다.** org 를 프로젝트 이름에서 파생시키면 그
-/// 파생이 만들어내는 것이 정확히 위의 `com.<name>.<name>` 이다.
-class _ApplicationIdLine extends StatelessWidget {
-  const _ApplicationIdLine({required this.applicationId});
-
-  /// null 이면 둘 중 하나가 아직 값 타입이 못 된 것이다. 무엇이 잘못됐는지는
-  /// 여기서 말하지 않는다 — 생성 버튼을 누를 때 값 타입이 말한다.
-  final ApplicationId? applicationId;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.tweakcnColors;
-    final id = applicationId;
-
-    return Row(
-      key: GenerateFormPage.applicationIdKey,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          id == null ? '' : '→ applicationId: ',
-          style: TextStyle(color: colors.mutedForeground, fontSize: 12),
-        ),
-        Expanded(
-          child: id == null
-              ? Text(
-                  '프로젝트 이름과 org 를 형식에 맞게 넣으면 만들어질 applicationId 가 여기 보입니다.',
-                  style: TextStyle(color: colors.mutedForeground, fontSize: 12),
-                )
-              : SelectableText(
-                  id.value,
-                  style: TextStyle(
-                    color: colors.foreground,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
 class _Field extends StatelessWidget {
   const _Field({
     required this.fieldKey,
@@ -459,6 +518,8 @@ class _Field extends StatelessWidget {
     this.hint,
     this.helper,
     this.trailing,
+    this.onChanged,
+    this.readOnly = false,
   });
 
   /// 입력칸을 집어내는 키. 필드는 뒤따르는 티켓에서 계속 늘어나므로
@@ -470,6 +531,17 @@ class _Field extends StatelessWidget {
   final String? hint;
   final String? helper;
   final Widget? trailing;
+
+  /// **사람이 친 것에만** 불린다. 컨트롤러에 프로그램으로 써넣은 값에는 불리지
+  /// 않는다 — 표시 이름의 따라가기가 정확히 그 차이 위에 서 있다.
+  final ValueChanged<String>? onChanged;
+
+  /// 되비추기만 하는 칸. 글자를 고칠 수 없되 **고를 수는 있다** — 번들 ID 는
+  /// 스토어 콘솔에 붙여넣을 일이 있는 값이라 복사를 막으면 안 된다.
+  ///
+  /// `enabled: false` 로 잠그지 않는 이유가 그것이다. 그쪽은 선택도 함께
+  /// 막힌다.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -493,10 +565,20 @@ class _Field extends StatelessWidget {
                 key: fieldKey,
                 controller: controller,
                 enabled: enabled,
+                readOnly: readOnly,
+                onChanged: onChanged,
+                style: TextStyle(
+                  color: readOnly ? colors.mutedForeground : colors.foreground,
+                ),
                 decoration: InputDecoration(
                   hintText: hint,
                   isDense: true,
                   border: const OutlineInputBorder(),
+                  // 잠긴 칸은 배경으로 구분한다. 테두리를 지우면 어디까지가
+                  // 한 칸인지 안 보이고, 글자를 더 흐리게 하면 붙여넣으려고
+                  // 읽는 값이 읽기 힘들어진다.
+                  filled: readOnly,
+                  fillColor: readOnly ? colors.muted : null,
                 ),
               ),
             ),
