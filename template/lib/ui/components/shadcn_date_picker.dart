@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
 import 'shadcn_calendar.dart';
+import 'shadcn_shadow.dart';
 
 /// 트리거를 눌러 달력을 띄우고 날짜를 고른다.
 ///
@@ -85,6 +86,9 @@ class ShadcnDatePicker extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(radius.md.r),
               border: Border.all(color: colors.border),
+              // 트리거는 outline 버튼 자리다 — button.tsx:16 과 같은
+              // `shadow-xs`.
+              boxShadow: context.tweakcnShadows.shadowXs.r,
             ),
             child: Row(
               children: [
@@ -220,6 +224,9 @@ class _CalendarDialogState extends State<_CalendarDialog> {
           color: colors.popover,
           borderRadius: BorderRadius.circular(radius.lg.r),
           border: Border.all(color: colors.border),
+          // 팝오버(popover.tsx:33 의 `shadow-md`)가 아니라 다이얼로그다 —
+          // 우리는 `Dialog` 로 띄우므로 dialog.tsx:64 의 `shadow-lg` 를 쓴다.
+          boxShadow: context.tweakcnShadows.shadowLg.r,
         ),
         child: ShadcnCalendar(
           month: _month,

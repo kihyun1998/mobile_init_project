@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 enum ShadcnButtonVariant {
   defaultStyle,
@@ -41,24 +42,39 @@ class ShadcnButton extends StatelessWidget {
     final colors = context.tweakcnColors;
     final radius = context.tweakcnRadius;
 
+    // **`outline` 에만 그림자가 붙는다** — 나머지 다섯 변형에는 shadcn 원본이
+    // 아무 그림자도 걸지 않는다 (button.tsx:11-24). `ButtonStyle` 에는
+    // `BoxShadow` 를 실을 자리가 없고 `elevation` 은 Material 의 그림자라
+    // CSS 레이어와 모양이 다르므로, 버튼 밖에 상자 하나를 두른다. 모서리는
+    // 버튼의 `shape` 과 같은 값이라 그림자가 어긋나지 않는다.
+    final shadow = variant == ShadcnButtonVariant.outline
+        ? context.tweakcnShadows.shadowXs.r
+        : const <BoxShadow>[];
+
     return SizedBox(
       width: width,
       height: height ?? _getButtonHeight(),
-      child: ElevatedButton(
-        onPressed: disabled || isLoading ? null : onPressed,
-        style: _getButtonStyle(colors, radius),
-        child: isLoading
-            ? SizedBox(
-                width: 16.r,
-                height: 16.r,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.r,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    _getLoadingColor(colors),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(radius.md.r),
+          boxShadow: shadow,
+        ),
+        child: ElevatedButton(
+          onPressed: disabled || isLoading ? null : onPressed,
+          style: _getButtonStyle(colors, radius),
+          child: isLoading
+              ? SizedBox(
+                  width: 16.r,
+                  height: 16.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.r,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _getLoadingColor(colors),
+                    ),
                   ),
-                ),
-              )
-            : child,
+                )
+              : child,
+        ),
       ),
     );
   }

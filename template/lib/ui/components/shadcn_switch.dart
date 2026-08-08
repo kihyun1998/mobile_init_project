@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 /// tweakcn 테마를 따르는 스위치.
 ///
@@ -112,6 +113,12 @@ class ShadcnSwitchVisual extends StatelessWidget {
             : value
             ? colors.primary
             : colors.border,
+        // **그림자는 트랙에 있다, 엄지가 아니라.** shadcn 원본이
+        // `SwitchPrimitive.Root` 에 `shadow-xs` 를 걸고
+        // (switch.tsx:20) `SwitchPrimitive.Thumb` 에는 아무것도 안 건다
+        // (switch.tsx:28). 예전 우리 코드는 정확히 반대였다 — 엄지에 손으로
+        // 고른 검정 10% 를 그렸고 트랙은 비어 있었다 (#25).
+        boxShadow: context.tweakcnShadows.shadowXs.r,
       ),
       child: AnimatedAlign(
         duration: const Duration(milliseconds: 200),
@@ -128,13 +135,6 @@ class ShadcnSwitchVisual extends StatelessWidget {
                 : value
                 ? colors.primaryForeground
                 : colors.foreground,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 2.r,
-                offset: Offset(0, 1.r),
-              ),
-            ],
           ),
         ),
       ),

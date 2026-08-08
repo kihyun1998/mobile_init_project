@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 class ShadcnCard extends StatelessWidget {
   const ShadcnCard({
@@ -31,13 +32,9 @@ class ShadcnCard extends StatelessWidget {
         color: colors.card,
         borderRadius: BorderRadius.circular(radius.lg.r),
         border: Border.all(color: colors.border, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 5.r,
-            offset: Offset(1.r, 4.r),
-          ),
-        ],
+        // shadcn 원본이 카드에 `shadow-sm` 을 건다 (card.tsx:10). 예전에는
+        // 손으로 고른 검정 3% 를 그렸고 어떤 토큰과도 대응하지 않았다 (#25).
+        boxShadow: context.tweakcnShadows.shadowSm.r,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

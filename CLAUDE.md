@@ -40,7 +40,11 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 - **크기는 항상 `.w` `.h` `.sp` `.r`.** 생짜 픽셀을 쓰지 말 것. 기준 디자인은 375×812.
-- **색은 `context.tweakcnColors`.** 하드코딩 금지. (**모서리·그림자는 이 규칙이 코드와 어긋나 있다** — `tweakcnRadius`/`tweakcnShadows` 를 읽는 컴포넌트가 하나도 없고 전부 `.r` 하드코딩이다. 규칙과 코드 중 어느 쪽을 움직일지는 #25 가 들고 있다. 그때까지 새 컴포넌트는 형제 관례대로 하드코딩한다.) 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
+- **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
+  - **어느 컴포넌트가 어느 단계를 쓰는지는 shadcn 원본이 정한 것을 따라간다** — 우리가 고르지 않는다. `--radius` 는 #23, `--shadow-*` 는 #25 에서 `shadcn-ui/ui` 의 `apps/v4/registry/new-york-v4/ui/*.tsx` 를 실측해 정했고, 각 컴포넌트가 `file:line` 으로 근거를 달고 있다. 새 컴포넌트를 만들면 형제에서 유추하지 말고 그 파일을 읽는다.
+  - **원본이 안 거는 자리에는 우리도 안 건다.** 그림자는 카드(`shadow-sm`)·입력·outline 버튼·체크박스·라디오 표시기·스위치 트랙·select 트리거(`shadow-xs`)·select 메뉴(`shadow-md`)·날짜 다이얼로그(`shadow-lg`) 뿐이고, 기본 버튼·뱃지·아바타·구분선·표·달력은 원본에도 없다.
+  - 그림자 값은 `context.tweakcnShadows.shadowSm.r` 처럼 **`.r` 을 걸어 읽는다** (`shadcn_shadow.dart` 의 확장). 모서리가 배율을 타므로 그림자도 타야 한다.
+  - **체크박스만 그림자를 못 받는다** — `flutter_checkbox` 의 `CheckboxStyle` 에 슬롯이 없다. 하류에서 덧씌우지 않고 상류에 올려 뒀다 (`kihyun1998/flutter_checkbox#8`). `shadow_token_test.dart` 가 없다는 사실을 적어 두고 있다.
 - **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
