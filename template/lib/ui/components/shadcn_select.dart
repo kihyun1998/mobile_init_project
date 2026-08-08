@@ -3,6 +3,7 @@ import 'package:flutter_dropdown_button/flutter_dropdown_button.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 /// tweakcn 테마를 따르는 셀렉트.
 ///
@@ -77,6 +78,7 @@ class ShadcnSelect<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.tweakcnColors;
     final radius = context.tweakcnRadius;
+    final shadows = context.tweakcnShadows;
     final selectedItem = items.cast<ShadcnSelectItem<T>?>().firstWhere(
       (item) => item?.value == value,
       orElse: () => null,
@@ -134,7 +136,7 @@ class ShadcnSelect<T> extends StatelessWidget {
                       : colors.popoverForeground,
                 ),
               ),
-              theme: _theme(colors, radius),
+              theme: _theme(colors, radius, shadows),
             );
           },
         ),
@@ -157,15 +159,39 @@ class ShadcnSelect<T> extends StatelessWidget {
 
   /// 패키지에 넘길 테마. **도달 가능한 색 슬롯이 여기서 전부 채워진다** — 위
   /// 클래스 doc-comment 의 표가 왜인지를 들고 있다.
-  DropdownStyleTheme _theme(TweakcnColors colors, TweakcnRadius radius) {
+  DropdownStyleTheme _theme(
+    TweakcnColors colors,
+    TweakcnRadius radius,
+    TweakcnShadows shadows,
+  ) {
+    // 트리거의 상자를 `backgroundColor`/`border` 대신 `decoration` 으로 넘긴다.
+    // 그 셋은 `BoxShadow` 를 실을 자리가 없고, `decoration` 은 셋을 통째로
+    // 대신한다 (`dropdown_button_theme.dart:52-54`). 활성/비활성 두 갈래가
+    // 따로 있으므로(`_decoration`, :175-198) 둘 다 넘겨야 한다 — 하나만 넘기면
+    // 비활성 트리거만 조용히 그림자를 잃는다.
+    //
+    // **그래서 `backgroundColor`·`border`·`disabledBackgroundColor`·
+    // `disabledBorder` 는 이제 안 채운다.** `_decoration` 이 그 넷을 읽는
+    // 유일한 자리인데 `decoration`/`disabledDecoration` 이 그 앞에서
+    // 돌아가므로 도달하지 않는다. 도달 못 하는 슬롯을 채우는 것은 완전함이
+    // 아니라 낡을 근거를 하나 더 만드는 것이다 (ADR-0001 3번).
+    //
+    // `borderRadius` 는 `decoration` 을 넘겨도 계속 필요하다. 잉크 리플이
+    // 그 값을 따로 읽는다 (`dropdown_button_theme.dart:42`).
+    final trigger = BoxDecoration(
+      color: Colors.transparent,
+      border: Border.all(color: colors.border),
+      borderRadius: BorderRadius.circular(radius.md.r),
+      // select.tsx:40 — 트리거는 `shadow-xs`.
+      boxShadow: shadows.shadowXs.r,
+    );
+
     return DropdownStyleTheme(
       button: DropdownButtonTheme(
         // shadcn 원본이 트리거·팝오버를 `rounded-md` 로 잡는다 (#23 에서 실측).
         borderRadius: radius.md.r,
-        backgroundColor: Colors.transparent,
-        border: Border.all(color: colors.border),
-        disabledBackgroundColor: Colors.transparent,
-        disabledBorder: Border.all(color: colors.border),
+        decoration: trigger,
+        disabledDecoration: trigger,
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
         height: 20.h,
         hoverColor: colors.accent,
@@ -179,16 +205,30 @@ class ShadcnSelect<T> extends StatelessWidget {
       ),
       overlay: DropdownOverlayTheme(
         borderRadius: radius.md.r,
+        // **`decoration` 을 넘겨도 이건 계속 도달한다.** `resolveOverlay` 가
+        // `backgroundColor ?? ambient.card` 를 `decoration` 과 별개로 계산해
+        // 스크롤 페이드의 `fadeInto` 로 넘긴다
+        // (`dropdown_overlay_theme.dart:73, 85` → `dropdown_menu_shell.dart:562`).
+        // 비우면 목록 가장자리의 페이드만 Material 기본 카드색이 된다.
+        // 반대로 `border` 는 그 `??` 안쪽이라 도달하지 않으므로 안 채운다.
         backgroundColor: colors.popover,
-        border: Border.all(color: colors.border),
         padding: EdgeInsets.all(4.r),
-        // **그림자를 그리지 않는다.** 형제 팝오버(`shadcn_date_picker.dart:218-223`)
-        // 도 안 그린다. 그리면 색을 정해야 하는데 `tweakcnShadows` 를 읽을지
-        // 말지는 #25 가 들고 있는 미결이고, 여기서 정하면 그 티켓을 앞질러
-        // 매핑을 하나 발명하는 것이 된다. 비워두면 Material 기본 검정이 들어오므로
-        // 명시적으로 끈다.
+        // **Material 의 `elevation` 은 계속 꺼둔다.** 그건 CSS 레이어와 모양이
+        // 다른 별개의 그림자라, 켜면 우리 토큰 위에 Material 검정이 하나 더
+        // 겹친다. 그림자는 아래 `decoration` 이 그린다.
         elevation: 0,
         shadowColor: Colors.transparent,
+        // select.tsx:65 — 메뉴는 `shadow-md`. `decoration` 은 위
+        // `backgroundColor`/`border`/`borderRadius` 를 통째로 대신하므로
+        // (`dropdown_overlay_theme.dart:46-48`) 셋을 여기서 다시 적는다.
+        // 이 상자는 `Material(clipBehavior: Clip.none)` 안에 있어서
+        // (`dropdown_overlay_controller.dart:318-323`) 그림자가 잘리지 않는다.
+        decoration: BoxDecoration(
+          color: colors.popover,
+          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(radius.md.r),
+          boxShadow: shadows.shadowMd.r,
+        ),
       ),
       item: DropdownItemTheme(
         // 항목만 `rounded-sm` 이다 (#23 실측).
