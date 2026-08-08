@@ -5,6 +5,8 @@ import 'package:flutter/material.dart'
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
 import 'package:mobile_init_builder/src/generation/app_language.dart';
+import 'package:mobile_init_builder/src/generation/generation_exception.dart';
+import 'package:mobile_init_builder/src/generation/package_name.dart';
 import 'package:mobile_init_builder/src/generation/project_generator.dart';
 import 'package:mobile_init_builder/src/generation/project_platform.dart';
 import 'package:mobile_init_builder/src/preview/preview_panel.dart';
@@ -301,6 +303,79 @@ void main() {
     });
   });
 
+  /// #45. 두 식별자 칸이 비는 것만으로는 **거부됐다**와 **아직 안 쳤다**가
+  /// 구별되지 않는다. 예약어가 그 차이가 가장 크게 벌어지는 자리다 — 글자만
+  /// 보면 멀쩡해서 사용자가 자기 입력을 의심할 이유가 없다.
+  group('거부된 이름은 그 칸에서 이유를 말한다', () {
+    Future<void> typeName(WidgetTester tester, String value) async {
+      await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), value);
+      await tester.pumpAndSettle();
+    }
+
+    /// **값 타입이 던지는 문장을 여기 다시 적지 않는다.** 그러면 문구를 두 벌
+    /// 관리하게 되고, 화면이 판정자가 아니라는 이 설계의 전제도 흐려진다.
+    /// 대신 진짜 `PackageName.parse` 에게 물어서 같은 문장인지 본다.
+    String messageFor(String name) {
+      try {
+        PackageName.parse(name);
+        fail('"$name" 이 거부되지 않았다');
+      } on GenerationException catch (e) {
+        return e.message;
+      }
+    }
+
+    testWidgets('예약어를 치면 그 문장이 이름 칸에 뜬다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'test');
+
+      expect(find.text(messageFor('test')), findsOneWidget);
+    });
+
+    testWidgets('형식이 틀린 이름도 같은 길을 탄다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'My-App');
+
+      expect(find.text(messageFor('My-App')), findsOneWidget);
+    });
+
+    /// 폼을 열자마자 빨간 글씨가 사람을 맞이하면 안 된다. 아직 안 친 것은
+    /// 거부가 아니다.
+    testWidgets('빈 칸은 거부가 아니다', (tester) async {
+      await pumpForm(tester);
+
+      expect(find.textContaining('쓸 수 없습니다'), findsNothing);
+    });
+
+    testWidgets('고치면 오류가 사라진다', (tester) async {
+      await pumpForm(tester);
+      await typeName(tester, 'test');
+      await typeName(tester, 'test_app');
+
+      expect(find.textContaining('쓸 수 없습니다'), findsNothing);
+    });
+
+    /// 오류가 뜨는 동안에는 helper 를 접는다. 둘 다 "어떻게 써야 하는가" 에
+    /// 답하므로 나란히 두면 무엇을 읽어야 할지가 흐려진다.
+    testWidgets('오류가 뜨면 helper 가 접힌다', (tester) async {
+      await pumpForm(tester);
+      expect(find.textContaining('도구가 쓰는 이름은 뺍니다'), findsOneWidget);
+
+      await typeName(tester, 'test');
+      expect(find.textContaining('도구가 쓰는 이름은 뺍니다'), findsNothing);
+    });
+
+    /// **막지는 않는다.** 이 티켓은 거부된 사실을 화면에 드러낼 뿐이고,
+    /// 생성 버튼을 누르는 길은 그대로다 — 눌렀을 때 값 타입이 던지고 그
+    /// 문장이 배너에 뜬다. 같은 판정자의 같은 문장이다.
+    testWidgets('오류가 떠도 생성 버튼은 그대로 눌린다', (tester) async {
+      await pumpForm(tester);
+      await fillAndSubmit(tester, name: 'test');
+
+      expect(find.text(messageFor('test')), findsWidgets);
+      expect(runner.invocations, isEmpty);
+    });
+  });
+
   testWidgets('폼에 적은 설명이 결과물 pubspec 까지 간다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'my_app', description: '내 앱 설명');
@@ -505,12 +580,20 @@ void main() {
     expect(runner.invocations, isEmpty);
   });
 
+  /// **문장이 두 자리에 뜬다** — 이름 칸(#45)과 아래 오류 배너. 중복이지만
+  /// 없애지 않았다. 폼이 길어서 생성 버튼을 누르는 시점에 이름 칸이 화면
+  /// 밖일 수 있고, 그때 배너가 유일한 답이 된다. 반대로 배너만 두면 **어느
+  /// 칸이 문제인지**를 말하지 않는다.
+  ///
+  /// 두 자리 다 같은 예외의 `message` 를 그대로 옮기므로 문구가 갈릴 일은
+  /// 없다. 갈린다면 그건 판정자가 둘이 됐다는 뜻이고, 그때 이 테스트가 먼저
+  /// 빨개진다.
   testWidgets('잘못된 이름은 오류로 보이고 flutter create 가 실행되지 않는다', (tester) async {
     await pumpForm(tester);
     await fillAndSubmit(tester, name: 'My-App');
 
     expect(find.text('만들었습니다'), findsNothing);
-    expect(find.textContaining('Dart 패키지 이름으로 쓸 수 없습니다'), findsOneWidget);
+    expect(find.textContaining('Dart 패키지 이름으로 쓸 수 없습니다'), findsNWidgets(2));
     expect(runner.invocations, isEmpty);
   });
 

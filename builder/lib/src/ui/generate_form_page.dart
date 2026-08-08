@@ -62,8 +62,13 @@ class GenerateFormPage extends StatefulWidget {
   ///
   /// 파싱된 결과가 아니라 원문을 받는다. 미리보기는 파싱에 성공했을 때만
   /// 갱신되므로, 이 문자열이 파싱되면 그것이 곧 화면에 보이는 그 테마다.
-  /// 파싱되지 않으면 값 타입이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된
-  /// 이름과 같은 길이다. **막는 자리를 화면에 따로 만들지 않는다.**
+  /// 파싱되지 않으면 값 타입이 던지고 그 문장이 오류 자리에 뜬다.
+  /// **막는 자리를 화면에 따로 만들지 않는다.**
+  ///
+  /// 이름 칸이 [_GenerateFormPageState._revalidateName] 으로 그 자리에서
+  /// 말하는 것과 다른 이유는, **읽을 수 없는 CSS 는 미리보기가 안 바뀌는
+  /// 것으로 이미 보이기 때문**이다. 거부됐다는 사실이 화면에 안 나타나는
+  /// 경우만 따로 말한다 — 근거는 그쪽 doc-comment.
   final String themeCss;
 
   @override
@@ -95,6 +100,10 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
   /// 사람이 표시 이름을 직접 고치면 끊기고, 완전히 비우면 다시 이어진다.
   bool _displayNameFollowsName = true;
 
+  /// `PackageName` 이 지금 이름을 거부하며 던진 문장. null 이면 거부되지
+  /// 않았거나 아직 아무것도 안 쳤다는 뜻이다. 근거는 [_revalidateName].
+  String? _nameError;
+
   bool _running = false;
 
   /// 시작조차 못 한 경우의 오류. 프로젝트가 만들어지지 않았다는 뜻이다.
@@ -113,6 +122,50 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
     // 두 식별자는 이름과 org 를 **둘 다** 먹으므로 양쪽을 듣는다.
     _name.addListener(_recomputeIdentifiers);
     _organization.addListener(_recomputeIdentifiers);
+    _name.addListener(_revalidateName);
+  }
+
+  /// 이름이 거부되면 **그 칸에서** 이유를 말한다.
+  ///
+  /// ## 이 폼의 "막는 자리를 따로 만들지 않는다" 와 어긋나지 않는다
+  ///
+  /// 그 규칙이 막는 것은 **화면이 판정자가 되는 것**이지 화면이 일찍 말하는
+  /// 것이 아니다. 여기서 화면은 자기 정규식을 갖지 않는다 —
+  /// `PackageName.parse` 를 부르고 그것이 던진 문장을 **글자 그대로** 옮긴다.
+  /// 판정자는 여전히 값 타입 하나이고, 생성 버튼을 눌렀을 때 같은 예외가 같은
+  /// 문장으로 배너에 뜨는 길도 그대로다. 문구를 여기서 새로 짓는 순간 그 전제가
+  /// 깨진다.
+  ///
+  /// ## 왜 이름만인가 — CSS·플랫폼은 왜 아닌가
+  ///
+  /// 갈리는 축은 **거부됐다는 사실이 화면에 이미 나타나는가**다.
+  ///
+  /// - 플랫폼을 하나도 안 고른 것은 체크가 전부 비어 있는 것으로 **보인다**
+  /// - 읽을 수 없는 CSS 는 미리보기가 안 바뀌는 것으로 **보인다**
+  /// - 이름이 예약어인 것은 **어디에도 안 보인다.** 글자는 멀쩡하고
+  ///   (`test` 는 소문자에 특수문자도 없다), 식별자 두 칸은 그냥 비어서
+  ///   *아직 안 친 것*과 구별되지 않는다
+  ///
+  /// 즉 이 자리는 규칙의 예외가 아니라 **규칙이 기대던 "화면이 이미 말하고
+  /// 있다" 가 성립하지 않는 유일한 자리**다. #45 가 그것을 실측으로 잡았다.
+  void _revalidateName() {
+    final raw = _name.text.trim();
+
+    // 빈 칸은 거부가 아니다. 아직 안 친 것을 틀렸다고 말하면, 폼을 열자마자
+    // 빨간 글씨가 사람을 맞이한다.
+    String? next;
+    if (raw.isNotEmpty) {
+      try {
+        PackageName.parse(raw);
+      } on GenerationException catch (e) {
+        next = e.message;
+      }
+    }
+
+    // 타이핑 대부분은 여기서 끝난다. 상태가 바뀔 때만 다시 그리므로,
+    // 한 글자마다 폼 전체를 다시 그리지 않는다.
+    if (next == _nameError) return;
+    setState(() => _nameError = next);
   }
 
   /// 되비추는 두 칸을 다시 채운다.
@@ -309,9 +362,14 @@ class _GenerateFormPageState extends State<GenerateFormPage> {
                   fieldKey: GenerateFormPage.nameFieldKey,
                   label: '프로젝트 이름',
                   hint: 'my_app',
-                  helper: '소문자로 시작하고 소문자·숫자·밑줄만 쓸 수 있습니다.',
+                  // 예약어를 여기서 미리 말한다. 걸렸을 때 errorText 가
+                  // 말해주기는 하지만, `test` 는 글자만 보면 멀쩡해서
+                  // **걸릴 줄을 모르고 치게 되는** 이름이다.
+                  helper:
+                      '소문자로 시작하고 소문자·숫자·밑줄만 쓸 수 있습니다. test·flutter 처럼 도구가 쓰는 이름은 뺍니다.',
                   controller: _name,
                   enabled: !_running,
+                  errorText: _nameError,
                 ),
                 const SizedBox(height: 16),
                 _Field(
@@ -520,6 +578,7 @@ class _Field extends StatelessWidget {
     this.trailing,
     this.onChanged,
     this.readOnly = false,
+    this.errorText,
   });
 
   /// 입력칸을 집어내는 키. 필드는 뒤따르는 티켓에서 계속 늘어나므로
@@ -542,6 +601,14 @@ class _Field extends StatelessWidget {
   /// `enabled: false` 로 잠그지 않는 이유가 그것이다. 그쪽은 선택도 함께
   /// 막힌다.
   final bool readOnly;
+
+  /// 값 타입이 이 칸의 입력을 거부하며 던진 문장. **이 위젯이 지어낸 문장이
+  /// 아니다** — 화면은 판정하지 않고 옮기기만 한다.
+  ///
+  /// 들어오면 [helper] 자리를 대신 차지한다. 둘을 함께 띄우면 무엇을 읽어야
+  /// 할지가 흐려지고, 어차피 helper 는 "어떻게 써야 하는가" 이고 이쪽은
+  /// "지금 왜 안 되는가" 라 같은 질문에 답한다.
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -579,13 +646,28 @@ class _Field extends StatelessWidget {
                   // 읽는 값이 읽기 힘들어진다.
                   filled: readOnly,
                   fillColor: readOnly ? colors.muted : null,
+                  // Material 에 넘기면 테두리까지 함께 빨개진다. 문구만 따로
+                  // 그리면 칸은 멀쩡해 보이고 밑줄만 붉어서 눈이 안 간다.
+                  errorText: errorText,
+                  errorStyle: TextStyle(
+                    color: colors.destructive,
+                    fontSize: 12,
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colors.destructive),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colors.destructive),
+                  ),
                 ),
               ),
             ),
             if (trailing != null) ...[const SizedBox(width: 8), trailing!],
           ],
         ),
-        if (helper != null) ...[
+        // 오류가 있으면 helper 를 접는다. 오류 문구는 위 InputDecoration 이
+        // 이미 그렸다.
+        if (helper != null && errorText == null) ...[
           const SizedBox(height: 4),
           Text(
             helper!,
@@ -600,8 +682,12 @@ class _Field extends StatelessWidget {
 /// 체크박스 여러 개를 한 묶음으로 보여주는 자리.
 ///
 /// 하나도 안 고른 상태를 여기서 막지 않는다. 생성 버튼을 누르는 순간 값
-/// 타입이 던지고 그 문장이 오류 자리에 뜬다 — 잘못된 이름과 같은 길을 타므로
-/// "막는 자리" 가 화면 곳곳으로 흩어지지 않는다.
+/// 타입이 던지고 그 문장이 오류 자리에 뜬다.
+///
+/// 이름 칸은 [_GenerateFormPageState._revalidateName] 으로 그 자리에서
+/// 말하는데 여기는 안 그러는 이유는, **하나도 안 고른 것은 체크가 전부 비어
+/// 있는 것으로 이미 보이기 때문**이다. 화면이 이미 말하고 있는 것을 글로 한
+/// 번 더 적으면 그때부터 "막는 자리" 가 흩어진다.
 class _CheckboxGroup<T> extends StatelessWidget {
   const _CheckboxGroup({
     required this.label,
