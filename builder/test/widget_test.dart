@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart'
-    show Key, Scrollable, ScrollableState, Size;
+    show Key, Scrollable, ScrollableState, Size, TextField;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_builder/main.dart';
 import 'package:mobile_init_builder/src/generation/app_language.dart';
@@ -29,8 +29,10 @@ void main() {
   Future<void> pumpForm(WidgetTester tester) async {
     // 폼 전체가 스크롤 없이 들어가는 크기로 잡는다. 실제 창에서는 스크롤이
     // 되지만, 테스트에서 스크롤에 기대면 위젯이 하나 늘 때마다 tap 이
-    // 화면 밖을 찍어 엉뚱한 이유로 빨개진다.
-    tester.view.physicalSize = const Size(1280, 1200);
+    // 화면 밖을 찍어 엉뚱한 이유로 빨개진다. **칸을 더하면 여기도 키운다** —
+    // #42 에서 식별자 칸 둘을 더했을 때 실제로 이것 때문에 다섯 개가
+    // 빨개졌고, 증상은 "생성 버튼이 화면 밖" 이라 원인과 안 닮아 있었다.
+    tester.view.physicalSize = const Size(1280, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -166,7 +168,11 @@ void main() {
   /// **화면에 그려진 글자만 본다.** 같은 규칙으로 값을 다시 계산해서 비교하면
   /// 구현을 두 번 적은 것이 되고, 화면이 그것을 실제로 보여주는지는 아무도
   /// 확인하지 않게 된다 (#36 의 수용 기준).
-  group('만들어질 applicationId 가 폼에 보인다', () {
+  ///
+  /// 여기 적힌 식별자는 전부 **실측값**이다 — `application_id_test.dart` 와
+  /// `bundle_identifier_test.dart` 가 어느 날 무엇을 돌려 읽은 것인지 적고
+  /// 있다. 이 파일은 그 값이 **화면에 실제로 나오는지**만 본다.
+  group('만들어질 식별자 두 개가 폼에 보인다', () {
     Future<void> type(WidgetTester tester, {String? name, String? org}) async {
       if (name != null) {
         await tester.enterText(find.byKey(GenerateFormPage.nameFieldKey), name);
@@ -180,11 +186,21 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('이름과 org 를 넣으면 만들어질 applicationId 가 뜬다', (tester) async {
+    /// 칸에 **실제로 들어 있는 글자**를 읽는다. `find.text` 로는 부족하다 —
+    /// 두 식별자가 같아지는 입력에서는 같은 글자가 두 칸에 뜨므로, 어느 칸이
+    /// 맞았는지 구별하지 못한다.
+    String textOf(WidgetTester tester, Key field) =>
+        tester.widget<TextField>(find.byKey(field)).controller!.text;
+
+    testWidgets('이름과 org 를 넣으면 두 칸이 채워진다', (tester) async {
       await pumpForm(tester);
       await type(tester, name: 'my_app', org: 'com.example');
 
-      expect(find.text('com.example.my_app'), findsOneWidget);
+      expect(
+        textOf(tester, GenerateFormPage.applicationIdKey),
+        'com.example.my_app',
+      );
+      expect(textOf(tester, GenerateFormPage.bundleIdKey), 'com.example.myApp');
     });
 
     testWidgets('org 를 고치면 즉시 따라 바뀐다', (tester) async {
@@ -192,8 +208,14 @@ void main() {
       await type(tester, name: 'my_app', org: 'com.example');
       await type(tester, org: 'io.github.kihyun1998');
 
-      expect(find.text('io.github.kihyun1998.my_app'), findsOneWidget);
-      expect(find.text('com.example.my_app'), findsNothing);
+      expect(
+        textOf(tester, GenerateFormPage.applicationIdKey),
+        'io.github.kihyun1998.my_app',
+      );
+      expect(
+        textOf(tester, GenerateFormPage.bundleIdKey),
+        'io.github.kihyun1998.myApp',
+      );
     });
 
     testWidgets('프로젝트 이름을 고치면 즉시 따라 바뀐다', (tester) async {
@@ -201,50 +223,81 @@ void main() {
       await type(tester, name: 'my_app', org: 'com.example');
       await type(tester, name: 'my_ledger');
 
-      expect(find.text('com.example.my_ledger'), findsOneWidget);
-      expect(find.text('com.example.my_app'), findsNothing);
+      expect(
+        textOf(tester, GenerateFormPage.applicationIdKey),
+        'com.example.my_ledger',
+      );
+      expect(
+        textOf(tester, GenerateFormPage.bundleIdKey),
+        'com.example.myLedger',
+      );
     });
 
     /// #36 이 실제로 잡으려던 화면이다. org 칸에 프로젝트 이름을 한 번 더
     /// 넣었고 `com.example` 의 `e` 가 빠졌다 — 둘 다 형식으로는 올바라서
-    /// 검증으로는 영영 안 걸린다. 문자열은 실측값이다 (2026-08-05,
-    /// Flutter 3.44.8 로 진짜 생성해서 `build.gradle.kts` 를 읽었다).
+    /// 검증으로는 영영 안 걸린다.
     testWidgets('이름이 두 번 들어간 것과 org 오타가 그 자리에서 보인다', (tester) async {
       await pumpForm(tester);
       await type(tester, name: 'mib_gen_test', org: 'com.exampl.mib_gen_test');
 
-      expect(find.text('com.exampl.mib_gen_test.mib_gen_test'), findsOneWidget);
-    });
-
-    /// 빈 값을 이어붙여 `com.example.` 을 보여주면 그건 만들어질 값이
-    /// 아니다 — 없는 것을 있는 것처럼 말하는 셈이다.
-    testWidgets('이름이 비어 있으면 이어붙인 것을 보여주지 않는다', (tester) async {
-      await pumpForm(tester);
-
-      expect(find.text('com.example.'), findsNothing);
       expect(
-        find.descendant(
-          of: find.byKey(GenerateFormPage.applicationIdKey),
-          matching: find.textContaining('여기'),
-        ),
-        findsOneWidget,
+        textOf(tester, GenerateFormPage.applicationIdKey),
+        'com.exampl.mib_gen_test.mib_gen_test',
+      );
+      expect(
+        textOf(tester, GenerateFormPage.bundleIdKey),
+        'com.exampl.mibgentest.mibGenTest',
       );
     });
 
-    testWidgets('형식이 틀린 동안에는 보여주지 않는다', (tester) async {
+    /// #42 가 이 두 칸을 나란히 세운 이유다. **가장 평범한 입력에서 이미
+    /// 갈린다** — 밑줄 하나면 충분하다.
+    testWidgets('두 칸이 서로 다른 값을 보여준다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+
+      expect(
+        textOf(tester, GenerateFormPage.applicationIdKey),
+        isNot(textOf(tester, GenerateFormPage.bundleIdKey)),
+      );
+    });
+
+    /// 빈 값을 이어붙여 `com.example.` 을 보여주면 그건 만들어질 값이
+    /// 아니다 — 없는 것을 있는 것처럼 말하는 셈이다. 빈 칸에는 hint 가
+    /// 드러나므로 화면은 여전히 무엇이 들어올 자리인지 말한다.
+    testWidgets('이름이 비어 있으면 두 칸이 빈다', (tester) async {
+      await pumpForm(tester);
+
+      expect(find.text('com.example.'), findsNothing);
+      expect(textOf(tester, GenerateFormPage.applicationIdKey), isEmpty);
+      expect(textOf(tester, GenerateFormPage.bundleIdKey), isEmpty);
+    });
+
+    testWidgets('형식이 틀린 동안에는 두 칸이 빈다', (tester) async {
       await pumpForm(tester);
       await type(tester, name: 'my_app', org: 'com.example');
       await type(tester, name: 'My-App');
 
-      expect(find.text('com.example.My-App'), findsNothing);
-      expect(find.text('com.example.my_app'), findsNothing);
-      expect(
-        find.descendant(
-          of: find.byKey(GenerateFormPage.applicationIdKey),
-          matching: find.textContaining('여기'),
-        ),
-        findsOneWidget,
-      );
+      expect(textOf(tester, GenerateFormPage.applicationIdKey), isEmpty);
+      expect(textOf(tester, GenerateFormPage.bundleIdKey), isEmpty);
+    });
+
+    /// 되비추는 칸이지 입력칸이 아니다. 열어두면 고친 글자가 조용히
+    /// 무시된다 — `flutter create` 는 이름과 org 만 받는다.
+    testWidgets('두 칸은 고칠 수 없되 고를 수는 있다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, name: 'my_app', org: 'com.example');
+
+      for (final key in [
+        GenerateFormPage.applicationIdKey,
+        GenerateFormPage.bundleIdKey,
+      ]) {
+        final field = tester.widget<TextField>(find.byKey(key));
+        expect(field.readOnly, isTrue, reason: '$key 가 열려 있다');
+        // enabled 로 잠그면 선택도 함께 막힌다. 스토어 콘솔에 붙여넣을 일이
+        // 있는 값이라 복사는 열어둬야 한다.
+        expect(field.enabled, isTrue, reason: '$key 에서 복사가 막혔다');
+      }
     });
   });
 
@@ -277,6 +330,81 @@ void main() {
       File(p.join(root, 'ios', 'Runner', 'Info.plist')).readAsStringSync(),
       contains('<string>내 가계부</string>'),
     );
+  });
+
+  group('표시 이름 칸이 프로젝트 이름을 따라간다', () {
+    /// 칸에 **실제로 들어 있는 글자**를 읽는다. `find.text` 로는 안 된다 —
+    /// 같은 글자가 프로젝트 이름 칸과 applicationId 줄에도 있어서, 셋 중
+    /// 어디가 맞았는지 구별하지 못한다.
+    String displayNameText(WidgetTester tester) => tester
+        .widget<TextField>(find.byKey(GenerateFormPage.displayNameFieldKey))
+        .controller!
+        .text;
+
+    Future<void> type(WidgetTester tester, Key field, String value) async {
+      await tester.enterText(find.byKey(field), value);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('프로젝트 이름을 치면 표시 이름 칸에 같은 글자가 나타난다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, GenerateFormPage.nameFieldKey, 'my_app');
+
+      expect(displayNameText(tester), 'my_app');
+    });
+
+    testWidgets('표시 이름을 직접 고치면 추적이 끊긴다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, GenerateFormPage.nameFieldKey, 'my_app');
+      await type(tester, GenerateFormPage.displayNameFieldKey, '내 가계부');
+      await type(tester, GenerateFormPage.nameFieldKey, 'other_app');
+
+      expect(displayNameText(tester), '내 가계부');
+    });
+
+    testWidgets('표시 이름을 비우면 그 자리에서 프로젝트 이름이 다시 들어온다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, GenerateFormPage.nameFieldKey, 'my_app');
+      await type(tester, GenerateFormPage.displayNameFieldKey, '내 가계부');
+      await type(tester, GenerateFormPage.displayNameFieldKey, '');
+
+      // 다음 타이핑을 기다리지 않는다.
+      expect(displayNameText(tester), 'my_app');
+
+      // 그리고 추적이 다시 이어진다.
+      await type(tester, GenerateFormPage.nameFieldKey, 'other_app');
+      expect(displayNameText(tester), 'other_app');
+    });
+
+    testWidgets('공백만 남겨도 비운 것으로 본다', (tester) async {
+      await pumpForm(tester);
+      await type(tester, GenerateFormPage.nameFieldKey, 'my_app');
+      await type(tester, GenerateFormPage.displayNameFieldKey, '내 가계부');
+      // GenerationConfig 가 trim 한 뒤에 비었는지를 보므로, 이렇게 제출해도
+      // 어차피 프로젝트 이름이 들어간다. 화면이 그것과 같은 말을 해야 한다.
+      await type(tester, GenerateFormPage.displayNameFieldKey, '   ');
+
+      expect(displayNameText(tester), 'my_app');
+    });
+
+    testWidgets('칸을 건드리지 않으면 프로젝트 이름이 결과물까지 그대로 간다', (tester) async {
+      await pumpForm(tester);
+      // 이제 빈 문자열이 아니라 실제 글자가 제출된다. 경로가 달라졌어도
+      // 결과물은 전과 같아야 한다.
+      await fillAndSubmit(tester, name: 'my_app');
+
+      final root = p.join(outputParent.path, 'my_app');
+      expect(
+        File(
+          p.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+        ).readAsStringSync(),
+        contains('android:label="my_app"'),
+      );
+      expect(
+        File(p.join(root, 'ios', 'Runner', 'Info.plist')).readAsStringSync(),
+        contains('<string>my_app</string>'),
+      );
+    });
   });
 
   testWidgets('체크를 푼 플랫폼은 만들어지지 않는다', (tester) async {
