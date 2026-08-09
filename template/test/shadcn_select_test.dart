@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_init_project/core/theme/tweakcn_theme.g.dart';
 import 'package:mobile_init_project/ui/components/shadcn_select.dart';
+import 'package:mobile_init_project/ui/components/shadcn_shadow.dart';
 
 /// `ShadcnSelect` 는 `flutter_dropdown_button` 위에 앉아 있다.
 ///
@@ -178,15 +179,18 @@ void main() {
 
       final t = _passedTheme(tester);
       final filled = <String, Object?>{
-        // button 7
-        'button.backgroundColor': t.button.backgroundColor,
+        // button 7 — 배경은 이제 `decoration` 안에 있다. `backgroundColor`
+        // 슬롯은 `_decoration` 이 `decoration` 앞에서 돌아가 도달하지 않는다
+        // (#25). 그리는 값을 보려면 그리는 자리를 봐야 한다.
+        'button.decoration.color': t.button.decoration?.color,
+        'button.disabledDecoration.color': t.button.disabledDecoration?.color,
         'button.hoverColor': t.button.hoverColor,
         'button.splashColor': t.button.splashColor,
         'button.highlightColor': t.button.highlightColor,
         'button.iconColor': t.button.iconColor,
         'button.iconDisabledColor': t.button.iconDisabledColor,
-        'button.disabledBackgroundColor': t.button.disabledBackgroundColor,
-        // overlay 2
+        // overlay 2 — `backgroundColor` 는 `decoration` 과 별개로 스크롤
+        // 페이드에 쓰이므로 여전히 도달한다 (`dropdown_menu_shell.dart:562`).
         'overlay.backgroundColor': t.overlay.backgroundColor,
         'overlay.shadowColor': t.overlay.shadowColor,
         // item 4
@@ -212,6 +216,10 @@ void main() {
       // `Color?` 24개 세기로는 안 잡히는 표면이다. 테두리는 `Border?` 안에
       // 색이 들어 있는데, 비우면 `ambient.divider` 로 간다
       // (`dropdown_button_theme.dart:196`, `dropdown_overlay_theme.dart:79`).
+      //
+      // **이제 세 개 다 `decoration` 안에 있다** (#25). 그림자를 실으려고
+      // 상자를 통째로 넘기게 됐고, 그러면 `border` 슬롯은 도달하지 않는다 —
+      // 여기서 옛 슬롯을 계속 봤다면 그리지도 않는 값을 지키는 테스트가 된다.
       await _pump(
         tester,
         ShadcnSelect<String>(
@@ -223,9 +231,9 @@ void main() {
 
       final t = _passedTheme(tester);
 
-      expect(t.button.border, isNotNull);
-      expect(t.button.disabledBorder, isNotNull);
-      expect(t.overlay.border, isNotNull);
+      expect(t.button.decoration?.border, isNotNull);
+      expect(t.button.disabledDecoration?.border, isNotNull);
+      expect(t.overlay.decoration?.border, isNotNull);
     });
 
     testWidgets('도달 못 하는 슬롯 8개는 안 채운다 — 채우면 근거가 낡은 것이다', (tester) async {
@@ -267,6 +275,70 @@ void main() {
     });
   });
 
+  group('그림자가 CSS 에서 온다', () {
+    // #31 은 팝오버 그림자를 **일부러 껐다** — 그리려면 매핑을 정해야 하는데
+    // 그 미결을 #25 가 들고 있었기 때문이다. #25 가 정해졌으므로 되돌린다.
+    // 단계는 shadcn 원본 실측이다: 트리거 `shadow-xs` (select.tsx:40),
+    // 메뉴 `shadow-md` (select.tsx:65).
+    //
+    // 값은 CSS 에서 오는 것이므로 기본 테마가 아니라 **단계마다 다른 값**을
+    // 넣은 테마로 잰다. 템플릿 CSS 는 `shadow-sm` 과 `shadow` 가 같고 light 와
+    // dark 도 같아서, 단계를 잘못 골라도 통과시킨다.
+    TweakcnShadowLayer layer(double y) => (
+      offsetX: 0,
+      offsetY: y,
+      blurRadius: y * 2,
+      spreadRadius: 0,
+      color: 0x33000000,
+    );
+
+    final distinct = TweakcnShadows.fromShadowMap({
+      'shadow-xs': [layer(11)],
+      'shadow-md': [layer(13)],
+    });
+
+    ThemeData themed() => ThemeData(
+      brightness: Brightness.light,
+      extensions: [TweakcnColors.light, TweakcnRadius.standard, distinct],
+    );
+
+    testWidgets('트리거는 shadow-xs 를 쓴다', (tester) async {
+      await _pump(
+        tester,
+        ShadcnSelect<String>(
+          value: 'member',
+          onChanged: (_) {},
+          items: _items(),
+        ),
+        theme: themed(),
+      );
+
+      final t = _passedTheme(tester);
+      expect(t.button.decoration?.boxShadow, distinct.shadowXs.r);
+      // 비활성 트리거만 조용히 그림자를 잃는 것이 이 패키지에서 가능한
+      // 모양이다 — `_decoration` 이 갈래를 따로 들고 있다.
+      expect(t.button.disabledDecoration?.boxShadow, distinct.shadowXs.r);
+    });
+
+    testWidgets('메뉴는 shadow-md 를 쓰고 Material 그림자는 꺼져 있다', (tester) async {
+      await _pump(
+        tester,
+        ShadcnSelect<String>(
+          value: 'member',
+          onChanged: (_) {},
+          items: _items(),
+        ),
+        theme: themed(),
+      );
+
+      final t = _passedTheme(tester);
+      expect(t.overlay.decoration?.boxShadow, distinct.shadowMd.r);
+      // `elevation` 을 켜면 CSS 레이어 위에 Material 검정이 하나 더 겹친다.
+      expect(t.overlay.elevation, 0);
+      expect(t.overlay.shadowColor, Colors.transparent);
+    });
+  });
+
   group('색이 CSS 에서 온다', () {
     testWidgets('트리거는 투명 배경에 border 테두리, 글자는 foreground 다', (tester) async {
       await _pump(
@@ -281,8 +353,11 @@ void main() {
       final t = _passedTheme(tester);
       const colors = TweakcnColors.light;
 
-      expect(t.button.backgroundColor, Colors.transparent);
-      expect(t.button.border?.top.color, colors.border);
+      expect(t.button.decoration?.color, Colors.transparent);
+      expect(
+        (t.button.decoration?.border as Border?)?.top.color,
+        colors.border,
+      );
       expect(t.button.iconColor, colors.mutedForeground);
       expect(_textColor(tester, 'Member'), colors.foreground);
       // 두 토큰이 실제로 다른 값이어야 위 assert 가 의미를 갖는다.
@@ -317,7 +392,11 @@ void main() {
       const colors = TweakcnColors.light;
 
       expect(t.overlay.backgroundColor, colors.popover);
-      expect(t.overlay.border?.top.color, colors.border);
+      expect(t.overlay.decoration?.color, colors.popover);
+      expect(
+        (t.overlay.decoration?.border as Border?)?.top.color,
+        colors.border,
+      );
     });
 
     testWidgets('메뉴 항목 글자는 popoverForeground, 선택된 것은 accentForeground 다', (

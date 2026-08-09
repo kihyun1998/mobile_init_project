@@ -70,6 +70,25 @@ CSS 로 채우는 한 유효하고, `preview_colorscheme_parity_test` 가 그 �
 `item_presentation.dart:375`, search 2 = `dropdown_menu_shell.dart:593` 의 게이트,
 tooltip 2 = 커스텀 모드가 `tooltipTheme` 을 안 받는다).
 
+> **갱신 (2026-08-08, #25) — 위 16/8 은 더 이상 현재 값이 아니다. 도달성은
+> 우리가 무엇을 넘기느냐로도 바뀐다.** 아래 "구성이 도달성을 바꾼다" 의 더 강한
+> 형태다. #25 에서 select 트리거와 메뉴에 그림자를 실으려고 `decoration` 을
+> 통째로 넘겼는데, 그 슬롯은 `backgroundColor`·`border`·`borderRadius` 를
+> **대신하는** 것이라 (`dropdown_button_theme.dart:52-54`) 그 순간 다섯이
+> 도달 불가가 됐다: `button.backgroundColor`, `button.border`,
+> `button.disabledBackgroundColor`, `button.disabledBorder`, `overlay.border`.
+> 그래서 안 채우고, 그리는 값은 `decoration` 안에서 본다.
+>
+> **`overlay.backgroundColor` 는 반대다 — `decoration` 을 넘겨도 계속 도달한다.**
+> `resolveOverlay` 가 그것을 `decoration` 과 별개로 계산해 스크롤 페이드의
+> `fadeInto` 로 넘긴다 (`dropdown_overlay_theme.dart:73, 85` →
+> `dropdown_menu_shell.dart:562`). "같은 서브테마에 나란히 있는 두 필드" 라는
+> 이유로 함께 판정하면 여기서 틀린다.
+>
+> 즉 3번은 채택 시점에 **한 번** 하는 판정이 아니다. 넘기는 슬롯을 바꾸는
+> 변경마다 다시 센다 — 안 그러면 "빈 슬롯 없음" 테스트가 **그리지도 않는 값**을
+> 지키게 되고, 그건 초록인 채로 아무것도 증명하지 않는다.
+
 **구성 자체가 도달성을 바꿀 수 있다.** #31 은 텍스트 모드 대신 커스텀 모드를 골라
 tooltip 2개를 도달 불가로 만들었다. 슬롯을 줄이는 구성이 있으면 그쪽이 낫다.
 

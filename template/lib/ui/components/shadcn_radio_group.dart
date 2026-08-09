@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 /// tweakcn 테마를 따르는 라디오 그룹.
 ///
@@ -165,6 +166,9 @@ class _RadioTileState<T> extends State<_RadioTile<T>> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: colors.primary, width: 1.r),
+              // radio-group.tsx:30 — 그림자는 동그라미 표시기에 붙는다.
+              // 바깥 타일은 원본에 없는 우리 것이라 받지 않는다.
+              boxShadow: context.tweakcnShadows.shadowXs.r,
             ),
             child: selected
                 ? Center(

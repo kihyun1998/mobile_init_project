@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/tweakcn_theme.g.dart';
+import 'shadcn_shadow.dart';
 
 class ShadcnInput extends StatelessWidget {
   const ShadcnInput({
@@ -75,6 +76,8 @@ class ShadcnInput extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius.md.r),
+            // input.tsx:11 — `shadow-xs`.
+            boxShadow: context.tweakcnShadows.shadowXs.r,
             border: Border.all(
               color: hasError
                   ? colors.destructive
