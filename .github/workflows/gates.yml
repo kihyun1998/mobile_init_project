@@ -1,6 +1,6 @@
 # 이 저장소의 게이트를 CI 에서 그대로 돌린다.
 #
-# 게이트 매트릭스의 근거는 docs/agents/theflow.md 의 Step 7 이다. 여기와
+# 게이트 매트릭스의 근거는 docs/agents/thegraph.md 의 `gate` 절이다. 여기와
 # 그쪽이 갈리면 그쪽이 기준이고, 이 파일을 맞춘다.
 #
 # **루트에 pubspec.yaml 이 없다.** Flutter 프로젝트가 둘이고 워크스페이스로
