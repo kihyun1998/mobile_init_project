@@ -19,6 +19,8 @@
 
 import 'dart:io';
 
+import '_pipeline_proof.dart';
+
 Future<void> main(List<String> args) async {
   final opts = _parse(args);
 
@@ -80,8 +82,13 @@ Future<void> main(List<String> args) async {
   stdout.writeln('  dart scripts/thegraph/generate.dart --out $out --teardown');
 
   if (failures.isEmpty) {
+    // 영수증을 남긴다 — 지금 파이프라인 상태에 대해서만 유효하다. gates.dart 가
+    // 이걸 보고 1층 게이트를 통과시킨다. 없으면 그 게이트는 영원히 빨갛고,
+    // 통과할 수 없는 게이트는 곧 무시당한다.
+    writeReceipt();
     stdout.writeln('');
-    stdout.writeln('1층 왕복 통과.');
+    stdout.writeln('1층 왕복 통과. 영수증: ${receiptFile.path}');
+    stdout.writeln('파이프라인이 다시 움직이면 이 영수증은 저절로 무효가 된다.');
     exit(0);
   }
   stdout.writeln('');
@@ -101,6 +108,10 @@ Future<void> main(List<String> args) async {
 Future<bool> _precondition() async {
   var ok = true;
 
+  // **더러운 트리는 막지 않는다 — 알리기만 한다.**
+  // 커밋 안 한 template 변경을 검증하려고 이 증명을 돌리는 것이 정상 경로다.
+  // 처음엔 이걸 하드 실패로 걸어놨는데, 그러면 정확히 써야 할 때 못 쓴다.
+  // 여기서 값이 있는 것은 "무엇이 같이 실려 나가는지" 를 눈앞에 두는 것이다.
   final status = await Process.run('git', [
     'status',
     '--short',
@@ -108,14 +119,17 @@ Future<bool> _precondition() async {
   ], runInShell: true);
   final dirty = (status.stdout as String).trim();
   if (dirty.isNotEmpty) {
-    stdout.writeln('! template/ 이 깨끗하지 않다:');
+    stdout.writeln('커밋 안 된 template 변경이 결과물로 같이 간다:');
     for (final l in dirty.split('\n')) {
       stdout.writeln('    $l');
     }
-    stdout.writeln('  커밋 안 된 변경은 생성물로 그대로 실려 나간다.');
-    ok = false;
+    stdout.writeln('  의도한 것이면 그대로 진행한다.');
   }
 
+  // 이쪽은 하드 실패다. 로컬 개발용 override 는 사용자 머신에 없는 상대
+  // 경로를 가리키므로, 결과물의 pub get 이 **변경과 무관한 이유로** 죽는다.
+  // `_withoutDependencies` 는 `dependencies:` 와 `dev_dependencies:` 만 보고
+  // `copyEntries` 는 pubspec 을 통째로 복사한다.
   final pubspec = File('template/pubspec.yaml');
   if (pubspec.existsSync() &&
       pubspec.readAsStringSync().contains('dependency_overrides:')) {

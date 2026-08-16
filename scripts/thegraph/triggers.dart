@@ -53,7 +53,12 @@ Future<void> main(List<String> args) async {
 
   for (final lock in _lockFiles) {
     final before = _versions(await _fileAt(base, lock));
-    final after = _versions(await _fileAt('HEAD', lock));
+    // **워킹 트리를 읽는다. `HEAD` 가 아니다.**
+    // 경로 절은 `git diff <base>` 로 워킹 트리를 보는데 여기만 `HEAD` 를 보면
+    // 아직 커밋 안 한 버전 이동을 양쪽 다 옛 값으로 읽어 히트가 안 난다.
+    // 실측으로 걸렸다 — `^0.3.1` → `^0.3.2` 로 올리고 `pub get` 을 돌린
+    // 직후, 즉 이 절이 존재하는 이유 그 자체인 변경에서 가드가 통과했다.
+    final after = _versions(_workingTree(lock));
     for (final entry in _sacredDeps.entries) {
       final b = before[entry.key];
       final a = after[entry.key];
@@ -135,6 +140,12 @@ Future<List<String>> _changedPaths(String base) async {
 Future<String> _fileAt(String ref, String path) async {
   final r = await Process.run('git', ['show', '$ref:$path'], runInShell: true);
   return r.exitCode == 0 ? r.stdout as String : '';
+}
+
+/// 디스크의 지금 내용. 커밋 여부와 무관하게 **실제로 컴파일되는 것**이다.
+String _workingTree(String path) {
+  final f = File(path);
+  return f.existsSync() ? f.readAsStringSync() : '';
 }
 
 /// pubspec.lock 에서 패키지 → 해석된 버전. diff 텍스트를 파싱하는 것보다
