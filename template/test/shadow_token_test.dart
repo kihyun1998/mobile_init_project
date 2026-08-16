@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_checkbox/flutter_checkbox.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -191,6 +192,42 @@ void main() {
 
       expect(_shadowsIn(tester, find.byType(Dialog)), _distinct.shadowLg.r);
     });
+
+    testWidgets('체크박스는 shadow-xs 를 쓴다 — 다만 바깥으로만', (tester) async {
+      // checkbox.tsx:17 — `shadow-xs`. 슬롯은 `flutter_checkbox` 0.3.2 가
+      // 줬다 (`kihyun1998/flutter_checkbox#8`).
+      //
+      // **판독 방법이 이 그룹의 다른 테스트들과 다르다.** 위 컴포넌트들은
+      // `DecoratedBox` 로 그려서 [_shadowsPerBox] 가 트리에서 읽을 수 있는데,
+      // `flutter_checkbox` 는 **캔버스에 직접** 칠한다 —
+      // `checkbox_painter.dart:53` 이 `BoxDecoration.createBoxPainter().paint`
+      // 를 부르고 트리에는 `DecoratedBox` 가 안 생긴다. 같은 판독기를 쓰면
+      // 값을 제대로 넘겨도 `isEmpty` 가 나온다.
+      //
+      // 그래서 **그 값을 받는 위젯**을 트리에서 찾아 읽는다. 스타일 함수의
+      // 반환값을 직접 보는 것보다 한 칸 뒤다 — 값이 실제로 그리는 위젯까지
+      // 도달했다는 것을 말한다.
+      await _pump(tester, ShadcnCheckbox(value: true, onChanged: (_) {}));
+
+      final tile = tester.widget<FlutterCheckboxTile>(
+        find.byType(FlutterCheckboxTile),
+      );
+      final shadows = tile.checkboxStyle.shadows;
+      expect(shadows, hasLength(_distinct.shadowXs.length));
+
+      final drawn = shadows!.single;
+      final token = _distinct.shadowXs.r.single;
+      expect(drawn.offset, token.offset);
+      expect(drawn.blurRadius, token.blurRadius);
+      expect(drawn.spreadRadius, token.spreadRadius);
+      expect(drawn.color, token.color);
+
+      // CSS 의 바깥 `box-shadow` 는 요소 뒤로 잘린다. Flutter 의 기본
+      // `BlurStyle.normal` 은 도형 밑까지 칠하므로, `inactiveColor` 가 투명한
+      // 우리 구성에서는 안 켜진 상자를 통과해 비친다. 상류가 릴리스 노트에서
+      // 직접 권한 방법이다.
+      expect(drawn.blurStyle, BlurStyle.outer, reason: '투명한 상자를 통과해 비치면 안 된다');
+    });
   });
 
   group('그림자를 일부러 안 그리는 컴포넌트', () {
@@ -204,21 +241,6 @@ void main() {
         ShadcnButton(onPressed: () {}, child: const Text('Save')),
       );
       expect(_shadowsIn(tester, find.byType(ShadcnButton)), isEmpty);
-    });
-
-    testWidgets('체크박스는 그림자를 못 받는다 — 상류에 슬롯이 없다', (tester) async {
-      // checkbox.tsx:17 은 `shadow-xs` 다. 우리는 그리지 못한다:
-      // `flutter_checkbox` 의 `CheckboxStyle` 에 그림자 슬롯이 아예 없고,
-      // 상자를 그리는 것은 그 패키지의 `CustomPaint` 라 하류에서 덧씌우면
-      // 라벨까지 함께 그림자를 얻는다. #27 · #26 과 같은 판단이다 —
-      // 상류에 올리고(`kihyun1998/flutter_checkbox#8`), 없는 것을 없다고
-      // 적는다.
-      //
-      // **이 테스트는 상류가 고쳐져도 저절로 빨개지지 않는다.** 패키지가
-      // 슬롯을 만들어도 우리가 값을 넘기기 전까지는 여전히 초록이다.
-      // 되살아나는 방아쇠는 이 테스트가 아니라 상류 이슈가 닫히는 것이다.
-      await _pump(tester, ShadcnCheckbox(value: true, onChanged: (_) {}));
-      expect(_shadowsIn(tester, find.byType(ShadcnCheckbox)), isEmpty);
     });
   });
 

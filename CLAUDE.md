@@ -42,7 +42,8 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 - **크기는 항상 `.w` `.h` `.sp` `.r`.** 생짜 픽셀을 쓰지 말 것. 기준 디자인은 375×812.
 - **색·모서리·그림자는 `context.tweakcnColors` / `.tweakcnRadius` / `.tweakcnShadows`.** 하드코딩 금지. 테마를 바꾸려면 `tweakcn.css` 를 고치고 `dart run flutter_tweakcn_generator` 를 돌린다 — `build_runner` 는 이 파일을 보지 않는다. 생성물은 커밋한다.
   - **어느 컴포넌트가 어느 단계를 쓰는지는 shadcn 원본이 정한 것을 따라간다** — 우리가 고르지 않는다. `--radius` 는 #23, `--shadow-*` 는 #25 에서 `shadcn-ui/ui` 의 `apps/v4/registry/new-york-v4/ui/*.tsx` 를 실측해 정했고, 각 컴포넌트가 `file:line` 으로 근거를 달고 있다. 새 컴포넌트를 만들면 형제에서 유추하지 말고 그 파일을 읽는다.
-  - **원본이 안 거는 자리에는 우리도 안 건다.** 그림자는 카드(`shadow-sm`)·입력·outline 버튼·라디오 표시기·스위치 트랙·select 트리거(`shadow-xs`)·select 메뉴(`shadow-md`)·날짜 다이얼로그(`shadow-lg`) 뿐이고, 기본 버튼·뱃지·아바타·구분선·표·달력은 원본에도 없다. 체크박스는 원본엔 있는데 우리가 **못 받는다** — 아래 "상류 대기" 참고.
+  - **원본이 안 거는 자리에는 우리도 안 건다.** 그림자는 카드(`shadow-sm`)·입력·outline 버튼·라디오 표시기·스위치 트랙·select 트리거·체크박스(`shadow-xs`)·select 메뉴(`shadow-md`)·날짜 다이얼로그(`shadow-lg`) 뿐이고, 기본 버튼·뱃지·아바타·구분선·표·달력은 원본에도 없다.
+  - **체크박스만 `BlurStyle.outer` 로 싣는다.** CSS 의 바깥 `box-shadow` 는 요소 뒤로 잘리는데 Flutter 의 기본값은 도형 밑까지 칠하고, 체크박스의 `inactiveColor` 가 투명이라 그대로 실으면 안 켜진 상자를 통과해 비친다. 값을 바꾸는 게 아니라 CSS 의미론을 미러링하는 것이고, 상류가 릴리스 노트에서 직접 권한 방법이다. 다른 컴포넌트는 배경이 불투명해서 이 문제가 없다.
   - 그림자 값은 `context.tweakcnShadows.shadowSm.r` 처럼 **`.r` 을 걸어 읽는다** (`shadcn_shadow.dart` 의 확장). 모서리가 배율을 타므로 그림자도 타야 한다.
 - **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
@@ -65,12 +66,23 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 | 무엇이 없나 | 상류 | 풀리면 할 일 | 자동으로 알 수 있나 |
 |---|---|---|---|
-| 체크박스가 `shadow-xs` 를 못 받는다. `CheckboxStyle` 에 그림자 슬롯이 없고 상자는 그 패키지의 `CustomPaint` 가 그린다 | `kihyun1998/flutter_checkbox#8` | `template/pubspec.yaml` 의 `flutter_checkbox` 를 올리고 → `shadcnCheckboxStyle` 에 `shadows.shadowXs.r` 을 넘기고 → `shadow_token_test.dart` 의 "체크박스는 그림자를 못 받는다" 를 "받는다" 로 뒤집는다. 버전을 올렸으니 ADR-0001 3번의 도달성도 다시 센다 | **아니오.** 슬롯이 생겨도 우리가 값을 넘기기 전까지 테스트는 초록이다 |
 | select 트리거에 `isButton`, 열린 메뉴의 선택된 행에 `isSelected` 가 없다 | `kihyun1998/flutter_dropdown_button#88` | **#26** 이 들고 있다 — 여기 옮겨 적지 않는다 | **예.** `shadcn_select_test.dart` 의 `matchesSemantics` 가 안 적은 플래그를 전부 false 로 보므로, 상류가 뭘 더 실으면 빨개진다 |
 
-**둘째 줄은 열린 이슈(#26)가 있고 첫째 줄은 없다.** 그래서 첫째만 여기에 전부
-적는다. 이 파일은 매 세션 자동으로 읽히지만 `gh issue list` 는 아니라서, 닫힌
-이슈(#25)에만 남겨두면 아무도 다시 안 본다.
+이 줄은 열린 이슈(#26)가 들고 있다. 이 파일은 매 세션 자동으로 읽히지만
+`gh issue list` 는 아니라서, 닫힌 이슈에만 남겨두면 아무도 다시 안 본다 — 이슈가
+없는 항목은 여기에 전부 적는다.
+
+**전에 여기 있던 체크박스 그림자 항목은 풀렸다** — `flutter_checkbox` 0.3.2 가
+`CheckboxStyle.shadows` 를 줬고 우리가 넘긴다. 같은 릴리스가 시맨틱 결함
+(`flutter_checkbox#7`)도 고쳐서 라벨 붙은 체크박스가 `isFocusable` 과 `focus` 를
+되찾았다 — `shadcn_checkbox_test.dart` 의 "라벨이 있든 없든 focusable 이 나간다" 가
+그 수정을 잠근다. 재계수는 `docs/adr/0001-…` §3 의 2026-08-16 항목에 있다.
+
+**그 절차가 어떻게 발견됐는지는 적어둘 값이 있다.** "자동으로 알 수 있나" 열이
+**아니오**였고 실제로 아무도 몰랐다. 드러난 것은 임시 폴더에 진짜 프로젝트를 한 번
+만들어 본 것(`scripts/thegraph/generate.dart`) 덕이다 — 새로 만들어지는 프로젝트는
+`pubspec.lock` 을 물려받지 않아 `^0.3.1` 안에서 **0.3.2 를 새로 해석**했고, 그
+차이가 테스트 두 개를 빨갛게 만들면서 릴리스 노트를 읽게 했다.
 
 ## 명령어
 

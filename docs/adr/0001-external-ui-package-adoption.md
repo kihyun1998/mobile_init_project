@@ -49,7 +49,9 @@
 | 패키지 자체 상수 | CSS 와 무관 | **전부 명시적으로 채운다** |
 
 - `flutter_checkbox` → 1행. `resolve()` 가 hover/focus/splash 를 `colorScheme.primary`
-  에서 파생한다 (`checkbox_style.dart:213-232`).
+  에서 파생한다 (0.3.2 기준 `checkbox_style.dart:263-265`, `resolve()` 는 `:246`.
+  0.3.1 에서는 `:213-232` 였다 — `shadows` 필드가 `:132` 에 들어오면서 밀렸다.
+  **줄 번호는 버전을 탄다. 인용을 옮길 때 다시 잰다.**)
 - `flutter_dropdown_button` → 2행. `DropdownAmbientColors.of(context)` 가
   `splashColor`·`highlightColor`·`hoverColor`·`disabledColor`·`hintColor`·
   `iconTheme.color` 를 읽는다 (`resolved_dropdown_style.dart:24-37`).
@@ -88,6 +90,32 @@ tooltip 2 = 커스텀 모드가 `tooltipTheme` 을 안 받는다).
 > 즉 3번은 채택 시점에 **한 번** 하는 판정이 아니다. 넘기는 슬롯을 바꾸는
 > 변경마다 다시 센다 — 안 그러면 "빈 슬롯 없음" 테스트가 **그리지도 않는 값**을
 > 지키게 되고, 그건 초록인 채로 아무것도 증명하지 않는다.
+
+> **재계수 (2026-08-16) — `flutter_checkbox` 0.3.1 → 0.3.2.** 위 규칙에 따라
+> 다시 셌다. **색 슬롯의 도달성은 안 움직였다.**
+>
+> `Color?` 는 여전히 **7개**다 — `activeColor`·`checkColor`·`borderColor`·
+> `inactiveColor` 넷은 우리가 채우고, `hoverColor`·`focusColor`·`splashColor`
+> 셋은 `resolve()` 가 `colorScheme.primary` 에서 파생하므로(위 1행) 안 넘긴다.
+> 0.3.2 가 더한 `shadows` 는 색이 아니고, 우리가 채운다.
+>
+> **`shadows` 는 #25 의 `decoration` 과 다르다 — 아무 슬롯도 밀어내지 않는다.**
+> 이것이 이 재계수의 핵심이다. `decoration` 은 `backgroundColor`·`border`·
+> `borderRadius` 를 **대신하는** 슬롯이라 넘기는 순간 다섯이 도달 불가가 됐다.
+> `shadows` 는 페인터가 `_drawBackground` **전에** 그림자 전용
+> `BoxDecoration` 을 따로 만들어 칠하는 것이고, 상류 주석이 "With no colour,
+> gradient, image or border set, the decoration paints nothing else" 라고
+> 명시한다 (`checkbox_painter.dart:32-58`). 같은 서브테마에 슬롯이 늘었다는
+> 이유만으로 도달성이 움직인다고 보면 여기서 틀린다.
+>
+> **딸려 나온 것 — 이 슬롯은 위젯 테스트로 *그려지는지*를 볼 수 없다.**
+> `flutter_test` 는 모든 런에서 `debugDisableShadows` 를 세우고, 상류는 그
+> 아래에서 `BlurStyle.outer` 가 단색으로 뭉개지지 않도록 클립까지 걸어둔다
+> (같은 주석). 그래서 `shadow_token_test.dart` 의 체크박스 테스트는 **값이
+> 실제로 그리는 위젯까지 도달했다**는 것까지만 주장하고 그 이상을 주장하지
+> 않는다. 이 그룹의 다른 테스트들은 `DecoratedBox` 를 읽으므로 같은 한계를
+> 공유한다 — 다만 그쪽은 판독기가 트리에서 값을 보고, 이쪽은 캔버스로 직접
+> 칠해서 판독기가 아예 못 본다는 것이 다르다.
 
 **구성 자체가 도달성을 바꿀 수 있다.** #31 은 텍스트 모드 대신 커스텀 모드를 골라
 tooltip 2개를 도달 불가로 만들었다. 슬롯을 줄이는 구성이 있으면 그쪽이 낫다.

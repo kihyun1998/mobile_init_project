@@ -160,26 +160,30 @@ void main() {
           hasEnabledState: true,
           label: '동의',
           hasTapAction: true,
+          hasFocusAction: true,
+          isFocusable: true,
         ),
       );
       handle.dispose();
     });
 
-    testWidgets('라벨이 없으면 focusable 까지 나간다 — 있으면 빠진다', (tester) async {
-      // 실측으로 갈린 차이다. 패키지가 라벨이 있을 때 `excludeChildSemantics` 를
-      // 켜서 노드를 하나로 합치는데(스크린 리더가 컨트롤 하나로 보게 하려는 것),
-      // 그 과정에서 안쪽 `FocusableActionDetector` 의 기여도 같이 빠진다.
+    testWidgets('라벨이 있든 없든 focusable 이 나간다', (tester) async {
+      // **이 테스트는 한때 상류 결함을 기대값으로 못박고 있었다.**
       //
-      //   라벨 있음 → flags: [hasCheckedState, isChecked, hasEnabledState,
-      //                       isEnabled]                    actions: [tap]
-      //   라벨 없음 → 위 + isFocusable                       actions: [tap, focus]
+      // 0.3.1 까지는 라벨이 있을 때만 `isFocusable` 과 `focus` 액션이 빠졌다.
+      // 패키지가 라벨이 있으면 `excludeChildSemantics` 로 노드를 하나로
+      // 합치는데(스크린 리더가 컨트롤 하나로 보게 하려는 것), 그 과정에서
+      // 안쪽 `FocusableActionDetector` 의 기여까지 같이 빠졌기 때문이다.
+      // 키보드 활성화 자체는 실제 Focus 위젯에 걸려 있어 멀쩡했으므로
+      // 아무도 눈치채지 못했다 — 잃은 것은 보조기술이 이 노드를 포커스
+      // 가능한 것으로 인식하는 부분뿐이었다.
       //
-      // 키보드 활성화(Space/Enter) 자체는 시맨틱이 아니라 실제 Focus 위젯에
-      // 걸려 있어 양쪽 다 동작한다. 여기서 잃는 것은 보조기술이 이 노드를
-      // 포커스 가능한 것으로 인식하는 부분이다.
+      // `flutter_checkbox` 0.3.2 가 고쳤다(`kihyun1998/flutter_checkbox#7`).
+      // 그래서 이제 두 경우가 같고, 이 테스트는 그 수정을 잠그는 자리다 —
+      // 상류가 되돌아가면 여기가 빨개진다.
       final handle = tester.ensureSemantics();
-      await _pump(tester, ShadcnCheckbox(value: true, onChanged: (_) {}));
 
+      await _pump(tester, ShadcnCheckbox(value: true, onChanged: (_) {}));
       expect(
         tester.getSemantics(find.byType(ShadcnCheckbox)),
         matchesSemantics(
@@ -191,7 +195,28 @@ void main() {
           hasFocusAction: true,
           isFocusable: true,
         ),
+        reason: '라벨 없음',
       );
+
+      await _pump(
+        tester,
+        ShadcnCheckbox(value: true, onChanged: (_) {}, label: '동의'),
+      );
+      expect(
+        tester.getSemantics(find.byType(ShadcnCheckbox)),
+        matchesSemantics(
+          hasCheckedState: true,
+          isChecked: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: '동의',
+          hasTapAction: true,
+          hasFocusAction: true,
+          isFocusable: true,
+        ),
+        reason: '라벨 있음 — 0.3.1 에서는 여기서 focusable 이 빠졌다',
+      );
+
       handle.dispose();
     });
 
@@ -211,6 +236,8 @@ void main() {
           hasEnabledState: true,
           label: '동의',
           hasTapAction: true,
+          hasFocusAction: true,
+          isFocusable: true,
         ),
       );
       handle.dispose();
