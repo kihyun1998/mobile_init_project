@@ -66,11 +66,22 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 | 무엇이 없나 | 상류 | 풀리면 할 일 | 자동으로 알 수 있나 |
 |---|---|---|---|
-| select 트리거에 `isButton`, 열린 메뉴의 선택된 행에 `isSelected` 가 없다 | `kihyun1998/flutter_dropdown_button#88` | **#26** 이 들고 있다 — 여기 옮겨 적지 않는다 | **예.** `shadcn_select_test.dart` 의 `matchesSemantics` 가 안 적은 플래그를 전부 false 로 보므로, 상류가 뭘 더 실으면 빨개진다 |
+| _(비어 있음)_ | | | |
 
-이 줄은 열린 이슈(#26)가 들고 있다. 이 파일은 매 세션 자동으로 읽히지만
-`gh issue list` 는 아니라서, 닫힌 이슈에만 남겨두면 아무도 다시 안 본다 — 이슈가
-없는 항목은 여기에 전부 적는다.
+**이 표가 한 번 제 역할을 다했다 (2026-08-17).** 유일한 항목이었던 *"select 트리거에
+`isButton`, 열린 메뉴의 선택된 행에 `isSelected` 가 없다"* 가
+`kihyun1998/flutter_dropdown_button` 4.2.0 에서 풀렸다(#88, #91). 제약을 `^4.2.0` 으로
+올리자 **"자동으로 알 수 있나 = 예" 에 적어둔 그대로** `shadcn_select_test.dart` 의 두
+테스트가 빨개졌고 — `matchesSemantics` 가 안 적은 플래그를 전부 false 로 보므로 —
+그 자리에서 없음이 아니라 **있음**을 못박도록 뒤집었다. 실측된 트리거 플래그는
+`[isButton, hasEnabledState, isEnabled, isFocusable, hasExpandedState]`.
+
+같이 확인된 것: **덧씌우지 않고 기다린 판단(#27, `docs/adr/0001-…`)이 옳았다.** 하류에서
+`Semantics` 를 붙였다면 지금 상류 노드와 충돌하는 것을 걷어내고 있었을 것이다.
+
+이 표는 열린 이슈가 들고 있는 항목을 옮겨 적지 않는다. 이 파일은 매 세션 자동으로
+읽히지만 `gh issue list` 는 아니라서, 닫힌 이슈에만 남겨두면 아무도 다시 안 본다 —
+**이슈가 없는** 항목은 여기에 전부 적는다.
 
 **전에 여기 있던 체크박스 그림자 항목은 풀렸다** — `flutter_checkbox` 0.3.2 가
 `CheckboxStyle.shadows` 를 줬고 우리가 넘긴다. 같은 릴리스가 시맨틱 결함

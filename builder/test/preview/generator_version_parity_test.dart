@@ -32,15 +32,33 @@ import 'package:path/path.dart' as p;
 ///
 /// 그래서 여기서는 코드가 아니라 **두 `pubspec.lock`** 을 본다. 조용히 갈릴
 /// 것을 시끄럽게 깨지게 만드는 것이 목적이다.
+///
+/// **생성기 하나만 보다가 넓혔다 (2026-08-17).** `flutter_dropdown_button` 을
+/// `^4.2.0` 으로 올렸을 때 `template/pubspec.lock` 만 움직이고
+/// `builder/pubspec.lock` 은 4.1.0 에 남았다. 그 상태에서 `template` 테스트는
+/// 새 시맨틱으로 초록이었고 **빌더 미리보기는 옛 시맨틱으로 렌더하고 있었다** —
+/// 정확히 이 테스트가 막으려는 모양인데, 패키지 이름이 하나로 박혀 있어서
+/// 아무것도 안 잡았다. 사람이 눈으로 보고 찾았다.
+///
+/// 그래서 **미리보기가 그리는 것을 좌우하는 패키지 전부**를 본다. 판정 기준은
+/// "버전이 갈리면 미리보기와 생성 결과가 달라지는가" 다.
 void main() {
-  const package = 'flutter_tweakcn_generator';
+  /// 버전이 갈리면 미리보기가 거짓말하는 패키지들. 값은 갈렸을 때 무엇이
+  /// 달라지는지 — 실패 문구에 그대로 실린다.
+  const packages = <String, String>{
+    'flutter_tweakcn_generator':
+        '파서·색 파생·폰트 추출 규칙이 갈린다. '
+        'preview_theme.dart 가 사본으로 들고 있는 바로 그 부분이다',
+    'flutter_checkbox': '체크박스의 시맨틱과 그림자 슬롯이 갈린다',
+    'flutter_dropdown_button': 'select 트리거와 메뉴 행의 시맨틱이 갈린다',
+  };
 
   /// `pubspec.lock` 에서 [package] 가 실제로 해석된 버전.
   ///
   /// 줄바꿈을 정규식에 박지 않는다. `.gitattributes` 가 `* text=auto` 라
   /// Windows 체크아웃은 CRLF 이고, `\n` 을 박은 패턴은 거기서 조용히 아무것도
   /// 못 찾는다.
-  String? resolvedVersion(String lockPath) {
+  String? resolvedVersion(String lockPath, String package) {
     final lines = File(lockPath).readAsStringSync().split(RegExp(r'\r?\n'));
 
     final header = lines.indexWhere((l) => l.trimRight() == '  $package:');
@@ -55,28 +73,36 @@ void main() {
     return null;
   }
 
-  test('빌더와 템플릿이 같은 버전의 생성기를 해석한다', () {
-    final builder = resolvedVersion('pubspec.lock');
-    final template = resolvedVersion(p.join('..', 'template', 'pubspec.lock'));
+  for (final entry in packages.entries) {
+    final package = entry.key;
+    final whatDiverges = entry.value;
 
-    expect(
-      builder,
-      isNotNull,
-      reason: 'builder/pubspec.lock 에서 $package 를 못 찾았다',
-    );
-    expect(
-      template,
-      isNotNull,
-      reason: 'template/pubspec.lock 에서 $package 를 못 찾았다',
-    );
+    test('빌더와 템플릿이 같은 버전의 $package 를 해석한다', () {
+      final builder = resolvedVersion('pubspec.lock', package);
+      final template = resolvedVersion(
+        p.join('..', 'template', 'pubspec.lock'),
+        package,
+      );
 
-    expect(
-      builder,
-      template,
-      reason:
-          '미리보기는 $builder 로 그리고 생성된 앱은 $template 로 만들어진다. '
-          '파서·색 파생·폰트 추출 규칙이 갈리면 미리보기가 거짓말을 시작한다. '
-          '양쪽 pubspec.yaml 의 제약을 맞추고 pub get 을 다시 돌릴 것.',
-    );
-  });
+      expect(
+        builder,
+        isNotNull,
+        reason: 'builder/pubspec.lock 에서 $package 를 못 찾았다',
+      );
+      expect(
+        template,
+        isNotNull,
+        reason: 'template/pubspec.lock 에서 $package 를 못 찾았다',
+      );
+
+      expect(
+        builder,
+        template,
+        reason:
+            '미리보기는 $builder 로 그리고 생성된 앱은 $template 로 만들어진다. '
+            '$whatDiverges. '
+            '양쪽 pubspec.yaml 의 제약을 맞추고 pub get 을 다시 돌릴 것.',
+      );
+    });
+  }
 }

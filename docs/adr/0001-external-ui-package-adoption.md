@@ -117,6 +117,27 @@ tooltip 2 = 커스텀 모드가 `tooltipTheme` 을 안 받는다).
 > 공유한다 — 다만 그쪽은 판독기가 트리에서 값을 보고, 이쪽은 캔버스로 직접
 > 칠해서 판독기가 아예 못 본다는 것이 다르다.
 
+> **재계수 (2026-08-17) — `flutter_dropdown_button` 4.1.0 → 4.2.0.
+> 안 움직였다.** 결과가 "변화 없음" 이어도 잰 것은 적는다 — 안 적으면 다음
+> 사람이 **재지 않은 것**과 구별하지 못한다.
+>
+> 실측: 네 서브테마의 슬롯 개수가 4.1.0 과 **동일**하다
+> (`dropdown_item_theme` 9 · `dropdown_button_theme` 17 ·
+> `dropdown_overlay_theme` 7 · `search_field_theme` 20).
+>
+> 릴리스 노트가 `SearchFieldTheme.disabledBorder` 를 *"nothing had reached
+> before because the field was never built disabled"* 라고 적어서 도달성이
+> 움직인 것처럼 읽힌다. **우리에게는 아니다.** 그 슬롯은 4.1.0 에도 있었고
+> (개수가 같다), 4.2.0 이 한 일은 패키지가 그것을 *채우기* 시작한 것이다.
+> 그리고 우리는 `searchable` 을 노출하지 않으므로 검색 필드 자체가 안 만들어진다
+> — `dropdown_menu_shell.dart:593` 의 `if (widget.searchable)` 이 서브트리
+> 전체를 막는다.
+>
+> **이것이 "도달 못 하는 것은 `file:line` 으로 근거를 적는다" 가 값을 치르는
+> 방식이다.** `shadcn_select.dart` 의 doc-comment 가 그 게이트를 이미 줄번호로
+> 적어둔 덕에 이번 재계수가 한 줄로 끝났다. 근거가 "안 쓰니까" 였다면 20개
+> 슬롯을 처음부터 다시 분류해야 했다.
+
 **구성 자체가 도달성을 바꿀 수 있다.** #31 은 텍스트 모드 대신 커스텀 모드를 골라
 tooltip 2개를 도달 불가로 만들었다. 슬롯을 줄이는 구성이 있으면 그쪽이 낫다.
 

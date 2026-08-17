@@ -488,21 +488,26 @@ void main() {
     });
   });
 
-  group('스크린 리더 — 나가는 것과 아직 안 나가는 것', () {
+  group('스크린 리더 — 상류가 마저 실었다', () {
     // #26 의 대상이었다. 손으로 만든 `GestureDetector` 구현은 트리거가 역할도
-    // 현재 값도 싣지 않았다. 교체 후 시맨틱 트리를 직접 열어 실측한 결과
-    // (#31, 2026-08-05):
+    // 현재 값도 싣지 않았다. 교체(#31, 2026-08-05) 후에는 값과 포커스 가능성만
+    // 생기고 역할(`isButton`)도 선택 상태(`isSelected`)도 없어서, 아래 두 테스트는
+    // **없다는 사실**을 정직하게 못박고 있었다 — "상류가 고쳐지면 이 테스트가
+    // 빨개진다" 는 조건과 함께.
     //
-    //   닫힘: label="Member"  flags=[isFocusable]  actions=[tap, focus]
-    //   열림: 행마다 label="Owner"/"Member"  flags=[isFocusable]
-    //                                        actions=[tap, focus]
+    // **그 조건이 충족됐다.** flutter_dropdown_button 4.2.0 이 나머지 절반을
+    // 실었고(#88, #91), 제약을 ^4.2.0 으로 올리자 두 테스트가 예고대로 빨개졌다.
+    // 이제 없음이 아니라 **있음**을 못박도록 뒤집는다. 실측(2026-08-17):
     //
-    // **절반만 해소됐다.** 값과 포커스 가능성은 생겼지만 역할(`isButton`)도
-    // 선택 상태(`isSelected`)도 없다. 아래 두 테스트는 그 절반씩을 각각
-    // 못박는다 — 좋아진 것을 회귀로부터 지키고, 아직 없는 것을 없다고
-    // 정직하게 적는다. 없는 쪽을 우리가 `Semantics` 로 덧씌우지 않은 이유는
-    // #27 과 같다: 패키지가 합쳐둔 노드를 하류에서 도로 가르게 된다.
-    testWidgets('트리거가 현재 값을 싣고 포커스·탭을 받는다', (tester) async {
+    //   트리거: flags=[isButton, hasEnabledState, isEnabled, isFocusable,
+    //                  hasExpandedState]  actions=[focus, tap]  label="Member"
+    //   행:     flags=[hasEnabledState, isEnabled, isFocusable, hasSelectedState]
+    //           (+ 선택된 행에는 isSelected)  actions=[focus, tap]
+    //
+    // 우리가 `Semantics` 로 덧씌우지 않은 판단(#27 과 같은 이유 — 패키지가 합쳐둔
+    // 노드를 하류에서 도로 가르게 된다)이 옳았음도 같이 확인됐다: 아무것도 안
+    // 하고 기다린 결과가 상류 수정이다. **#26 의 select 항목은 이제 닫아도 된다.**
+    testWidgets('트리거가 역할·활성 상태·펼침 상태를 싣는다', (tester) async {
       final handle = tester.ensureSemantics();
       await _pump(
         tester,
@@ -517,7 +522,12 @@ void main() {
         tester.getSemantics(find.text('Member')),
         matchesSemantics(
           label: 'Member',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
           isFocusable: true,
+          // 닫혀 있으므로 hasExpandedState 만 서고 isExpanded 는 안 선다.
+          hasExpandedState: true,
           hasTapAction: true,
           hasFocusAction: true,
         ),
@@ -525,9 +535,7 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('열린 메뉴의 선택된 행이 아직 selected 로 나가지 않는다', (tester) async {
-      // 실패해야 할 것이 실패하는 상태를 적어둔다. 상류가 고쳐지면 이 테스트가
-      // 빨개지고, 그때 #26 에서 select 항목을 뺀다.
+    testWidgets('열린 메뉴의 선택된 행이 selected 로 나간다', (tester) async {
       final handle = tester.ensureSemantics();
       await _pump(
         tester,
@@ -541,14 +549,31 @@ void main() {
       await tester.tap(find.byType(ShadcnSelect<String>));
       await tester.pumpAndSettle();
 
-      // `matchesSemantics` 는 적지 않은 플래그를 전부 false 로 본다. 그래서 이
-      // 한 줄이 `isSelected` 도 `isButton` 도 안 나간다는 것을 함께 못박는다 —
-      // 상류가 무엇을 더 싣기 시작하면 여기가 빨개진다.
+      // 선택된 행: isSelected 가 선다.
+      expect(
+        tester.getSemantics(find.text('Member').last),
+        matchesSemantics(
+          label: 'Member',
+          hasEnabledState: true,
+          isEnabled: true,
+          isFocusable: true,
+          hasSelectedState: true,
+          isSelected: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+        ),
+      );
+
+      // 그리고 고르지 않은 행에는 서지 않는다 — 이 대조가 없으면 "전부 selected"
+      // 라는 반대 결함도 통과한다.
       expect(
         tester.getSemantics(find.text('Viewer').last),
         matchesSemantics(
           label: 'Viewer',
+          hasEnabledState: true,
+          isEnabled: true,
           isFocusable: true,
+          hasSelectedState: true,
           hasTapAction: true,
           hasFocusAction: true,
         ),
