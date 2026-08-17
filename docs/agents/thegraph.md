@@ -157,12 +157,33 @@ pub cache 에 없고 로컬 형제 저장소에 있다. 지금 실제로 컴파�
 (`colorTokens`, `_colorSchemeFrom`)을 명시한다. 상류에 export 를 요청한 `ftg#22` 는
 아직 **열려 있다**.
 
-### `builder/lib/src/generation/application_id.dart`
+### `PackageName` 의 패턴을 넓히면 깨지는 자리 — **둘이다**
 
-상류 `flutter_tools` 의 `createAndroidIdentifier` 를 미러링한 사본이다. doc-comment 가
-"왜 그냥 이어붙이기여도 되는가" 의 **조건**(값 타입 패턴이 상류 정규화보다 좁다)을
-들고 있고, `Organization`·`PackageName` 의 패턴을 넓히면 그 조건이 깨진다. 컴파일은
+한 트리거에 두 자리가 걸려 있다. 하나만 고치고 지나가기 쉬우니 함께 적는다.
+둘 다 증상이 컴파일 오류가 아니라 **화면에 적힌 것과 실제로 만들어진 것이
+다른 것**이고, 그건 정확히 #37 이 없애려던 사고다.
+
+**`builder/lib/src/generation/application_id.dart`** — 상류 `flutter_tools` 의
+`createAndroidIdentifier` 를 미러링한 사본이다. doc-comment 가 "왜 그냥
+이어붙이기여도 되는가" 의 **조건**(값 타입 패턴이 상류 정규화보다 좁다)을 들고
+있고, `Organization`·`PackageName` 의 패턴을 넓히면 그 조건이 깨진다. 컴파일은
 되고 화면에 적힌 applicationId 만 실제와 달라진다.
+
+**`builder/lib/src/ui/generate_form_page.dart`** — `_mirrorNameIntoDisplayName`
+(`:215`). 표시 이름 칸에 미러링하는 것은 **값 타입을 안 거친 생짜 입력**
+(`_name.text`)인데, `GenerationConfig` 의 fallback 은 `projectName.value` 다
+(`generation_config.dart:30`). **둘이 같은 이유는 `PackageName.parse` 가 `trim`
+밖에 안 하기 때문뿐이다** (`package_name.dart:13`). 패턴이 넓어져 정규화가
+붙는 순간(대시를 밑줄로, 대문자를 소문자로 …) 칸에 보이는 앱 이름과 실제로
+만들어진 앱 이름이 갈린다.
+
+형제 `application_id.dart` 는 값 타입을 거치는 쪽을 골랐지만 — 타이핑 도중
+null 을 보여주면 그만이라 — 여기서는 그 길을 못 쓴다. 표시 이름 칸에서
+"값이 없다" 는 **"칸이 비었다"** 를 뜻하고, 그건 추적을 끊을지 이을지를 가르는
+상태이기 때문이다.
+
+*(2026-08-17 에 닫힌 PR #43 에서 건져 왔다. 그 PR 은 #44 로 대체됐지만 이
+분석만은 main 에 여전히 유효했고, 어디에도 안 적혀 있었다.)*
 
 **템플릿에 파일·의존성·언어를 추가했다면 이 목록부터 확인한다. 컴파일러가 봐주지
 않는다.**
