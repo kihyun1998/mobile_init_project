@@ -31,7 +31,7 @@ dependencies:
   # 색을 ThemeData 의 레거시 필드(splash/highlight/hover/disabled/hint/iconTheme)
   # 에서 가져오는데, TweakcnTheme 는 그것들을 채우지 않는다 — 그래서 색을 하나도
   # 빠짐없이 명시적으로 넘긴다. 근거는 shadcn_select.dart 의 doc-comment.
-  flutter_dropdown_button: ^4.1.0
+  flutter_dropdown_button: ^4.2.0
   flutter_riverpod: ^2.6.1
   flutter_screenutil: ^5.9.0
   flutter_svg: ^2.2.0
