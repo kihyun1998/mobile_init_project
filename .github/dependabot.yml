@@ -34,7 +34,42 @@ updates:
       - "/builder"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+
+    # 첫 실행에서 5개가 전부 template 것으로 차서 builder 는 처리조차 안 됐다.
+    # 아래 ignore 로 소음이 빠지므로 이 숫자에 부딪힐 일은 줄지만, 한 디렉토리가
+    # 다른 쪽을 굶기는 모양은 남는다.
+    open-pull-requests-limit: 10
+
+    ignore:
+      # **`intl` 은 영원히 초록이 될 수 없다.** SDK 의 `flutter_localizations`
+      # 가 `intl` 을 정확한 버전으로 못박는다. Dependabot 이 `^0.20.3` 을
+      # 제안했을 때 CI 가 이렇게 답했다:
+      #
+      #   Because mobile_init_project depends on flutter_localizations from sdk
+      #   which depends on intl 0.20.2, intl 0.20.2 is required.
+      #   So, because mobile_init_project depends on intl ^0.20.3,
+      #   version solving failed.
+      #
+      # 머지할 수 없는 PR 이 주마다 뜨면 사람들이 Dependabot 자체를 무시하게
+      # 되고, 그러면 이걸 켠 이유가 사라진다.
+      - dependency-name: "intl"
+
+      # **메이저는 주간 알림이 아니라 의도적으로 하는 작업이다.**
+      # 첫 실행에 뜬 다섯 중 넷이 메이저였다 — riverpod 2→3, fl_chart 0.70→1.x,
+      # flutter_lints 5→6, build_runner. 전부 머지 버튼 하나로 끝나지 않는
+      # 마이그레이션이라 PR 로 떠 있으면 그냥 쌓인다. 필요할 때
+      # `dart pub outdated` 로 언제든 본다.
+      #
+      # **여기서 잡으려던 것은 마이너·패치다.** 우리를 문 것이
+      # `flutter_checkbox` 0.3.1 → 0.3.2 였고 그건 패치다.
+      #
+      # **알고 있는 구멍:** 0.x 패키지는 두 번째 자리가 메이저 경계다. 즉
+      # `flutter_checkbox` 가 0.4.0 을 내면 이 규칙이 가린다. 그쪽은 우리가
+      # 상류 이슈를 열어둔 저장소들이라(`flutter_checkbox#8`,
+      # `flutter_dropdown_button#88`) GitHub 이 직접 알려주는 것에 기댄다.
+      # 그 경로가 끊기면 이 줄을 다시 본다.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
     groups:
       # **디렉토리를 가로질러 패키지마다 PR 하나로 묶는다.**
