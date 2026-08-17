@@ -10,6 +10,22 @@ analyzer:
     invalid_annotation_target: ignore
   plugins:
     - custom_lint
+  # 생성 파일은 분석하지 않는다. 손으로 못 고치는 자리라 지적이 떠도 할 수 있는
+  # 것이 없고, 고쳐봐야 다음 재생성에 덮인다. 이것들을 지키는 것은 분석기가
+  # 아니라 CI 의 `codegen` 잡이다 — 재생성한 뒤 `git diff --exit-code` 로 커밋된
+  # 생성물이 소스보다 낡았는지를 본다.
+  #
+  # **생성기가 셋인데 둘만 적혀 있었다.** `intl_utils` 출력만 빠져 있었고,
+  # `flutter_lints` 6.0.0 이 새 lint(`strict_top_level_inference`)를 들여오면서
+  # 드러났다 — `messages_{en,ko}.dart:23` 넉 줄이 그것 하나로 걸렸고, 손으로 쓴
+  # 코드에는 위반이 **0개**였다.
+  #
+  # 이 파일은 `copyEntries` 에 있어 **생성되는 프로젝트로 그대로 복사된다.**
+  # 안 적으면 새로 만든 프로젝트가 첫날부터 `flutter analyze` 에 걸린다
+  # (`flutter analyze` 는 info 하나에도 exit 1 이다).
+  #
+  # 경로는 pubspec 의 `flutter_intl: output_dir` 과 같아야 한다.
   exclude:
     - '**/*.g.dart'
     - '**/*.freezed.dart'
+    - 'lib/core/localization/generated/**'
