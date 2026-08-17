@@ -1,0 +1,59 @@
+# 상류 패키지가 움직인 것을 **우리가 먼저** 알기 위한 것이다.
+#
+# 왜 필요한가 — 이 저장소의 실패 모양은 diff 가 아니라 **시간**을 탄다.
+# 상류가 새 버전을 내도 우리 저장소는 한 글자도 안 바뀌므로 어떤 게이트도
+# 걸리지 않는다. 그런데 **생성되는 프로젝트는 `pubspec.lock` 을 물려받지 않아**
+# caret 범위 안에서 새로 해석하므로, 우리는 옛 버전으로 초록이고 사용자는 새
+# 버전으로 빨간 상태가 조용히 성립한다.
+#
+# 실물: `flutter_checkbox` 0.3.2 가 시맨틱을 고쳤는데(`flutter_checkbox#7`)
+# 우리 테스트가 고쳐지기 **전** 모습을 정답으로 못박고 있었다. `template` 은
+# lock 이 0.3.1 을 잡아 초록, 갓 생성된 프로젝트는 0.3.2 를 받아 2개 빨강.
+# 임시 폴더에 진짜 프로젝트를 한 번 만들어 보고서야 알았다. 그 릴리스가
+# 우리가 상류에 올려두고 기다리던 `CheckboxStyle.shadows` 도 함께 들고 있었다 —
+# 즉 **좋은 소식도 같이 놓치고 있었다.**
+#
+# Dependabot 이 PR 을 열면 CI 가 그 테스트들을 빨갛게 만들고, 우리는 상류가
+# 움직인 주에 안다.
+#
+# **한계 둘.**
+# - pub 은 **보안 업데이트를 지원하지 않는다.** 버전 업데이트만 온다. CVE 는
+#   이 경로로 알 수 없다.
+# - 이건 우리 저장소를 테스트하지 **제품(생성 결과)** 을 테스트하지 않는다.
+#   상류 릴리스와 PR 머지 사이의 창은 좁아질 뿐 사라지지 않는다. 창을 없애려면
+#   생성물이 새로 해석하지 않게 해야 한다 — 별도 결정이다.
+
+version: 2
+
+updates:
+  - package-ecosystem: "pub"
+    # 루트에 pubspec.yaml 이 없다. Flutter 프로젝트가 둘이고 워크스페이스로
+    # 묶여 있지 않아서 각각 걸어야 한다.
+    directories:
+      - "/template"
+      - "/builder"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+    groups:
+      # **디렉토리를 가로질러 패키지마다 PR 하나로 묶는다.**
+      #
+      # 안 묶으면 같은 패키지가 모듈마다 따로 PR 이 되는데,
+      # `builder/test/preview/generator_version_parity_test.dart` 가 두
+      # `pubspec.lock` 의 `flutter_tweakcn_generator` 버전이 **같기를** 요구한다.
+      # 한쪽만 올린 PR 은 그래서 반드시 빨갛고, 나머지 한쪽이 머지될 때까지
+      # 그대로다. 그 테스트가 잘못된 게 아니라 — 미리보기와 생성 결과가 다른
+      # 버전의 생성기를 쓰면 색 파생이 갈리므로 맞는 가드다 — PR 을 쪼개는
+      # 쪽이 틀렸다.
+      #
+      # `group-by: dependency-name` 이 정확히 그 일을 한다: 패키지 하나당
+      # PR 하나, 그 안에 두 디렉토리의 변경이 함께 들어온다.
+      cross-module:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+
+    commit-message:
+      prefix: "chore"
+      include: "scope"
