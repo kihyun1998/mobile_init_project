@@ -61,7 +61,13 @@ jobs:
   # test 도 그걸 못 본다.
   #
   # 전례: PR #16 이 theme_provider.dart 를 고치고 build_runner 를 안 돌려서,
-  # riverpod 소스 해시가 낡은 채로 머지됐다. 4개 잡이 전부 초록이었다.
+  # riverpod 소스 해시가 낡은 채로 머지됐다 — `.g.dart` 는 #18(fc03ba5)에서야
+  # 갱신됐다. 그때 초록이었던 잡은 **하나도 없다.** 이 워크플로가 아직 없었고
+  # (첫 커밋 31347f5, #17), 이 잡은 그 사고 **뒤에** 생겼다. 게이트가 놓친 것이
+  # 아니라 막을 것이 없었다는 뜻이다.
+  #
+  # 잡 개수를 문장에 박지 않는다. 여기 있던 "4개" 는 codegen 잡이 늘면서 조용히
+  # 틀렸고(#51), 아무도 그 숫자를 검사하지 않는다.
   #
   # ubuntu 하나면 된다 — 생성기 출력은 OS 를 타지 않는다. 줄바꿈 때문에
   # 헛빨간불이 나지 않는 것은 .gitattributes 가 생성물을 eol=lf 로 못박은
@@ -81,8 +87,8 @@ jobs:
       # `.tweakcn.css` → `.tweakcn.dart` 만 걸고, pubspec 의
       # `flutter_tweakcn_generator:` 블록은 CLI 만 읽는다. 우리 파일 이름은
       # tweakcn.css 라 builder 패턴에 걸리지 않는다. 이 줄이 없으면
-      # tweakcn.css 를 고치고 재생성을 잊은 커밋이 **네 잡 전부 초록으로**
-      # 지나간다 — 이 잡이 존재하는 이유인 PR #16 사고와 같은 모양이다.
+      # tweakcn.css 를 고치고 재생성을 잊은 커밋이 **어느 잡도 빨갛게 하지
+      # 않고** 지나간다 — 이 잡이 존재하는 이유인 PR #16 사고와 같은 모양이다.
       - name: template — 테마 재생성
         working-directory: template
         run: dart run flutter_tweakcn_generator
