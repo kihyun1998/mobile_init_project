@@ -26,6 +26,33 @@ String? _readTextOrNull(File file) {
   }
 }
 
+/// 진짜 템플릿에서 `copyEntries` 가 읽는 것만 임시 폴더로 복제한다.
+///
+/// 이 저장소의 템플릿에는 `dependency_overrides` 가 **없다.** 그래서 그것이
+/// 결과물에서 빠지는지를 진짜 템플릿으로는 잴 수 없다 — 수정을 꺼도 어서션이
+/// 초록이다. 복제본에 심어야 끄고 빨개지는 것을 볼 수 있다.
+Directory _templateCopyWith(Directory source, String Function(String) patch) {
+  final copy = Directory.systemTemp.createTempSync('tmpl_');
+  for (final entry in ProjectGenerator.copyEntries) {
+    final from = p.join(source.path, entry);
+    final to = p.join(copy.path, entry);
+    if (Directory(from).existsSync()) {
+      for (final f in Directory(from).listSync(recursive: true)) {
+        if (f is! File) continue;
+        final rel = p.relative(f.path, from: source.path);
+        final dest = File(p.join(copy.path, rel));
+        dest.parent.createSync(recursive: true);
+        f.copySync(dest.path);
+      }
+    } else if (File(from).existsSync()) {
+      File(from).copySync(to);
+    }
+  }
+  final pubspec = File(p.join(copy.path, 'pubspec.yaml'));
+  pubspec.writeAsStringSync(patch(pubspec.readAsStringSync()));
+  return copy;
+}
+
 void main() {
   late Directory outputParent;
   late FakeProcessRunner runner;
@@ -796,6 +823,201 @@ flutter_tweakcn_generator:
     });
   });
 
+  group('dependency_overrides 걷어내기', () {
+    // 생성기를 통해서는 템플릿 pubspec 이 가진 모양 하나만 지나간다. 그리고
+    // 지금 template/pubspec.yaml 에는 dependency_overrides 가 **없어서**,
+    // 결과물에 거는 어서션은 수정 전에도 초록이다 — 끄고 빨개지는 것을 볼 수가
+    // 없다. 그래서 순수 함수를 직접 먹인다. withMainLocale 이 공개인 이유와 같다.
+    test('섹션이 없으면 한 글자도 안 바뀐다', () {
+      const yaml = '''
+name: x
+dependencies:
+  path: ^1.9.0
+
+flutter:
+  uses-material-design: true
+''';
+
+      expect(ProjectGenerator.withoutDependencyOverrides(yaml), yaml);
+    });
+
+    test('섹션과 딸린 항목이 통째로 사라진다', () {
+      const yaml = '''
+name: x
+
+dependency_overrides:
+  flutter_dropdown_button:
+    path: ../../flutter_dropdown_button
+  collection: 1.18.0
+
+flutter:
+  uses-material-design: true
+''';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, isNot(contains('dependency_overrides')));
+      expect(out, isNot(contains('flutter_dropdown_button')));
+      expect(out, isNot(contains('1.18.0')));
+      expect(out, contains('flutter:'));
+      expect(out, contains('  uses-material-design: true'));
+      expect(out, contains('name: x'));
+    });
+
+    test('같은 들여쓰기의 형제 설정 블록은 안 다친다', () {
+      // 이 함수가 만들 수 있는 최악의 사고다. pubspec 에는 flutter:,
+      // flutter_intl:, flutter_tweakcn_generator: 처럼 같은 들여쓰기를 쓰는
+      // 설정 블록이 여럿이다.
+      const yaml = '''
+name: x
+
+dependency_overrides:
+  a:
+    path: ../a
+
+flutter_intl:
+  enabled: true
+  main_locale: ko
+
+flutter_tweakcn_generator:
+  input: tweakcn.css
+  output: lib/theme/tweakcn_theme.g.dart
+''';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, isNot(contains('dependency_overrides')));
+      expect(out, contains('flutter_intl:'));
+      expect(out, contains('  main_locale: ko'));
+      expect(out, contains('flutter_tweakcn_generator:'));
+      expect(out, contains('  output: lib/theme/tweakcn_theme.g.dart'));
+    });
+
+    test('파일 마지막 섹션이어도 지운다', () {
+      const yaml = '''
+name: x
+
+dependency_overrides:
+  a:
+    path: ../a
+''';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, isNot(contains('dependency_overrides')));
+      expect(out, contains('name: x'));
+    });
+
+    test('CRLF 체크아웃에서도 걸린다', () {
+      // .gitattributes 가 `* text=auto` 라 Windows 체크아웃의 pubspec 은
+      // CRLF 다. 줄바꿈을 박은 패턴은 거기서 안 걸린다 — 이 저장소가 이미
+      // 한 번 물린 함정이다.
+      const yaml =
+          'name: x\r\n'
+          '\r\n'
+          'dependency_overrides:\r\n'
+          '  a:\r\n'
+          '    path: ../a\r\n'
+          '\r\n'
+          'flutter:\r\n'
+          '  uses-material-design: true\r\n';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, isNot(contains('dependency_overrides')));
+      expect(out, isNot(contains('../a')));
+      expect(out, contains('uses-material-design'));
+    });
+
+    test('들여쓴 자리에 같은 글자가 있어도 톱레벨만 본다', () {
+      const yaml = '''
+name: x
+
+some_tool:
+  dependency_overrides: true
+
+flutter:
+  uses-material-design: true
+''';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, contains('  dependency_overrides: true'));
+      expect(out, contains('some_tool:'));
+    });
+
+    test('한 줄 flow 스타일도 지운다', () {
+      // `==` 비교면 여기서 조용히 새 나간다. 이 저장소의 가드 둘이
+      // `contains('dependency_overrides:')` 라 이 모양을 **잡는데**, 섹션 헤더만
+      // 보는 드롭은 못 잡아서 가드와 수정이 반대 방향으로 어긋난다.
+      const yaml = '''
+name: x
+
+dependency_overrides: {a: {path: ../a}}
+
+flutter:
+  uses-material-design: true
+''';
+
+      final out = ProjectGenerator.withoutDependencyOverrides(yaml);
+
+      expect(out, isNot(contains('dependency_overrides')));
+      expect(out, isNot(contains('../a')));
+      expect(out, contains('uses-material-design'));
+    });
+
+    // 위 단위 테스트가 함수를 재고, 이 둘은 **그 함수가 실제로 불리는지**를
+    // 잰다. 호출 자리가 예제 분기 밑에 있으면 켠 쪽이 통째로 새 버리므로
+    // 두 팔을 다 본다 — `includeExample` 의 기본값이 `true` 다.
+    for (final withExample in [true, false]) {
+      test('예제를 ${withExample ? "켜도" : "꺼도"} 결과물에 override 가 없다', () async {
+        final patched = _templateCopyWith(
+          Directory(p.join('..', 'template')),
+          (yaml) =>
+              '$yaml\n'
+              'dependency_overrides:\n'
+              '  flutter_dropdown_button:\n'
+              '    path: ../../flutter_dropdown_button\n',
+        );
+        addTearDown(() => patched.deleteSync(recursive: true));
+
+        final localRunner = FakeProcessRunner();
+        final root =
+            await ProjectGenerator(
+                  templateDir: patched,
+                  processRunner: localRunner,
+                )
+                .generate(
+                  GenerationConfig(
+                    projectName: PackageName.parse('my_app'),
+                    organization: Organization.parse('io.github.kihyun1998'),
+                    outputParent: outputParent,
+                    description: '설명',
+                    displayName: '',
+                    includeExample: withExample,
+                    languages: LanguageSelection.of(const [
+                      AppLanguage.ko,
+                      AppLanguage.en,
+                    ]),
+                    platforms: PlatformSelection.of(const [
+                      ProjectPlatform.android,
+                    ]),
+                    themeCss: null,
+                  ),
+                )
+                .then((r) => r.projectRoot);
+
+        final pubspec = read(root, 'pubspec.yaml');
+        expect(pubspec, isNot(contains('dependency_overrides')));
+        expect(pubspec, isNot(contains('../../flutter_dropdown_button')));
+        // 과잉 삭제 방지 — 뒤따르던 것들이 살아 있어야 한다.
+        expect(pubspec, contains('name: my_app'));
+        expect(pubspec, contains('flutter_dropdown_button: ^'));
+        expect(pubspec, contains('uses-material-design'));
+      });
+    }
+  });
+
   group('생성 전에 막는 것', () {
     test('형식이 틀린 입력은 flutter create 를 시작조차 하지 않는다', () {
       // 값 타입이 GenerationConfig 를 만드는 시점에 던지므로, 잘못된 입력으로는
@@ -838,6 +1060,132 @@ flutter_tweakcn_generator:
       expect(precious.readAsStringSync(), '건드리지 마시오');
       expect(existing.listSync(), hasLength(1));
       expect(runner.invocations, isEmpty);
+    });
+
+    group('머신 종속 의존성 찾기', () {
+      test('hosted 와 sdk 만 있으면 빈 목록이다', () {
+        const yaml = '''
+name: x
+dependencies:
+  flutter:
+    sdk: flutter
+  path: ^1.9.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+''';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), isEmpty);
+      });
+
+      test('dependencies 의 path 소스를 잡는다', () {
+        const yaml = '''
+name: x
+dependencies:
+  path: ^1.9.0
+  flutter_dropdown_button:
+    path: ../../flutter_dropdown_button
+''';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), [
+          'flutter_dropdown_button',
+        ]);
+      });
+
+      test('dev_dependencies 의 git 소스를 잡는다', () {
+        const yaml = '''
+name: x
+dev_dependencies:
+  some_tool:
+    git:
+      url: https://example.com/x.git
+''';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), ['some_tool']);
+      });
+
+      test('한 줄 flow 스타일도 잡는다', () {
+        const yaml = '''
+name: x
+dependencies:
+  a: {path: ../a}
+''';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), ['a']);
+      });
+
+      test('dependency_overrides 의 path 는 안 잡는다 — 그건 드롭이 처리한다', () {
+        // 두 섹션의 올바른 처리가 다르다. override 를 지우면 제약으로
+        // 되돌아갈 뿐이지만, dependencies 의 항목을 지우면 그 패키지가 통째로
+        // 사라져 결과물이 컴파일되지 않는다. 그래서 이쪽은 거절이다.
+        const yaml = '''
+name: x
+dependencies:
+  path: ^1.9.0
+dependency_overrides:
+  path:
+    path: ../p
+''';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), isEmpty);
+      });
+
+      test('CRLF 체크아웃에서도 잡는다', () {
+        const yaml =
+            'name: x\r\n'
+            'dependencies:\r\n'
+            '  a:\r\n'
+            '    path: ../a\r\n';
+
+        expect(ProjectGenerator.machineLocalDependencies(yaml), ['a']);
+      });
+    });
+
+    test('템플릿이 형제 저장소를 직접 물고 있으면 아무것도 만들지 않고 멈춘다', () async {
+      final patched = _templateCopyWith(
+        Directory(p.join('..', 'template')),
+        (yaml) => yaml.replaceFirst(
+          '  flutter_dropdown_button: ^4.2.0',
+          '  flutter_dropdown_button:\n'
+              '    path: ../../flutter_dropdown_button',
+        ),
+      );
+      addTearDown(() => patched.deleteSync(recursive: true));
+
+      final localRunner = FakeProcessRunner();
+      await expectLater(
+        ProjectGenerator(
+          templateDir: patched,
+          processRunner: localRunner,
+        ).generate(
+          GenerationConfig(
+            projectName: PackageName.parse('my_app'),
+            organization: Organization.parse('io.github.kihyun1998'),
+            outputParent: outputParent,
+            description: '설명',
+            displayName: '',
+            includeExample: true,
+            languages: LanguageSelection.of(const [AppLanguage.ko]),
+            platforms: PlatformSelection.of(const [ProjectPlatform.android]),
+            themeCss: null,
+          ),
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (e) => e.message,
+            'message',
+            contains('flutter_dropdown_button'),
+          ),
+        ),
+      );
+
+      // flutter create 도 안 돌았다 — 되돌릴 것이 없다.
+      expect(localRunner.invocations, isEmpty);
+      expect(
+        Directory(p.join(outputParent.path, 'my_app')).existsSync(),
+        isFalse,
+      );
     });
   });
 }

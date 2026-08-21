@@ -101,10 +101,16 @@ Future<void> main(List<String> args) async {
 }
 
 /// 커밋 안 된 템플릿 변경은 생성물로 그대로 실려 나가서 **변경과 무관한 이유로**
-/// 증명을 죽인다. `dependency_overrides:` 가 대표적이다 —
-/// `_withoutDependencies` 는 `dependencies:` 와 `dev_dependencies:` 만 보고
-/// `copyEntries` 는 pubspec 을 통째로 복사하므로, 로컬 path override 가 생성되는
-/// 모든 프로젝트로 나가고 그 경로는 사용자 머신에 없다.
+/// 증명을 죽일 수 있다. 그래서 무엇이 같이 나가는지를 눈앞에 둔다.
+///
+/// `dependency_overrides:` 는 더 이상 여기서 막지 않는다 — `#50` 이후 생성기의
+/// `withoutDependencyOverrides` 가 걷어내고, 걷어냈는지는 [_outputSane] 이
+/// 결과물에서 확인한다.
+///
+/// `dependencies:` 의 `path:`/`git:` 소스는 **생성기 자신이 거절한다**
+/// (`machineLocalDependencies`). 지우면 그 패키지가 통째로 사라져 결과물이
+/// 컴파일되지 않고, 올바른 버전 제약을 빌더가 알 수 없기 때문이다. 그 경우
+/// 이 스크립트는 생성 단계에서 그 예외를 그대로 본다.
 Future<bool> _precondition() async {
   var ok = true;
 
@@ -126,17 +132,21 @@ Future<bool> _precondition() async {
     stdout.writeln('  의도한 것이면 그대로 진행한다.');
   }
 
-  // 이쪽은 하드 실패다. 로컬 개발용 override 는 사용자 머신에 없는 상대
-  // 경로를 가리키므로, 결과물의 pub get 이 **변경과 무관한 이유로** 죽는다.
-  // `_withoutDependencies` 는 `dependencies:` 와 `dev_dependencies:` 만 보고
-  // `copyEntries` 는 pubspec 을 통째로 복사한다.
+  // **이쪽도 막지 않는다 — 알리기만 한다.** 예전에는 하드 실패였다.
+  // `withoutDependencyOverrides` 가 생기기 전에는 override 가 결과물로 그대로
+  // 실려 나가 pub get 을 죽였기 때문이다(#50). 이제 생성기가 걷어낸다.
+  //
+  // 그리고 하드 실패로 두면 **정확히 그 수정을 증명할 유일한 입력을 막는다** —
+  // override 가 걷어내지는 것을 보려면 override 를 둔 채 생성해야 한다.
+  // 위 더러운 트리 문단이 같은 교훈을 이미 적어뒀는데 이 줄에만 적용이 안 돼
+  // 있었다. 회귀는 아래 [_outputSane] 이 결과물에서 잡는다 — 그것이 이 완화로
+  // 비로소 **도달 가능해진다.**
   final pubspec = File('template/pubspec.yaml');
   if (pubspec.existsSync() &&
       pubspec.readAsStringSync().contains('dependency_overrides:')) {
-    stdout.writeln('! template/pubspec.yaml 에 dependency_overrides 가 있다.');
-    stdout.writeln('  통째로 복사되고, 그 상대 경로는 사용자 머신에 없다.');
-    stdout.writeln('  결과물의 pub get 이 변경과 무관하게 죽는다.');
-    ok = false;
+    stdout.writeln('template/pubspec.yaml 에 dependency_overrides 가 있다.');
+    stdout.writeln('  생성기가 걷어내므로 결과물에는 안 실린다.');
+    stdout.writeln('  실제로 걷어냈는지는 결과물 검사가 본다.');
   }
 
   if (ok) stdout.writeln('선행 조건 통과 — template/ 이 생성 가능한 상태다.');
@@ -155,7 +165,15 @@ Future<bool> _outputSane(String out) async {
     stderr.writeln('결과물의 pubspec name 이 치환되지 않았다.');
     return false;
   }
-  if (text.contains('dependency_overrides:')) {
+  // **생 `contains` 가 아니라 톱레벨 키로 본다.** 생 부분 문자열이면 누군가
+  // template pubspec 에 적어둘 법한 `# dependency_overrides: 를 두지 말 것`
+  // 같은 주석 한 줄이 이 영수증을 영구히 빨갛게 만든다. 주석은 결과물로
+  // 그대로 따라가고, 그건 결함이 아니다.
+  final leaked = text
+      .split('\n')
+      .map((l) => l.trimRight())
+      .where((l) => l.startsWith('dependency_overrides:'));
+  if (leaked.isNotEmpty) {
     stderr.writeln('결과물에 dependency_overrides 가 실려 나갔다.');
     return false;
   }

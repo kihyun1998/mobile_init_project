@@ -146,10 +146,23 @@ pub cache 에 없고 로컬 형제 저장소에 있다. 지금 실제로 컴파�
 | `_postProcessing` | 135 | 파이프라인 단계 순서. 순서의 이유가 상류 버전에 묶여 있다 |
 | `arbDirSegments` | 488 | arb 위치 |
 
-**`_withoutDependencies` 가 보는 섹션은 `dependencies:` 와 `dev_dependencies:` 둘뿐**
-(:442)이고 `copyEntries` 는 pubspec 을 통째로 복사한다. 즉 **template pubspec 에
-`dependency_overrides:` 를 걸어두면 생성되는 모든 프로젝트로 그대로 실려 나가고**, 그
-상대 경로는 사용자 머신에 없어 `flutter pub get` 에서 죽는다.
+**`copyEntries` 가 pubspec 을 통째로 복사하므로, 그 안의 톱레벨 섹션마다 "사용자
+머신에서 유효한가" 를 따로 답해야 한다.** `_withoutDependencies` 가 보는 섹션은
+`dependencies:` 와 `dev_dependencies:` 둘뿐이고(:442) 그것도 **이름으로만** 지운다
+(`exampleOnlyDependencies` 고정).
+
+**답이 섹션마다 다르다** (#50, 2026-08-21):
+
+| 섹션 | 처리 | 왜 |
+|---|---|---|
+| `dependency_overrides:` | `withoutDependencyOverrides` 가 **통째로 드롭** | 지워도 제약으로 되돌아갈 뿐이다. 항목 단위가 아닌 이유는 override 세 갈래 중 **둘이 조용히 성공**하기 때문 — path 만 exit 66 이고 hosted 핀·git 은 exit 0 에 lock 으로 구워진다. 지울 이름을 알 방법이 없다 |
+| `dependencies:` · `dev_dependencies:` 의 `path:`/`git:` | `machineLocalDependencies` 가 찾고 `_validate` 가 **생성을 거절** | 지우면 그 패키지가 통째로 사라져 결과물이 컴파일되지 않는다. 올바른 버전 제약을 빌더가 알 수 없으므로 **추측하면 안 된다** |
+| 톱레벨 `resolution: workspace` | **미처리** | 결과물에서 같은 exit 66 을 낸다(실측). 지금 템플릿에 없고, 이 저장소가 pub workspaces 를 쓰게 되면 올바른 처리가 거절이 아니라 드롭이라 미리 정하지 않았다 |
+
+실측된 근거: override 대상이 `dependencies:` 에 **없어도** 죽는다(override 자체가
+의존성 엣지를 만든다). 그리고 **override 는 root 패키지에서만 유효하다** — 빌더가
+root 이고 template 은 `path:` 의존이라, template 의 override 는 **미리보기에 아무
+효과가 없고** 결과물에서만 root 가 되어 그때 항상 틀린다.
 
 ### `builder/lib/src/preview/preview_theme.dart`
 
@@ -194,7 +207,7 @@ null 을 보여주면 그만이라 — 여기서는 그 길을 못 쓴다. 표�
 
 | 읽는 것 | 지금 무엇이 있나 |
 |---|---|
-| `docs/adr/` | `0001-external-ui-package-adoption.md` 하나 |
+| `docs/adr/` | `0001-external-ui-package-adoption.md`, `0002-generated-pubspec-must-be-valid-on-the-users-machine.md` |
 | `CLAUDE.md` 의 "상류 대기" 표 | 2행 — 체크박스 `shadow-xs`(`fcb#8`), select 시맨틱(`fdb#88`, #26 이 들고 있다) |
 | 루트 `CONTEXT.md` | **없다** |
 
@@ -549,11 +562,12 @@ builder 패턴에 애초에 걸리지 않는다. 실측(#9): `--primary` 를 바
 
 ### 이미 record 를 가진 영역
 
-**accepted 1, proposed 0.**
+**accepted 2, proposed 0.**
 
 | 영역 | record |
 |---|---|
 | 외부 UI 패키지를 `template/lib/ui/components/` 에 들이는 것 | `docs/adr/0001-external-ui-package-adoption.md` (accepted, 2026-08-05) — #27·#31 에서 승격. `flutter_table_plus`·`flutter_otp_widget` 은 이 record 아래 **conformance item** 으로 붙는다 (앵커를 새로 열지 않는다). §3 의 도달성은 **채택 시점에 한 번 하는 판정이 아니다** — 슬롯이 움직이면 다시 센다 (2026-08-08 갱신) |
+| **복사되는 pubspec 의 섹션마다 무엇을 하는가** | `docs/adr/0002-generated-pubspec-must-be-valid-on-the-users-machine.md` (accepted, 2026-08-21) — #50 에서 승격. 축이 둘이다: **지워도 성립하는가 → 드롭**, **아니면 빌더가 고칠 수 있는가 → 못 고치면 거절**. **#58(`pubspec.lock`)·#59(`.github/`)는 이 record 아래 conformance item 이다** — 앵커를 새로 열지 않는다. `copyEntries` 에 항목을 더하는 변경은 전부 여기에 걸린다 |
 
 그 외 영역은 record 가 없으므로 첫 클러스터를 만나면 앵커 이슈로 연다.
 

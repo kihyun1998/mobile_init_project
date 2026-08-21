@@ -99,6 +99,12 @@ class ProjectGenerator {
     // 예제를 먼저 걷어낸다. 그래야 pubspec 에서 의존성이 빠진 뒤에
     // 이름·설명이 다시 쓰이고, 치환이 어차피 지울 파일을 훑지 않는다.
     if (!config.includeExample) _dropExample(projectRoot);
+    // **옵션과 무관하게 돈다.** 예제를 끄는 길에 얹으면 켠 쪽이 안 덮이는데,
+    // `includeExample` 의 기본값이 `true` 라 흔한 경로가 통째로 새 버린다.
+    _rewriteIfPresent(
+      File(p.join(projectRoot.path, 'pubspec.yaml')),
+      withoutDependencyOverrides,
+    );
     _applyThemeCss(projectRoot, config.themeCss);
     _applyLanguages(projectRoot, config.languages);
     _rewriteReferences(projectRoot, config, preserved);
@@ -215,6 +221,24 @@ class ProjectGenerator {
       throw GenerationException('출력 폴더가 없습니다: ${config.outputParent.path}');
     }
 
+    // 템플릿이 형제 저장소를 직접 물고 있으면 여기서 멈춘다. 복사해봐야
+    // 그 상대 경로는 사용자 머신에 없고, 올바른 버전 제약을 빌더가 알 수
+    // 없어서 고쳐줄 수도 없다. `flutter create` 보다 먼저라 아무것도
+    // 만들어지지 않는다.
+    final templatePubspec = File(p.join(templateDir.path, 'pubspec.yaml'));
+    if (templatePubspec.existsSync()) {
+      final local = machineLocalDependencies(
+        templatePubspec.readAsStringSync(),
+      );
+      if (local.isNotEmpty) {
+        throw GenerationException(
+          '템플릿의 ${local.join(', ')} 가 로컬 경로(path/git)를 가리킵니다. '
+          '그대로 복사하면 결과물의 flutter pub get 이 실패합니다. '
+          '템플릿 pubspec 을 퍼블리시된 버전으로 되돌린 뒤 다시 시도하세요.',
+        );
+      }
+    }
+
     final target = _targetDirectory(config);
     if (target.existsSync() || File(target.path).existsSync()) {
       throw GenerationException(
@@ -325,6 +349,18 @@ class ProjectGenerator {
     }
   }
 
+  /// pubspec 의 `name:` / `description:` 과 보존 대상을 갈아끼운다.
+  ///
+  /// **전부 0열 매칭이고, 그것이 이 함수의 불변식이다.** 줄 단위 `map` 이라
+  /// 섹션 상태가 없어도 되는 이유가 그것 하나다 — 섹션 본문의 줄은 YAML 이
+  /// 강제로 들여쓰므로 여기 걸릴 수가 없다. `_preservedPrefixes` 에 들여쓴
+  /// 접두사를 더하는 순간 그 불변식이 깨지는데, **아무것도 그것을 검사하지
+  /// 않는다.**
+  ///
+  /// **알려진 구멍:** `description:` 은 **한 줄짜리만** 갈아끼운다. 템플릿이
+  /// 접힌 스칼라(`description: >` 다음 줄들)로 바뀌면 헤더만 바뀌고 들여쓴
+  /// 줄이 고아로 남아 YAML 이 깨진다. 지금 `template/pubspec.yaml` 이 한 줄
+  /// 인용 문자열이라 도달 불가다.
   void _rewritePubspec(
     Directory projectRoot,
     GenerationConfig config,
@@ -469,6 +505,136 @@ class HomeScreen extends StatelessWidget {
     }
 
     return kept.join('\n');
+  }
+
+  /// 생성물의 pubspec 에서 `dependency_overrides:` 를 **통째로** 걷어낸다.
+  ///
+  /// 로컬 개발 중에 형제 저장소로 override 를 거는 것은 정상 작업인데, 그것이
+  /// 그대로 실려 나가면 결과물의 `flutter pub get` 이 죽는다 — 실측 **exit 66**,
+  /// `version solving failed`. override 대상이 `dependencies:` 에 **없어도**
+  /// 죽는다. override 자체가 의존성 엣지를 만들기 때문이다.
+  ///
+  /// **항목 단위가 아니라 섹션 통째인 이유가 있다.** override 는 세 갈래인데
+  /// path 만 시끄럽게 죽고 나머지 둘은 **조용히 성공한다** — 실측: hosted 버전
+  /// 핀은 exit 0 에 lock 으로 `dependency: "direct overridden"` 이 구워지고,
+  /// git 은 exit 0 에 퍼블리시된 적 없는 버전이 `source: git` 으로 구워진다.
+  /// 지울 **이름 목록**을 요구하는 방식은 그 조용한 두 갈래에서 이름을 알
+  /// 방법이 없다.
+  ///
+  /// 이식 가능한 hosted 핀까지 같이 사라지는 것은 알고 있다. 지금 템플릿에
+  /// 그런 항목이 없고 있었던 적도 없어서, 가정을 위해 분류 로직을 이고 가지
+  /// 않는다 — 생기는 날 이 문단부터 고친다.
+  ///
+  /// **`dependencies:` 쪽은 이 함수가 아니라 [machineLocalDependencies] 가
+  /// 본다.** 올바른 처리가 반대이기 때문이다. override 를 지우면 제약으로
+  /// 되돌아갈 뿐이지만, 의존성을 지우면 그 패키지가 통째로 사라져 결과물이
+  /// **컴파일되지 않는다.**
+  ///
+  /// 공개해 둔 이유는 테스트가 직접 부르기 위해서다. 지금
+  /// `template/pubspec.yaml` 에는 이 섹션이 아예 없어서, 생성 결과물에 거는
+  /// 어서션은 **수정 전에도 초록이다** — 끄고 빨개지는 것을 볼 수가 없다.
+  ///
+  /// 섹션 판정은 반드시 [String.trimRight] 을 거친다. `.gitattributes` 가
+  /// `* text=auto` 라 Windows 체크아웃의 pubspec 은 CRLF 이고, 줄바꿈을 박은
+  /// 패턴은 거기서 조용히 안 걸린다.
+  ///
+  /// **인접한 미처리 사례:** 톱레벨 `resolution: workspace` 도 결과물에서 같은
+  /// exit 66 을 낸다(실측 — 워크스페이스 루트를 부모에서 못 찾는다). 지금
+  /// 템플릿에 없고, 이 저장소가 pub workspaces 를 쓰게 되면 올바른 처리가
+  /// 거절이 아니라 드롭이라 지금 정하지 않는다.
+  static String withoutDependencyOverrides(String yaml) {
+    const section = 'dependency_overrides:';
+
+    final kept = <String>[];
+    var dropping = false;
+
+    for (final line in yaml.split('\n')) {
+      final bare = line.trimRight();
+      if (bare.isNotEmpty && !bare.startsWith(' ')) {
+        // 들여쓰지 않은 줄에서 섹션이 바뀐다. 들여쓴 자리의 같은 글자는
+        // 남의 설정값이므로 건드리지 않는다.
+        //
+        // `startsWith` 인 이유는 한 줄 flow 스타일 때문이다 —
+        // `dependency_overrides: {a: {path: ../a}}` 는 `==` 로는 안 걸리고
+        // 그대로 실려 나간다. 그 경우 매핑 전체가 이 한 줄에 있으므로 줄
+        // 하나만 지우면 되고, 다음 톱레벨 키에서 [dropping] 이 저절로 풀린다.
+        // `dependency_overrides_foo:` 같은 이름은 콜론 자리가 달라 안 걸린다.
+        dropping = bare.startsWith(section);
+      } else if (dropping && bare.isEmpty) {
+        // 섹션을 끝내는 빈 줄은 섹션과 함께 사라진다. 남기면 앞뒤로 빈 줄이
+        // 둘 남는다.
+        continue;
+      }
+      if (!dropping) kept.add(line);
+    }
+
+    return kept.join('\n');
+  }
+
+  /// 템플릿 pubspec 에서 **결과물로 실리면 안 되는 머신 종속 의존성**의 이름들.
+  ///
+  /// `dependencies:` / `dev_dependencies:` 안에서 `path:` 또는 `git:` 소스를
+  /// 쓰는 항목이다. 로컬 개발 중에 직접 의존성을 형제 저장소로 바꿔보는 것은
+  /// override 를 거는 것만큼이나 정상 작업이고
+  /// (`flutter_dropdown_button:\n    path: ../../flutter_dropdown_button`),
+  /// 그대로 실려 나가면 결과물의 `flutter pub get` 이 **exit 66** 으로 죽는다 —
+  /// `dependency_overrides` 와 글자 하나 다르지 않은 실패다(실측).
+  ///
+  /// **찾기만 하고 지우지 않는다.** 지우면 그 패키지가 통째로 사라져 결과물이
+  /// 컴파일되지 않고, 빌더는 올바른 버전 제약을 알 방법이 없어서 **추측하면
+  /// 안 된다.** 그래서 [_validate] 가 이것으로 생성을 **거절한다** —
+  /// `flutter create` 보다 먼저 돌므로 아무것도 만들어지지 않는다.
+  ///
+  /// `dependency_overrides:` 는 여기서 **안 본다.** 그쪽은 지워도 제약으로
+  /// 되돌아갈 뿐이라 처리가 반대이고 [withoutDependencyOverrides] 가 맡는다.
+  ///
+  /// `sdk: flutter` 는 머신 종속이 아니다 — 어느 머신에서나 유효하다.
+  static List<String> machineLocalDependencies(String yaml) {
+    const sections = {'dependencies:', 'dev_dependencies:'};
+    const localSources = {'path', 'git'};
+
+    final found = <String>[];
+    var inSection = false;
+    String? entry;
+
+    for (final raw in yaml.split('\n')) {
+      final line = raw.trimRight();
+      if (line.isEmpty) continue;
+
+      if (!line.startsWith(' ')) {
+        inSection = sections.contains(line);
+        entry = null;
+        continue;
+      }
+      if (!inSection) continue;
+
+      final item = RegExp(
+        r'^  ([A-Za-z_][A-Za-z0-9_]*):(.*)$',
+      ).firstMatch(line);
+      if (item != null) {
+        entry = item.group(1);
+        // 한 줄 flow 스타일 — `a: {path: ../a}`. 값 자리에서만 본다. 그래야
+        // hosted `path: ^1.9.0` 이 자기 이름 때문에 걸리지 않는다.
+        final inline = item.group(2)!;
+        if (localSources.any(
+          (s) => RegExp('[{,]\\s*$s\\s*:').hasMatch(inline),
+        )) {
+          found.add(entry!);
+          entry = null;
+        }
+        continue;
+      }
+
+      // 더 깊이 들여쓴 줄은 앞 항목에 딸린 것이다.
+      if (entry == null) continue;
+      final key = RegExp(r'^\s+([A-Za-z_][A-Za-z0-9_]*):').firstMatch(line);
+      if (key != null && localSources.contains(key.group(1))) {
+        found.add(entry);
+        entry = null;
+      }
+    }
+
+    return found;
   }
 
   /// 붙여넣은 CSS 를 결과물의 테마 소스로 앉힌다.

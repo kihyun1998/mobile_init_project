@@ -24,6 +24,8 @@ builder/     template/ 을 찍어내는 데스크톱 GUI (macOS + Windows).
 
 **`template/` 전체를 복사하면 안 된다.** `android/`, `ios/`, `macos/`, `web/`, `windows/`, `linux/`, `build/`, `.dart_tool/`, `.metadata` 는 `flutter create` 가 새로 만드는 것들이라 덮어쓰면 오히려 망가진다. 복사 대상은 `lib/`, `pubspec.yaml`, `tweakcn.css`, `analysis_options.yaml`, `assets/`, `test/` 다.
 
+**그런데 `pubspec.yaml` 은 파일 하나가 아니라 섹션 여럿이라 allowlist 의 보호가 그 안에서 끝난다.** 섹션마다 무엇을 할지는 **`docs/adr/0002-generated-pubspec-must-be-valid-on-the-users-machine.md`** 가 정한다 — `copyEntries` 에 무엇을 더하기 전에 읽는다. 요지만: 축이 둘이고, **지워도 결과물이 성립하면 드롭**(`dependency_overrides`), **지우면 안 되는데 빌더가 올바른 값을 알 수 없으면 거절**(`dependencies:` 의 `path:`/`git:`) 이다. 추측해서 채우면 결과물은 컴파일되고 화면만 다르다.
+
 ## builder/ 작업 규칙
 
 - **`template/` 을 `path:` 의존성으로 문다.** 미리보기 캔버스는 `package:mobile_init_project/...` 를 import해서 **진짜 컴포넌트**를 렌더한다. 미리보기용 사본을 따로 만들지 말 것 — 그 순간 미리보기가 거짓말을 시작한다.
