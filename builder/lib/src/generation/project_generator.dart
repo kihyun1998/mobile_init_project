@@ -420,12 +420,26 @@ class ProjectGenerator {
   /// 그래도 [homeScreenSegments] 의 클래스 이름과 생성자 모양에는 묶여 있다
   /// (`AppTab` 이 `const HomeScreen()` 으로 부른다). 컴파일러가 문자열을
   /// 봐주지 않으므로 그 결합은 테스트로 못박아 뒀다.
+  ///
+  /// **여기에 컴포넌트 개수를 적지 않는다** (#49). 예전에는 "shadcn 13종" 이
+  /// 적혀 있었고 지금은 어느 단위로도 13이 아니다. **이 문장은 생성물의
+  /// `home_screen.dart` 로 그대로 나가므로 사용자가 읽는 유일한 자리인데,
+  /// 아무 게이트도 그 값을 보지 않는다** — 그래서 틀린 채로 오래 나갔다.
+  ///
+  /// 그 13이 원래 무엇을 세었는지는 **확정할 수 없다.** 당시 파일은 12개,
+  /// 디렉토리 전체는 13개, 공개 위젯 클래스는 14개였고 그중 스위치의 라벨
+  /// 변형을 빼면 13종이 된다. 맞았다가 드리프트한 것일 수도, 처음부터 다른
+  /// 것을 센 것일 수도 있다. **단정하지 않는다** — 확실한 것은 단위가 어디에도
+  /// 안 적혀 있었다는 것이다.
+  ///
+  /// 개수가 필요한 자리는 `CLAUDE.md` 하나이고, 그쪽은 단위를 파일로 못박고
+  /// `builder/test/component_count_test.dart` 가 지킨다.
   static const emptyHomeScreenSource = '''
 import 'package:flutter/material.dart';
 
 /// 여기서부터 시작하면 된다.
 ///
-/// 컴포넌트가 필요하면 `lib/ui/components/` 에 shadcn 13종이 그대로 있다.
+/// 컴포넌트가 필요하면 `lib/ui/components/` 에 shadcn 컴포넌트가 그대로 있다.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
