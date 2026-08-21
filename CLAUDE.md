@@ -51,7 +51,7 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
 - **예제 페이지를 import 하는 테스트는 `test/example/` 안에 둔다.** 빌더가 예제를 끌 때 `lib/example` 과 함께 이 폴더를 지운다. 밖에 두면 지워진 파일을 import 하는 테스트가 결과물에 남아 `flutter test` 에서만 터진다 — `flutter analyze` 는 통과시키므로 조용하다.
-- shadcn 컴포넌트 15개는 `lib/ui/components/` 에 있고 **provider·l10n·navigation 을 물지 않는다.** 끌어들이는 순간 빌더 미리보기가 깨진다 — 이게 격리의 이유다. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다.
+- shadcn 컴포넌트는 `lib/ui/components/` 에 `shadcn_*.dart` **15개**로 있고 **provider·l10n·navigation 을 물지 않는다.** 끌어들이는 순간 빌더 미리보기가 깨진다 — 이게 격리의 이유다. **개수의 단위는 파일이고**(위젯 수가 아니다) `builder/test/component_count_test.dart` 가 지킨다 — 근거는 #49. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다. 끌어들이는 순간 빌더 미리보기가 깨진다 — 이게 격리의 이유다. `app_bottom_nav_bar.dart` 는 이 디렉토리에 있지만 shadcn 컴포넌트가 아니고 l10n·navigation 을 문다.
   - 컴포넌트끼리 서로 import 하는 것은 된다 (`shadcn_date_picker` → `shadcn_calendar`).
   - **순수 UI 패키지를 무는 것도 된다** (`shadcn_checkbox` → `flutter_checkbox`, `shadcn_select` → `flutter_dropdown_button`). 절차와 근거는 **`docs/adr/0001-external-ui-package-adoption.md`** 에 있다 — 새 패키지를 들이기 전에 읽는다. 요지만: 판정의 축은 "패키지가 좋은가" 가 아니라 **"안 넘긴 색이 어디서 오는가"** 이고, 그 답이 `colorScheme` 파생이면 안 넘겨도 되지만 `ThemeData` 레거시 필드면 **도달 가능한 슬롯을 전부 명시적으로 채워야 한다.** 빠뜨린 색은 컴파일도 테스트도 통과하고 화면만 다르다.
   - **`package:flutter/widgets.dart` 의 기본형 위에 앉는 것도 된다** (`shadcn_radio_group` → `RawRadio` + `RadioGroup`, `shadcn_switch` → `ToggleableStateMixin`). 둘 다 **그림은 우리가 그리게** 두면서 시맨틱·포커스·키보드를 맡는다. 색과 치수를 한 글자도 안 바꾸고 옮길 수 있다.
