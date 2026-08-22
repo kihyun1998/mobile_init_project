@@ -6,14 +6,20 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  # Flutter 3.35.0 (Dart 3.9.0) 에서 확인했다 — 별도로 받은 3.35.0 으로 테스트
-  # 135개 전부 통과하고, 진짜 생성까지 돌려 결과물 테스트도 통과한다.
+  # Flutter 3.47.1 (Dart 3.13.1) 에서 확인했다 — 별도로 받은 3.47.1 로 테스트
+  # 259개 전부 통과한다.
   #
-  # flutter create 가 찍어둔 ^3.12.2 는 그때 개발 머신에 깔려 있던 SDK 였을
-  # 뿐이고, 필요한 값보다 9개 마이너 버전 높았다. 하한은 template 을 통해
-  # 들어오는 shared_preferences 2.5.5 의 flutter >=3.35.0 에서 온다.
-  sdk: ^3.9.0
-  flutter: ">=3.35.0"
+  # 하한은 template 을 통해 들어온다. 근거 전체는 template/pubspec.yaml 의
+  # 같은 자리에 적어뒀다 — 요지만: riverpod 3.4.2 가 무는 `test` 를 SDK 의
+  # flutter_test 핀이 좁혀서, 3.47.0 미만에서는 riverpod_generator 4.0.8 이
+  # 아예 해석되지 않는다.
+  #
+  # **여기서 template 보다 낮게 적으면 안 된다.** 빌더가 template 을 path: 로
+  # 무는데, 양쪽이 갈리면 빌더만 낡은 riverpod 을 해석해서 template 의 커밋된
+  # .g.dart 와 런타임이 어긋난다. 그 상태는 analyze 를 통과하고 테스트 로드에서만
+  # 터진다 — 실제로 마이그레이션 중에 한 번 그렇게 됐다.
+  sdk: ^3.12.0
+  flutter: ">=3.47.0"
 
 dependencies:
   file_picker: ^11.0.2
@@ -24,7 +30,7 @@ dependencies:
   # 쓰는 것들이 빌더에도 필요하다 — l10n delegate, ProviderScope, .w/.h/.sp.
   flutter_localizations:
     sdk: flutter
-  flutter_riverpod: ^2.6.1
+  flutter_riverpod: ^3.4.2
   flutter_screenutil: ^5.9.3
 
   # 붙여넣은 CSS를 런타임에 파싱하는 데 쓴다 (CssParser.parse).
