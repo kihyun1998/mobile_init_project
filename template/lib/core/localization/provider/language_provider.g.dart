@@ -6,25 +6,49 @@ part of 'language_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$languageHash() => r'8790e18093b69934a6e14cc91d93c52348cf1251';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [language].
 @ProviderFor(language)
-final languageProvider = AutoDisposeProvider<S>.internal(
-  language,
-  name: r'languageProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$languageHash,
-  dependencies: <ProviderOrFamily>[localeStateProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    localeStateProvider,
-    ...?localeStateProvider.allTransitiveDependencies,
-  },
-);
+final languageProvider = LanguageProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef LanguageRef = AutoDisposeProviderRef<S>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class LanguageProvider extends $FunctionalProvider<S, S, S>
+    with $Provider<S> {
+  LanguageProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'languageProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[localeStateProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          LanguageProvider.$allTransitiveDependencies0,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = localeStateProvider;
+
+  @override
+  String debugGetCreateSourceHash() => _$languageHash();
+
+  @$internal
+  @override
+  $ProviderElement<S> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  S create(Ref ref) {
+    return language(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(S value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<S>(value),
+    );
+  }
+}
+
+String _$languageHash() => r'8790e18093b69934a6e14cc91d93c52348cf1251';
