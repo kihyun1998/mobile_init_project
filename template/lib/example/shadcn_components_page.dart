@@ -292,7 +292,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
-                barTouchData: BarTouchData(enabled: false),
+                barTouchData: const BarTouchData(enabled: false),
                 barGroups: List.generate(12, (i) {
                   final values = [4, 3, 5, 7, 5, 8, 6, 9, 7, 10, 8, 11];
                   return BarChartGroupData(
@@ -378,7 +378,7 @@ class _ShadcnComponentsPageState extends ConsumerState<ShadcnComponentsPage> {
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
-                barTouchData: BarTouchData(enabled: false),
+                barTouchData: const BarTouchData(enabled: false),
                 barGroups: List.generate(7, (i) {
                   final heights = [0.4, 0.6, 0.3, 0.8, 0.5, 0.7, 0.9];
                   return BarChartGroupData(
