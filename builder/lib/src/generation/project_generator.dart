@@ -144,11 +144,17 @@ class ProjectGenerator {
       'run',
       'intl_utils:generate',
     ]),
+    // `--delete-conflicting-outputs` 를 붙이지 않는다. build_runner 2.16 이
+    // 그 플래그를 **제거**했고(붙이면 무시되며 경고만 나온다), 그것이 하던 일
+    // — 어긋난 생성물을 고쳐 쓴다 — 이 기본 동작이 됐다. 반대를 원할 때
+    // `--keep-modified-outputs` 를 붙이는 구조로 뒤집혔다.
+    //
+    // 갓 만들어진 프로젝트에는 손으로 고친 생성물이 있을 수 없으므로 어느
+    // 쪽이든 결과가 같지만, **없는 플래그를 사용자 화면에 흘리지 않는다.**
     _PostProcessingStep(GenerationStep.codegen, 'dart', [
       'run',
       'build_runner',
       'build',
-      '--delete-conflicting-outputs',
     ]),
     _PostProcessingStep(
       GenerationStep.theme,

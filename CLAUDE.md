@@ -47,7 +47,7 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
   - **원본이 안 거는 자리에는 우리도 안 건다.** 그림자는 카드(`shadow-sm`)·입력·outline 버튼·라디오 표시기·스위치 트랙·select 트리거·체크박스(`shadow-xs`)·select 메뉴(`shadow-md`)·날짜 다이얼로그(`shadow-lg`) 뿐이고, 기본 버튼·뱃지·아바타·구분선·표·달력은 원본에도 없다.
   - **체크박스만 `BlurStyle.outer` 로 싣는다.** CSS 의 바깥 `box-shadow` 는 요소 뒤로 잘리는데 Flutter 의 기본값은 도형 밑까지 칠하고, 체크박스의 `inactiveColor` 가 투명이라 그대로 실으면 안 켜진 상자를 통과해 비친다. 값을 바꾸는 게 아니라 CSS 의미론을 미러링하는 것이고, 상류가 릴리스 노트에서 직접 권한 방법이다. 다른 컴포넌트는 배경이 불투명해서 이 문제가 없다.
   - 그림자 값은 `context.tweakcnShadows.shadowSm.r` 처럼 **`.r` 을 걸어 읽는다** (`shadcn_shadow.dart` 의 확장). 모서리가 배율을 타므로 그림자도 타야 한다.
-- **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build --delete-conflicting-outputs`.
+- **provider를 추가하면 codegen을 돌려야 한다.** `@riverpod` 애노테이션 + `part 'x.g.dart';` + `dart run build_runner build`.
 - **번역 추가**는 `lib/core/localization/l10n/intl_{ko,en}.arb` 를 고치고 `dart run intl_utils:generate`. 생성물은 커밋한다.
 - 생성 파일(`*.g.dart`, `generated/`)은 전부 커밋되어 있다. 빌더가 복사만으로 컴파일되게 하려는 의도이니 gitignore에 넣지 말 것.
 - **예제 페이지를 import 하는 테스트는 `test/example/` 안에 둔다.** 빌더가 예제를 끌 때 `lib/example` 과 함께 이 폴더를 지운다. 밖에 두면 지워진 파일을 import 하는 테스트가 결과물에 남아 `flutter test` 에서만 터진다 — `flutter analyze` 는 통과시키므로 조용하다.
@@ -126,7 +126,7 @@ Riverpod + flutter_screenutil + tweakcn 테마 + intl 기반 모바일 앱.
 
 ```bash
 cd template && flutter run                                  # 템플릿 앱 실행
-cd template && dart run build_runner build --delete-conflicting-outputs
+cd template && dart run build_runner build
 cd template && dart run intl_utils:generate
 cd template && dart run flutter_tweakcn_generator     # tweakcn.css → tweakcn_theme.g.dart
 cd builder  && flutter run -d macos                         # 빌더 실행

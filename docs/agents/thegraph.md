@@ -480,7 +480,7 @@ cd builder  && dart format --output=none --set-exit-if-changed lib test
 
 **재생성 도구가 셋이고 서로 다르다. 한 덩어리로 기억하면 안 된다.**
 
-- provider → `dart run build_runner build --delete-conflicting-outputs`
+- provider → `dart run build_runner build`
 - arb → `dart run intl_utils:generate`
 - `tweakcn.css` → **`dart run flutter_tweakcn_generator`**
 

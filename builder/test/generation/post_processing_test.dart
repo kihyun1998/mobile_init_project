@@ -50,7 +50,7 @@ void main() {
     expect(commands.sublist(1), [
       'flutter pub get',
       'dart run intl_utils:generate',
-      'dart run build_runner build --delete-conflicting-outputs',
+      'dart run build_runner build',
       'dart run flutter_tweakcn_generator',
     ]);
   });
