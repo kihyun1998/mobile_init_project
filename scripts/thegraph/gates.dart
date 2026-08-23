@@ -46,7 +46,7 @@ const _regenerators = [
   (
     'codegen',
     'dart',
-    ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+    ['run', 'build_runner', 'build'],
   ),
 ];
 
