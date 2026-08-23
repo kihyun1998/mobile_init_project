@@ -6,20 +6,56 @@ part of 'navigation_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(Navigation)
+final navigationProvider = NavigationProvider._();
+
+final class NavigationProvider extends $NotifierProvider<Navigation, int> {
+  NavigationProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'navigationProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$navigationHash();
+
+  @$internal
+  @override
+  Navigation create() => Navigation();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
 String _$navigationHash() => r'a20f313485d8ca71048bbabbc1cbc7906d6eb726';
 
-/// See also [Navigation].
-@ProviderFor(Navigation)
-final navigationProvider = NotifierProvider<Navigation, int>.internal(
-  Navigation.new,
-  name: r'navigationProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$navigationHash,
-  dependencies: const <ProviderOrFamily>[],
-  allTransitiveDependencies: const <ProviderOrFamily>{},
-);
-
-typedef _$Navigation = Notifier<int>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$Navigation extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

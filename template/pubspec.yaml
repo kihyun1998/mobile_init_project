@@ -6,17 +6,27 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  # Flutter 3.35.0 (Dart 3.9.0) 에서 확인했다 — 템플릿 테스트와, 이 템플릿으로
-  # 실제 생성한 프로젝트의 테스트가 양쪽 다 통과한다.
+  # Flutter 3.47.1 (Dart 3.13.1) 에서 확인했다 — 별도로 받은 3.47.1 로 템플릿
+  # 테스트 126개가 통과한다.
   #
-  # 하한은 shared_preferences 2.5.5 가 flutter >=3.35.0 을 요구하는 데서 온다.
-  # 직접 의존성 중 가장 높다 (다음이 flutter_screenutil 의 >=3.10.0).
+  # **하한이 직접 의존성에서 오지 않는다.** riverpod 3.4.2 가 dev 가 아니라
+  # 진짜 dependencies 로 `test ^1.0.0` 을 무는데, 그 test 를 SDK 의
+  # flutter_test 가 좁힌다. 3.44.9 까지는 `test_api: 0.7.11` 이 **캐럿이 아니라
+  # 정확한 핀**이라 test 가 1.31.0 에 갇히고, 1.31.0 은 analyzer <13.0.0 이라
+  # riverpod_generator 4.0.8 (analyzer ^13.0.0) 이 해석되지 않는다.
+  # 3.47.0 이 그 핀을 0.7.12 로 올리면서 풀렸다. 같은 릴리스가 `meta: 1.18.0`
+  # 도 `^1.18.3` 으로 바꿔서 build_runner 2.16.0 까지 같이 열렸다.
+  # 3.44.9 와 3.47.0 사이에 stable 이 없어서 하한이 정확히 3.47.0 이다.
+  #
+  # sdk 쪽 ^3.12.0 은 riverpod 3.4.2 / riverpod_generator 4.0.8 이 적어둔 값을
+  # 그대로 옮긴 것이다. flutter 하한이 이미 Dart 3.13 을 함의하므로 실질적인
+  # 게이트는 아니지만, 패키지가 요구하는 값을 낮춰 적을 이유가 없다.
   #
   # 이 값은 생성되는 모든 프로젝트로 그대로 따라가므로 거짓으로 두면 안 된다.
   # 예전의 >=3.0.0 은 의존성이 이미 반증하는 값이어서, 낮은 SDK 를 쓰는 사람의
   # pub get 은 통과시키면서 컴파일만 실패하게 만들었다.
-  sdk: ^3.9.0
-  flutter: ">=3.35.0"
+  sdk: ^3.12.0
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
@@ -32,12 +42,12 @@ dependencies:
   # 에서 가져오는데, TweakcnTheme 는 그것들을 채우지 않는다 — 그래서 색을 하나도
   # 빠짐없이 명시적으로 넘긴다. 근거는 shadcn_select.dart 의 doc-comment.
   flutter_dropdown_button: ^4.2.0
-  flutter_riverpod: ^2.6.1
+  flutter_riverpod: ^3.4.2
   flutter_screenutil: ^5.9.0
   flutter_svg: ^2.2.0
   intl: ^0.20.2
   logger: ^2.5.0
-  riverpod_annotation: ^2.6.1
+  riverpod_annotation: ^4.0.6
   shared_preferences: ^2.5.4
   fl_chart: ^0.70.2
 
@@ -48,8 +58,8 @@ dev_dependencies:
     sdk: flutter
   flutter_tweakcn_generator: ^0.5.1
   intl_utils: ^2.8.11
-  riverpod_generator: ^2.6.5
-  riverpod_lint: ^2.6.5
+  riverpod_generator: ^4.0.8
+  riverpod_lint: ^3.1.8
 
 flutter:
   uses-material-design: true

@@ -445,7 +445,7 @@ fake runner 테스트는 여기서 smoke 이지 증명이 아니다. **협상 �
 | 4 | 이슈 본문 | #1 이 PRD 다 (**닫혀 있다** — 아래 `search` 참고). 자식이 닫힐 때 anchor 에 접어 넣는 것은 `spine` 의 flush 다 |
 | 5 | `template/tweakcn.css` | 고치면 `dart run flutter_tweakcn_generator` 로 `tweakcn_theme.g.dart` 까지 만들어 **커밋한다** |
 | 6 | `template/lib/core/localization/l10n/intl_{ko,en}.arb` | 고치면 `dart run intl_utils:generate` 로 생성물까지 만들어 **커밋한다** |
-| 7 | 툴체인 하한 | 양쪽 `pubspec.yaml` 의 `environment:` (지금 `sdk: ^3.9.0`, `flutter: ">=3.35.0"`). 생성되는 모든 프로젝트로 따라가므로 **실제로 확인한 값만** 적는다 |
+| 7 | 툴체인 하한 | 양쪽 `pubspec.yaml` 의 `environment:` (지금 `sdk: ^3.12.0`, `flutter: ">=3.47.0"`) 와 `.github/workflows/gates.yml` 의 `FLUTTER_VERSION`. **셋이 같이 움직인다** — pubspec 만 올리면 CI 가 하한 미만으로 돌아 `pub get` 이 죽고, CI 만 올리면 생성물이 거짓 하한을 물고 태어난다. 생성되는 모든 프로젝트로 따라가므로 **실제로 확인한 값만** 적는다 |
 | 8 | `docs/adr/` | **write 표면이다.** 변경이 어떤 record 의 전제를 거짓으로 만들면 그 record 를 같은 변경에서 수정한다 (상태 노트, superseded-by) |
 
 **changelog / 릴리스 노트: 없다** — publish 하지 않으므로 스냅샷 문제도 없다.
