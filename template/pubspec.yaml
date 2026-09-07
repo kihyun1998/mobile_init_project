@@ -58,7 +58,7 @@ dev_dependencies:
     sdk: flutter
   flutter_tweakcn_generator: ^0.5.1
   intl_utils: ^2.8.11
-  riverpod_generator: ^4.0.8
+  riverpod_generator: ^4.0.9
   riverpod_lint: ^3.1.8
 
 flutter:
